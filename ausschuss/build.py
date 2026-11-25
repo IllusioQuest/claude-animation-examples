@@ -158,6 +158,7 @@ def main():
     ctx = Ctx()
     ctx.final = final
     ctx.seq = {}
+    ctx.ground_skip = []  # (rig name, f0, f1): seated on something, feet may hang
     ctx.lib = C.collection("Lib")
     base.collection.children.link(ctx.lib)
     P.mats()

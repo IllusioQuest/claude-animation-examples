@@ -143,9 +143,9 @@ class Actor:
         self.extra = {}
 
     # ----------------------------------------------------------------- placement
-    def place(self, f, loc=None, yaw=None, interp=None):
+    def place(self, f, loc=None, yaw=None, interp=None, hold=True):
         ob = self.rig
-        if interp is None:
+        if interp is None and hold:
             if loc is not None:
                 auto_hold(ob, "location", (0, 1, 2), f, 14, 8)
             if yaw is not None:

@@ -1,6 +1,6 @@
 {
 "fps": 24,
-"end": 6448,
+"end": 6442,
 "bounds": {
 "1": [
 1,
@@ -24,7 +24,7 @@
 ],
 "6": [
 5575,
-6448
+6442
 ]
 },
 "events": [
@@ -1456,77 +1456,56 @@
 "seq": 3
 },
 {
-"frame": 2514,
+"frame": 2520,
 "kind": "step",
 "who": "Woman1",
 "style": "walk",
 "seq": 3
 },
 {
-"frame": 2531,
+"frame": 2542,
 "kind": "step",
 "who": "Woman1",
 "style": "walk",
 "seq": 3
 },
 {
-"frame": 2547,
+"frame": 2565,
 "kind": "step",
 "who": "Woman1",
 "style": "walk",
 "seq": 3
 },
 {
-"frame": 2564,
+"frame": 2588,
 "kind": "step",
 "who": "Woman1",
 "style": "walk",
 "seq": 3
 },
 {
-"frame": 2581,
+"frame": 2611,
 "kind": "step",
 "who": "Woman1",
 "style": "walk",
 "seq": 3
 },
 {
-"frame": 2598,
+"frame": 2634,
 "kind": "step",
 "who": "Woman1",
 "style": "walk",
 "seq": 3
 },
 {
-"frame": 2615,
+"frame": 2656,
 "kind": "step",
 "who": "Woman1",
 "style": "walk",
 "seq": 3
 },
 {
-"frame": 2632,
-"kind": "step",
-"who": "Woman1",
-"style": "walk",
-"seq": 3
-},
-{
-"frame": 2648,
-"kind": "step",
-"who": "Woman1",
-"style": "walk",
-"seq": 3
-},
-{
-"frame": 2665,
-"kind": "step",
-"who": "Woman1",
-"style": "walk",
-"seq": 3
-},
-{
-"frame": 2682,
+"frame": 2679,
 "kind": "step",
 "who": "Woman1",
 "style": "walk",
@@ -3761,28 +3740,14 @@
 "seq": 6
 },
 {
-"frame": 6021,
+"frame": 6022,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 6026,
-"kind": "step",
-"who": "Funke",
-"style": "walk",
-"seq": 6
-},
-{
-"frame": 6030,
-"kind": "step",
-"who": "Funke",
-"style": "walk",
-"seq": 6
-},
-{
-"frame": 6034,
+"frame": 6028,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
@@ -3791,72 +3756,72 @@
 {
 "frame": 6017,
 "kind": "drag_metal",
-"dur": 17,
+"dur": 11,
 "seq": 6
 },
 {
-"frame": 6051,
+"frame": 6045,
 "kind": "knock_soft",
 "seq": 6
 },
 {
-"frame": 6058,
+"frame": 6052,
 "kind": "knock_soft",
 "seq": 6
 },
 {
-"frame": 6088,
+"frame": 6082,
 "kind": "warm_chord",
 "seq": 6
 },
 {
-"frame": 6098,
+"frame": 6092,
 "kind": "jukebox_soft",
 "beat": 12,
 "seq": 6
 },
 {
-"frame": 6188,
+"frame": 6182,
 "kind": "laugh",
 "seq": 6
 },
 {
-"frame": 6222,
+"frame": 6216,
 "kind": "hammer_tiny",
 "seq": 6
 },
 {
-"frame": 6238,
+"frame": 6232,
 "kind": "hammer_tiny",
 "seq": 6
 },
 {
-"frame": 6254,
+"frame": 6248,
 "kind": "hammer_tiny",
 "seq": 6
 },
 {
-"frame": 6222,
+"frame": 6216,
 "kind": "land_spring",
 "seq": 6
 },
 {
-"frame": 6314,
+"frame": 6308,
 "kind": "wink",
 "seq": 6
 },
 {
-"frame": 6331,
+"frame": 6325,
 "kind": "glint",
 "seq": 6
 },
 {
-"frame": 6340,
+"frame": 6334,
 "kind": "iris_out",
 "seq": 6
 },
 {
-"frame": 6398,
+"frame": 6392,
 "kind": "final_chord",
 "seq": 6
 }

@@ -179,7 +179,8 @@ def build(ctx, F):
     h.pose(tset, "bend_down")
     A.detach(f.rig, con, tset + 6)
     fpos = HL(1.6, -3.1)
-    f.place(tset + 12, fpos, h.yaw_at(tset))
+    A.arc(f.rig, tset + 7, tset + 16, f.pos_at(tset + 6), fpos, height=0.25)
+    f.place(tset + 16, fpos, h.yaw_at(tset))
     f.pose(tset + 12, "stand")
     # Hedda sits down on a drum by the slab
     sit_yaw = math.degrees(hr.rotation_euler.z) + 180 + 20
@@ -229,7 +230,7 @@ def build(ctx, F):
     carry_sheet.keyframe_insert("location", frame=f1 + 7)
     A.set_interp(carry_sheet, "location", f1 + 7, "CONSTANT")
     hp = h.pos_at(tsit + 12)
-    fdst = hp + (edge - hp).normalized() * 0.62
+    fdst = hp + (edge - hp).normalized() * 0.74
     fdst.z = 0
     f2 = f.walk(f1 + 12, [edge, fdst], speed=0.5, stride=0.1, end_pose=None)
     A.event(f1 + 12, "drag_metal", dur=f2 - f1 - 12)
@@ -268,8 +269,8 @@ def build(ctx, F):
     A.event(tk + 40, "warm_chord")
     B.shot(ctx, 6, "S6_c2_sheet", tf, [(tf, HL(-2.7, -6.0, 1.35), HL(0.2, -2.4, 0.5)), (f2, HL(-2.5, -5.8, 1.3), HL(-0.2, -2.8, 0.55))],
            lens=28)
-    B.shot(ctx, 6, "S6_c2b_knock", f2 - 6, [(f2 - 6, HL(0.8, -4.9, 1.2), HL(-0.6, -2.8, 0.75)),
-                                            (tk + 60, HL(0.7, -4.8, 1.2), HL(-0.65, -2.8, 0.85))], lens=26)
+    B.shot(ctx, 6, "S6_c2b_knock", f2 - 6, [(f2 - 6, seat_pos + sd * 2.1 + V((0, 0, 1.2)), seat_pos + V((0, 0, 0.9))),
+                                            (tk + 60, seat_pos + sd * 2.0 + V((0, 0, 1.2)), seat_pos + V((0, 0, 0.95)))], lens=26)
     # ------------------------------------------------------------------ the freed machines arrive
     tm = tk + 50
     road = [V((-25.5, 8.4, 0)), V((-21, 7.5, 0)), V((-20.6, 0.5, 0))]
@@ -297,6 +298,7 @@ def build(ctx, F):
                                                (tm + 100, V((-18.3, 4.4, 1.25)), V((-21.6, 7.4, 0.5)))], lens=30)
     # ------------------------------------------------------------------ 6.3 building again, the wink, iris out
     tb = tm + 110
+    ctx.ground_skip.append(("Hedda", tsit, tm + 82))
     h.pose(tb, "stand")
     h.hold_place(tb)
     h.place(tb + 4, None, math.degrees(hr.rotation_euler.z) + 180)
@@ -339,7 +341,7 @@ def build(ctx, F):
     f.glow(tk2 + 21, 25.0, "iris")
     f.glow(tk2 + 26, 4.0, "iris")
     A.event(tk2 + 21, "glint")
-    eye = A.world_matrix_at(f.rig, tk2 + 30, "head") @ V((0, -0.09, 0.1))
+    eye = A.world_matrix_at(f.rig, tk2 + 30) @ V((0, -0.16, 0.46))  # the lens (same spot as his eye light)
     cam = B.shot(ctx, 6, "S6_c5_wink", tw, [(tw, eye + cdir * 1.15 + V((0, 0, 0.1)), eye - V((0, 0, 0.12))),
                                             (tk2 + 30, eye + cdir * 0.95 + V((0, 0, 0.1)), eye),
                                             (END, eye + cdir * 0.9 + V((0, 0, 0.1)), eye)], lens=45)

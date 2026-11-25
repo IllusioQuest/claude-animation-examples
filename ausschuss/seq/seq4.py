@@ -69,8 +69,14 @@ def build(ctx, F):
                  speed=3.6, lean=14)
     A.event(tgrab + 22, "chase_start")
     B.shot(ctx, 4, "S4_c1_grab", F, [(F, hstop + V((-2.0, -2.3, 1.3)), hstop + V((0.6, 0.6, 1.0))),
-                                     (tgrab + 14, hstop + V((-1.4, -2.6, 1.35)), hstop + V((1.2, -0.8, 1.0))),
-                                     (tgrab + 30, hstop + V((-0.9, -3.2, 1.45)), hstop + V((3.2, -2.6, 1.0)))], lens=28)
+                                     (tgrab + 14, hstop + V((-1.4, -2.6, 1.35)), hstop + V((1.2, -0.8, 1.0)))], lens=28)
+    # she runs past the camera into the alley; the camera pans with her
+    mouth = Wv(11.6, -1.6, 1.3)
+    mk_keys = []
+    for t_ in range(tgrab + 20, tr1 + 1, 6):
+        hp_ = h.pos_at(t_) + V((0, 0, 1.0))
+        mk_keys.append((t_, mouth, hp_ if (hp_ - mouth).length > 1.4 else hp_ + (hp_ - mouth).normalized() * 1.4))
+    B.shot(ctx, 4, "S4_c1b_mouth", tgrab + 20, mk_keys, lens=26)
     # ------------------------------------------------------------------ 4.2 laundry
     # Hedda runs through the alley under the laundry; the Erfasser gets a sheet on his hat
     run2 = [Wv(18, 0.0), Wv(26, 0.4), Wv(34, -0.2)]

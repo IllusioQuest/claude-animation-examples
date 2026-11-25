@@ -203,7 +203,64 @@ def atmosphere(ctx):
                  st, st + 300, seed=10 + i)
 
 
+def ground_fix(ctx, f_end, step=1, tol=0.012):
+    """Keep human feet on the ground: where the lowest foot part floats above (or sinks
+    below) the actor's own ground level, shift the root bone. Skipped while carried/attached,
+    tilted, in a jump, or in ranges listed in ctx.ground_skip (seated on something high)."""
+    sc = bpy.context.scene
+    vl = bpy.context.view_layer
+    people = [ctx.hedda] + list(ctx.vill.values())
+    skip = getattr(ctx, "ground_skip", [])
+    parts = {}
+    for a in people:
+        n = a.rig.name
+        parts[n] = [o for o in a.rig.children if o.type == "MESH" and any(
+            k in o.name for k in ("_sole", "_boot", "_knee"))]
+    corr = {a.rig.name: {} for a in people}
+    for f in range(1, f_end + 1, step):
+        sc.frame_set(f)
+        for a in people:
+            r = a.rig
+            if r.location.z < -100 or abs(r.rotation_euler.x) > 0.05 or abs(r.rotation_euler.y) > 0.05:
+                continue
+            if any(c.influence > 0.01 for c in r.constraints):
+                continue
+            if any(n == r.name and s0 <= f <= s1 for n, s0, s1 in skip):
+                continue
+            fz = r.animation_data.action.fcurves.find("location", index=2)
+            if fz and abs(fz.evaluate(f + 1) - fz.evaluate(f - 1)) > 0.01:
+                continue
+            low = min((o.matrix_world @ Vector(c)).z for o in parts[r.name] for c in o.bound_box)
+            d = r.location.z - low
+            if abs(d) > tol:
+                corr[r.name][f] = d
+    n_keys = 0
+    for a in people:
+        c = corr[a.rig.name]
+        if not c:
+            continue
+        pb = a.rig.pose.bones["root"]
+        path = pb.path_from_id("location")
+        fc = a.rig.animation_data.action.fcurves.find(path, index=2)
+        if fc is None:
+            pb.keyframe_insert("location", frame=1, index=2)
+            fc = a.rig.animation_data.action.fcurves.find(path, index=2)
+        frames = sorted(c)
+        new = {}
+        for f in frames:
+            new[f] = fc.evaluate(f) + c[f]  # rigs are built in world units (scale 1)
+            for nb in (f - step, f + step):  # fade in/out where the correction starts/ends
+                if nb not in c and nb >= 1:
+                    new.setdefault(nb, fc.evaluate(nb))
+        for f, v in new.items():
+            fc.keyframe_points.insert(f, v, options={"FAST"})
+        fc.update()
+        n_keys += len(new)
+    print("ground_fix keys", n_keys)
+
+
 def apply(ctx, f_end):
+    ground_fix(ctx, f_end)
     humans(ctx, f_end)
     robots(ctx, f_end)
     atmosphere(ctx)

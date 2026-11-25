@@ -183,8 +183,8 @@ def build(ctx, F):
     h.hold_place(t_away)
     aw_end = h.walk(t_away, [W(0.2, 1.05), W(-0.4, 0.2), W(-1.0, -0.5)], speed=0.6, stride=0.4, style="shuffle",
                     end_pose="sigh")
-    B.shot(ctx, 2, "S2_c3_insert", T(14), [(T(14), W(-1.75, 1.15, 1.45), W(0.2, 1.45, 1.15)),
-                                           (t_away, W(-1.65, 1.1, 1.45), W(0.2, 1.4, 1.2))], lens=32)
+    B.shot(ctx, 2, "S2_c3_insert", T(14), [(T(14), W(1.9, 0.95, 1.4), W(0.2, 1.5, 1.12)),
+                                           (t_away, W(1.8, 0.9, 1.4), W(0.15, 1.45, 1.15))], lens=32)
     # ------------------------------------------------------------------ 2.4 awakening
     tw = T(21.0)
     f.glow(tw, 0.0, "iris")
@@ -536,10 +536,11 @@ def build(ctx, F):
     t6c_end = hw3 + 50
     B.shot(ctx, 2, "S2_c6c_dark", tc, [(tc, W(-1.1, -1.7, 1.5), W(1.4, 0.4, 0.9)),
                                        (tr_on + 40, W(-0.9, -1.6, 1.45), W(1.6, 0.5, 0.8))], lens=28)
-    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(0.55, 1.95, 1.5), W(1.75, 0.8, 0.7), 28),
-                                               (t6c_end, W(0.6, 1.9, 1.45), W(1.8, 0.85, 0.7), 28)], lens=28)
+    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(2.65, -0.6, 1.7), W(1.75, 0.8, 0.65), 22),
+                                               (t6c_end, W(2.6, -0.55, 1.65), W(1.8, 0.85, 0.65), 22)], lens=22)
     # ------------------------------------------------------------------ 2.7 later: both asleep
     ts = t6c_end + 2
+    ctx.ground_skip.append(("Hedda", ts, ts + C.sec(6)))
     END = ts + C.sec(5.5)
     B.set_end(ctx, 2, END)
     chair = ws["chair"]

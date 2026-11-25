@@ -645,7 +645,7 @@ class Erfasser(Robot):
             if i > 0:
                 fs = f0 + int(round((acc - (b - a).length) / total * dur))
                 self.place(fs, None, yaw)
-            self.place(f, b, yaw, interp="LINEAR" if i < len(pts) - 2 else None)
+            self.place(f, b, yaw, interp="LINEAR" if i < len(pts) - 2 else None, hold=False)
         f1 = f0 + dur
         self.pose(f0 + 6, {"body": (lean, 0, 0)})
         self.pose(f1 - 4, {"body": (lean, 0, 0)})

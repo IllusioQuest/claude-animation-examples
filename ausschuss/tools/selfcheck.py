@@ -99,20 +99,20 @@ for f in range(f0, f1 + 1):
         r = bpy.data.objects.get(n)
         if not r or W(r).translation.z < -100:
             continue
-        for s in ("soleL", "soleR"):
-            o = bpy.data.objects.get(f"{n}_{s}")
-            if not o:
-                continue
-            p = W(o).translation.copy()
-            k = o.name
-            if k in prev_sole:
+        soles = [(s, bpy.data.objects.get(f"{n}_{s}")) for s in ("soleL", "soleR")]
+        soles = [(s, W(o).translation.copy()) for s, o in soles if o]
+        if len(soles) == 2:
+            s, p = min(soles, key=lambda x: x[1].z)  # the stance foot is the lower one
+            k = f"{n}_{s}"
+            if k in prev_sole and p.z < W(r).translation.z + 0.06:
                 pp = prev_sole[k]
-                if p.z < W(r).translation.z + 0.06 and pp.z < W(r).translation.z + 0.06:
-                    v = Vector((p.x - pp.x, p.y - pp.y)).length * 24
-                    if v > 1.2:
-                        issues.append({"kind": "skate", "f": f, "who": n, "part": s, "v": round(v, 2),
-                                       "shot": sh[1] if sh else ""})
-            prev_sole[k] = p
+                v = Vector((p.x - pp.x, p.y - pp.y)).length * 24
+                if v > 0.8:
+                    issues.append({"kind": "skate", "f": f, "who": n, "part": s, "v": round(v, 2),
+                                   "shot": sh[1] if sh else ""})
+            prev_sole.clear() if False else None
+            for s2, p2 in soles:
+                prev_sole[f"{n}_{s2}"] = p2
 # ---------------------------------------------------------------- self & carried intersection (every 3rd)
 for f in range(f0, f1 + 1, 3):
     goto(f)

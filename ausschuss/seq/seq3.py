@@ -138,9 +138,9 @@ def build(ctx, F):
     w2.pose(F, "stand"); w2.pose(F, {"spine": (18, 0, 0), "head": (15, 0, 0), "upper_arm_R": (40, 0, 5),
                                      "forearm_R": (40, 0, 0)})
     w2.face(F, "neutral")
-    w1.cut(F, Wv(-7.0, -9.5), 0)
+    w1.cut(F, Wv(-4.6, -8.2), 0)
     w1.pose(F, "stand"); w1.face(F, "neutral")
-    w1.walk(T(0), [Wv(-7.0, -9.5), Wv(-6.0, -6.5), Wv(-5, -4.5)], speed=0.7, stride=0.45, end_pose="stand")
+    w1.walk(T(0), [Wv(-4.6, -8.2), Wv(-5.2, -6.2), Wv(-5, -4.5)], speed=0.5, stride=0.45, end_pose="stand")
     w3.cut(F, Wv(-6.5, 5.5), 160)
     w3.pose(F, "stand"); w3.face(F, "neutral")
     w3.pose(F, {"upper_arm_L": (150, 0, 10), "upper_arm_R": (150, 0, 10), "head": (-20, 0, 0)})  # hanging laundry
@@ -215,9 +215,12 @@ def build(ctx, F):
     f.pose(tout, "stand")
     f.pose(tout, {"lid": (-95, 0, 0)})
     fpos0 = f.pos_at(tout)
+    hy = math.radians(h.yaw_at(tout))
+    fpos1 = fpos0 + V((math.sin(hy), -math.cos(hy), 0)) * 0.3 + V((0, 0, 0.05))  # out of the coat first
+    f.place(tout + 3, fpos1, None)
     table_spot = local_to_world(radio_stall, (0.05, 0.05, 0.89))
-    A.arc(f.rig, tout + 2, tout + 16, fpos0, table_spot, height=0.4)
-    f.place(tout + 16, table_spot, math.degrees(A.yaw_towards(radio_pos - table_spot)))
+    A.arc(f.rig, tout + 4, tout + 18, fpos1, table_spot, height=0.4)
+    f.place(tout + 18, table_spot, math.degrees(A.yaw_towards(radio_pos - table_spot)))
     A.event(tout + 16, "land_spring")
     f.pose(tout + 16, "happy")
     f.bone_scale(tout + 16, "body", (1.15, 1.15, 0.8))
@@ -260,6 +263,7 @@ def build(ctx, F):
         dance(a, td + 6, t_stop, seed=s_, style="dance")
     # old man wakes up and dances, the cat jumps off
     tw = td + C.sec(2.5)
+    ctx.ground_skip += [("OldMan", F, tw + 16), ("Kid1", F, td + 2), ("Kid2", F, td + 2)]
     om.face(tw, "surprised")
     om.pose(tw, {"head": (-10, 0, 0)})
     om.bone_loc(tw + 10, "root", (0, 0.02, -0.38 / 0.95))
@@ -348,8 +352,8 @@ def build(ctx, F):
         hp_ = h.pos_at(t_)
         wk.append((t_, hp_ + V((1.9, 3.6, 1.5)), hp_ + V((0, 0, 1.05))))
     B.shot(ctx, 3, "S3_c2_walk", T(4.5), wk, lens=30)
-    B.shot(ctx, 3, "S3_c3_vendor", T(11), [(T(11), hstop + V((-1.6, -1.0, 1.0)), radio_pos + V((0, 0, 0.2))),
-                                           (tout, hstop + V((-1.5, -0.9, 1.0)), radio_pos + V((0, 0, 0.1)))], lens=30)
+    B.shot(ctx, 3, "S3_c3_vendor", T(11), [(T(11), hstop + V((1.3, -2.1, 1.2)), radio_pos + V((-0.4, 0, 0.15))),
+                                           (tout, hstop + V((1.2, -2.0, 1.2)), radio_pos + V((-0.6, -0.2, 0.1)))], lens=28)
     B.shot(ctx, 3, "S3_c4_radio", tout + 10, [(tout + 10, radio_pos + V((-0.9, -1.2, 0.35)), radio_pos + V((-0.2, 0, 0.1))),
                                               (td, radio_pos + V((-0.85, -1.1, 0.4)), radio_pos + V((-0.2, 0, 0.1)))],
            lens=32)
