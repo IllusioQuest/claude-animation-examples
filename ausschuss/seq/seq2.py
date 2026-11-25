@@ -24,7 +24,9 @@ def funke_groups(funke):
         n = ob.name
         if any(k in n for k in ("foot", "_leg", "spring")):
             g["legs"].append(ob)
-        elif any(k in n for k in ("_body", "rivet", "gauge", "needle", "decal")):
+        elif "decal" in n:
+            continue  # the OBSOLETE stamp only appears when it is stamped on
+        elif any(k in n for k in ("_body", "rivet", "gauge", "needle")):
             g["body"].append(ob)
         elif any(k in n for k in ("_sh", "_ua", "uarm", "farm", "_fa", "wrist", "claw")):
             g["arms"].append(ob)
@@ -146,7 +148,7 @@ def build(ctx, F):
                                         (T(8), W(-1.8, 0.7, 1.5), W(0.1, 1.6, 1.15))], lens=30)
     B.shot(ctx, 2, "S2_m3_arms", T(8), [(T(8), W(0.25, 1.25, 1.95), bench + V((0, 0, 0.2))),
                                         (T(10), W(0.35, 1.3, 1.9), bench + V((0, 0, 0.2)))], lens=35)
-    B.shot(ctx, 2, "S2_m4_bird", T(10), [(T(10), W(-1.6, -1.3, 1.5), W(-2.3, -0.2, 1.95)),
+    B.shot(ctx, 2, "S2_m4_bird", T(10), [(T(10), W(-1.75, -0.95, 1.9), W(-2.3, -0.2, 2.07), 50),
                                          (T(12), W(-1.4, -1.4, 1.5), W(-0.6, 1.2, 1.4))], lens=32)
     B.shot(ctx, 2, "S2_m5_orrery", T(12), [(T(12), W(1.75, 1.15, 1.2), W(1.3, 1.8, 1.25)),
                                            (T(14), W(1.7, 1.05, 1.22), W(0.6, 1.8, 1.2))], lens=40)
@@ -211,8 +213,8 @@ def build(ctx, F):
     f.blink(tt + 30)
     B.shot(ctx, 2, "S2_c4_eye", tw - 6, [(tw - 6, W(0.2, 1.2, 1.18), bench + V((0, 0, 0.44))),
                                          (tt, W(0.2, 1.28, 1.2), bench + V((0, 0, 0.44)))], lens=50)
-    B.shot(ctx, 2, "S2_c4b_turn", tt, [(tt, W(0.55, 2.35, 1.5), W(-0.9, -0.5, 1.2)),
-                                       (tt + 40, W(0.5, 2.3, 1.48), W(-0.9, -0.5, 1.25))], lens=26)
+    B.shot(ctx, 2, "S2_c4b_turn", tt, [(tt, W(1.3, 2.25, 1.45), W(-0.9, -0.5, 1.15)),
+                                       (tt + 40, W(1.25, 2.2, 1.43), W(-0.9, -0.5, 1.2))], lens=30)
     # ------------------------------------------------------------------ 2.5 first steps, plop, imitation
     t5 = tt + 42
     f.pose(t5, "stand")
@@ -351,14 +353,18 @@ def build(ctx, F):
         fr += 7
     A.event(hw2 + 10, "fiddle", dur=28)
     # Funke hops down and pulls a cable dangling from the shelf
-    cable = C.curve_tube("shelf_cable", [W(2.6, -0.95, 1.85), W(2.3, -1.0, 1.0), W(2.1, -1.05, 0.25)], radius=0.01,
-                         m=C.mat("p_red"), coll=ctx.c_props)
+    cable = C.curve_tube("shelf_cable", [W(2.62, -1.05, 1.85), W(2.35, -1.2, 1.0), W(2.15, -1.3, 0.25)],
+                         radius=0.01, m=C.mat("p_red"), coll=ctx.c_props)
+    bpy.context.view_layer.update()
+    cable.parent = ws["shelf"]
+    cable.matrix_parent_inverse = ws["shelf"].matrix_world.inverted()
     f.place(tb, onb, 210)
     A.arc(f.rig, tb + 4, tb + 18, onb, W(-0.2, 1.0), height=0.4)
     f.pose(tb + 4, "stand")
     A.event(tb + 18, "land_spring")
-    fw2 = f.walk(tb + 20, [W(-0.2, 1.0), W(1.0, -0.6), W(1.95, -1.15)], speed=1.0, stride=0.12, end_pose="stand")
-    f.place(fw2 + 2, W(1.95, -1.15), -60)
+    FP = W(1.95, -1.55)  # beside the shelf, under the dangling cable
+    fw2 = f.walk(tb + 20, [W(-0.2, 1.0), W(0.6, -1.5), FP], speed=1.0, stride=0.12, end_pose="stand")
+    f.place(fw2 + 2, FP, -60)
     tpull = fw2 + 10
     f.pose(tpull, "reach_up")
     f.pose(tpull + 8, {"arm_L": (120, 0, 10), "arm_R": (120, 0, 10), "body": (-25, 0, 0), "head": (-30, 0, 0)})
@@ -366,39 +372,77 @@ def build(ctx, F):
     # shelf topples onto Hedda (pivot at its foot, falls toward -X)
     shelf = ws["shelf"]
     shelf.keyframe_insert("rotation_euler", frame=tpull + 8)
-    shelf.rotation_euler.y = math.radians(-10)
-    shelf.keyframe_insert("rotation_euler", frame=tpull + 16)
-    shelf.rotation_euler.y = math.radians(-58)
-    shelf.keyframe_insert("rotation_euler", frame=tpull + 24)
-    A.set_interp(shelf, "rotation_euler", tpull + 16, "LINEAR")
-    A.event(tpull + 24, "crash")
-    A.shake(shelf, tpull + 24, tpull + 32, amp=0.02, freq=1)
-    h.pose(tpull + 14, {"head": (-30, 0, 0)})
+    shelf.rotation_euler.y = math.radians(-9)
+    shelf.keyframe_insert("rotation_euler", frame=tpull + 14)
+    shelf.rotation_euler.y = math.radians(-7)
+    shelf.keyframe_insert("rotation_euler", frame=tpull + 22)  # the hesitation
+    shelf.rotation_euler.y = math.radians(-35)
+    shelf.keyframe_insert("rotation_euler", frame=tpull + 28)
+    shelf.rotation_euler.y = math.radians(-90)
+    shelf.keyframe_insert("rotation_euler", frame=tpull + 32)
+    A.set_interp(shelf, "rotation_euler", tpull + 28, "LINEAR")
+    shelf.rotation_euler.y = math.radians(-86)
+    shelf.keyframe_insert("rotation_euler", frame=tpull + 34)
+    shelf.rotation_euler.y = math.radians(-90)
+    shelf.keyframe_insert("rotation_euler", frame=tpull + 37)
+    A.event(tpull + 32, "crash")
+    A.shake(shelf, tpull + 32, tpull + 38, amp=0.01, freq=1)
+    h.pose(tpull + 14, {"head": (-30, 0, 0), "spine": (10, 0, 0)})
     h.face(tpull + 14, "surprised")
-    h.pose(tpull + 24, {"spine": (40, 0, 0), "chest": (20, 0, 0), "head": (20, 0, 0)})
-    h.face(tpull + 24, "closed")
-    # pot flies onto Hedda's head
+    # leap clear: back and to her left, landing on her bottom
+    HD = W(1.0, 0.8)
+    h.hold_place(tpull + 20)
+    A.arc(h.rig, tpull + 21, tpull + 31, htv, HD, height=0.55)
+    h.place(tpull + 31, HD, 105)
+    h.pose(tpull + 24, {"spine": (-10, 0, 0), "chest": (-6, 0, 0), "head": (-10, 0, 0), "upper_arm_L": (150, 0, 30),
+                        "upper_arm_R": (150, 0, 30), "forearm_L": (20, 0, 0), "forearm_R": (20, 0, 0),
+                        "thigh_L": (60, 0, 8), "thigh_R": (40, 0, 8), "shin_L": (-70, 0, 0), "shin_R": (-50, 0, 0)})
+    floor_sit = {"hips": (-10, 0, 0), "spine": (4, 0, 0), "chest": (4, 0, 0), "thigh_L": (82, 0, 10),
+                 "thigh_R": (82, 0, 10), "shin_L": (-12, 0, 0), "shin_R": (-12, 0, 0), "foot_L": (-10, 0, 0),
+                 "foot_R": (-10, 0, 0), "upper_arm_L": (-25, 0, 20), "upper_arm_R": (-25, 0, 20),
+                 "forearm_L": (10, 0, 0), "forearm_R": (10, 0, 0), "head": (6, 0, 0)}
+    h.pose(tpull + 31, floor_sit)
+    h.bone_loc(tpull + 29, "root", (0, 0, 0))
+    h.bone_loc(tpull + 31, "root", (0, 0, -0.74))
+    h.face(tpull + 30, "closed")
+    A.event(tpull + 31, "thud")
+    h.face(tpull + 38, "surprised")
+    A.look(h, tpull + 40, W(1.6, -0.4, 0.3), pitch=25, extra={"spine": (10, 0, 0)})
+    # relief ...
+    h.face(tpull + 50, "happy")
+    h.pose(tpull + 50, {"chest": (-8, 0, 0), "head": (-6, 0, 0)})
+    h.pose(tpull + 58, {"chest": (6, 0, 0), "head": (8, 0, 0)})
+    A.event(tpull + 52, "sigh")
+    # ... then the pot, catapulted up by the crash, comes down on her head
     pot = ws["pot"]
-    tp_land = tpull + 26
-    head_m = A.world_matrix_at(h.rig, tp_land + 20, "head")
+    tp_land = tpull + 66
+    head_m = A.world_matrix_at(h.rig, tp_land, "head")
     headtop = head_m.translation + V((0, 0, 0.27))
-    pot.keyframe_insert("location", frame=tpull + 12)
-    A.arc(pot, tpull + 14, tp_land, V(pot.location), headtop + V((0, 0, 0.05)), height=0.4, spin=(0, 6.28, 0))
+    pot.keyframe_insert("location", frame=tpull + 27)
+    pot.keyframe_insert("rotation_euler", frame=tpull + 27)
+    A.arc(pot, tpull + 28, tp_land, V(pot.location) + V((-0.4, 0, 0)), headtop + V((0, 0, 0.02)), height=2.0,
+          spin=(0, 3 * 6.28 + math.pi, 0), steps=10)
     pot.location = headtop
     pot.rotation_euler = (0, math.radians(180), 0)
-    pot.keyframe_insert("location", frame=tp_land + 20)
-    pot.keyframe_insert("rotation_euler", frame=tp_land + 20)
-    con_pot = A.attach_to(pot, h.rig, tp_land + 20, bone="head")
+    pot.keyframe_insert("location", frame=tp_land)
+    pot.keyframe_insert("rotation_euler", frame=tp_land)
+    con_pot = A.attach_to(pot, h.rig, tp_land, bone="head")
     A.event(tp_land, "pot_bong")
-    # Hedda pops up out of the junk, pot on head
-    h.pose(tp_land + 30, "stand")
-    h.pose(tp_land + 30, {"head": (6, 0, -8), "spine": (4, 0, 6)})
-    h.face(tp_land + 30, "angry")
-    h.blink(tp_land + 44, "angry")
-    f.pose(tp_land + 8, {"arm_L": (140, 0, 30), "arm_R": (140, 0, 30), "fore_L": (80, 0, 0), "fore_R": (80, 0, 0),
+    h.face(tp_land, "closed")
+    h.bone_scale(tp_land, "head", (1.1, 1.1, 0.85))
+    h.bone_scale(tp_land + 4, "head", (1, 1, 1))
+    tp_land -= 20  # (later beats are timed from here)
+    # Hedda gets up, pot on head
+    h.bone_loc(tp_land + 26, "root", (0, 0, -0.74))
+    h.bone_loc(tp_land + 34, "root", (0, 0, 0))
+    h.pose(tp_land + 34, "stand")
+    h.pose(tp_land + 34, {"head": (6, 0, -8), "spine": (4, 0, 6)})
+    h.face(tp_land + 34, "angry")
+    h.blink(tp_land + 46, "angry")
+    f.pose(tp_land + 24, {"arm_L": (140, 0, 30), "arm_R": (140, 0, 30), "fore_L": (80, 0, 0), "fore_R": (80, 0, 0),
                          "lid": (-10, 0, 0), "head": (20, 0, 0)})
-    A.event(tp_land + 30, "pop_up")
-    t6b_end = tp_land + 60
+    A.event(tp_land + 32, "pop_up")
+    t6b_end = tp_land + 64
     B.shot(ctx, 2, "S2_c6b_shelf", tb, [(tb, W(-0.4, -1.9, 1.3), W(1.5, -0.6, 0.8)),
                                         (t6b_end, W(-0.2, -1.95, 1.25), W(1.8, -0.6, 0.9))], lens=30)
     # ------------------------------------------------------------------ 2.6c generator dies; the double knock
@@ -426,7 +470,11 @@ def build(ctx, F):
     f.pose(tg0 - 10, "stand")
     f.pose(tg0 - 10, {"head": (-20, 0, 0)})
     f.hold_place(tg0)
-    fg = f.walk(tg0, [W(1.95, -1.15), W(1.6, 0.4), W(2.0, 1.05)], speed=0.8, stride=0.12, end_pose="stand")
+    A.arc(f.rig, tg0, tg0 + 16, FP, W(1.8, 0.6), height=0.9)
+    f.place(tg0, FP, 0)
+    f.place(tg0 + 16, W(1.8, 0.6), 20)
+    A.event(tg0 + 16, "land_spring")
+    fg = f.walk(tg0 + 18, [W(1.8, 0.6), W(2.0, 1.05)], speed=0.6, stride=0.12, end_pose="stand")
     f.place(fg + 2, W(2.0, 1.05), math.degrees(A.yaw_towards(W(2.35, 1.6) - W(2.0, 1.05))))
     f.pose(fg + 6, {"head": (-25, 0, 0)})
     tk = fg + 14
@@ -452,7 +500,7 @@ def build(ctx, F):
     h.face(tr_on + 4, "surprised")
     h.pose(tr_on + 14, {"upper_arm_R": (150, 0, 10), "forearm_R": (60, 0, 0), "head": (0, 0, 0)})
     A.detach(pot, con_pot, tr_on + 20)
-    pot.location = h.pos_at(tr_on + 20) + V((0.3, -0.2, 0.06))
+    pot.location = h.pos_at(tr_on + 20) + V((-0.4, 0.35, 0.06))
     pot.rotation_euler = (0, 0, 0)
     pot.keyframe_insert("location", frame=tr_on + 30)
     pot.keyframe_insert("rotation_euler", frame=tr_on + 30)
@@ -465,7 +513,7 @@ def build(ctx, F):
     A.event(tr_on + 24, "laugh")
     hk = W(1.55, 0.55)
     h.hold_place(tr_on + 44)
-    hw3 = h.walk(tr_on + 44, [htv, hk], speed=0.9, stride=0.45, end_pose=None)
+    hw3 = h.walk(tr_on + 44, [HD, hk], speed=0.9, stride=0.45, end_pose=None)
     h.place(hw3 + 2, hk, math.degrees(A.yaw_towards(W(2.0, 1.05) - hk)))
     f.place(hw3 + 2, W(2.0, 1.05), math.degrees(A.yaw_towards(hk - W(2.0, 1.05))))
     h.pose(hw3 + 6, "bend_down")
@@ -486,14 +534,15 @@ def build(ctx, F):
     t6c_end = hw3 + 50
     B.shot(ctx, 2, "S2_c6c_dark", tc, [(tc, W(-1.1, -1.7, 1.5), W(1.4, 0.4, 0.9)),
                                        (tr_on + 40, W(-0.9, -1.6, 1.45), W(1.6, 0.5, 0.8))], lens=28)
-    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(0.25, 0.65, 1.05), W(2.0, 1.0, 0.6)),
-                                               (t6c_end, W(0.3, 0.7, 1.1), W(2.0, 1.0, 0.65))], lens=30)
+    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(2.75, -0.1, 1.3), W(1.75, 0.8, 0.75)),
+                                               (t6c_end, W(2.7, -0.05, 1.25), W(1.8, 0.85, 0.7))], lens=28)
     # ------------------------------------------------------------------ 2.7 later: both asleep
     ts = t6c_end + 2
     END = ts + C.sec(5.5)
     B.set_end(ctx, 2, END)
     chair = ws["chair"]
-    cpos = V(chair.location) + V((0.05, 0.06, 0))
+    cfwd = V((math.sin(chair.rotation_euler.z), -math.cos(chair.rotation_euler.z), 0))
+    cpos = V(chair.location) + V((0.05, 0.06, 0)) + cfwd * 0.14
     h.cut(ts, cpos, 35)
     h.pose(ts, "stand")
     h.pose(ts, "sit")

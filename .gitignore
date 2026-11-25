@@ -5,3 +5,8 @@ ausschuss/preview/frames/
 ausschuss/sound/*.wav
 ausschuss/sound/*.mid
 ausschuss/preview/*.mp4
+ausschuss/preview/coll*/
+ausschuss/preview/shots/
+ausschuss/preview/shots.log
+ausschuss/preview/shotframes*.txt
+ausschuss/preview/*.log

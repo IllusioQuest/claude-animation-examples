@@ -183,7 +183,7 @@ def build(ctx, F):
     h.face(F, "angry")
     for d in ctx.decal_hedda:
         A.hide(d, F, True)
-    hw = h.walk(F + 6, [Dd(-12, -3), Dd(-6, -1.2), hole + V((0, -0.4, 0)), hole + V((0, 1.5, 0))], speed=1.5,
+    hw = h.walk(F + 6, [Dd(-12, -3), Dd(-6, -1.8), hole + V((0, -1.3, 0)), hole + V((0, 1.5, 0))], speed=1.5,
                 stride=0.45, style="sneak", end_pose=None)
     e.cut(F, Hd(-14, 2.8, dep["catwalk_z"]), -90)
     e.pose(F, "stand")
@@ -208,7 +208,7 @@ def build(ctx, F):
                                             (T(12.5), Hd(belt_x(9.2, T(12.5)) - 0.2, -1.6, 1.6), Hd(belt_x(9.2, T(12.5)), 0, 1.3))],
            lens=45)
     # ------------------------------------------------------------------ 5.3 Hedda on the catwalk, netted, stamped
-    cz = dep["catwalk_z"]
+    cz = dep["catwalk_z"] + 0.04
     tcw = T(12.5)
     h.cut(tcw, Hd(-9.5, 2.75, cz), -90)
     h.pose(tcw, "stand")
@@ -286,19 +286,19 @@ def build(ctx, F):
     # ------------------------------------------------------------------ 5.5 jump to the control box, double knock
     plat = dep["control_box"]
     tj = tsq + 28
-    land = V((plat.x - 0.2, plat.y + 0.55, plat.z))
-    A.arc(f.rig, tj, tj + 14, p_out + V((BELT_V * 6 / C.FPS, 0, 0)), land, height=0.6)
+    land = V((plat.x - 0.7, plat.y + 0.1, plat.z))  # beside the control box, facing its light panel
+    A.arc(f.rig, tj, tj + 14, p_out + V((BELT_V * 6 / C.FPS, 0, 0)), land, height=0.9)
     f.pose(tj + 4, "happy")
     A.event(tj + 14, "land_spring")
-    f.place(tj + 16, land, 0)
+    f.place(tj + 16, land, 90)
     f.pose(tj + 16, "stand")
-    f.place(tj + 22, land + V((0.0, 0.1, 0.0)), 180)
-    f.pose(tj + 22, {"head": (-35, 0, 0)})
+    f.place(tj + 22, land, 90)
+    f.pose(tj + 22, {"head": (-25, 0, 0)})
     tk = tj + 26
     f.pose(tk - 4, "reach_up")
     for k in range(2):
-        f.pose(tk + k * 6, {"arm_R": (165, 0, 0), "fore_R": (10, 0, 0)})
-        f.pose(tk + k * 6 + 3, {"arm_R": (140, 0, 0), "fore_R": (0, 0, 0)}, interp="LINEAR")
+        f.pose(tk + k * 6, {"arm_R": (135, 0, 0), "fore_R": (25, 0, 0)})
+        f.pose(tk + k * 6 + 3, {"arm_R": (110, 0, 0), "fore_R": (5, 0, 0)}, interp="LINEAR")
         A.event(tk + k * 6 + 3, "knock_metal")
     f.pose(tk + 16, "happy")
     # (t_jam was fixed at T(30.5); print a warning if the action drifted)
@@ -307,7 +307,7 @@ def build(ctx, F):
     B.shot(ctx, 5, "S5_c4_squeeze", tsq - 12, [(tsq - 12, Hd(belt_x(9.2, tsq) + 0.4, -2.6, 1.5), Hd(belt_x(9.2, tsq), -0.3, 1.2)),
                                               (tj, Hd(belt_x(9.2, tj) + 0.2, -2.7, 1.5), Hd(belt_x(9.2, tj), -0.5, 1.2))],
            lens=32)
-    B.shot(ctx, 5, "S5_c5_knock", tj, [(tj, Hd(3.5, -6.0, 2.6), V((plat.x, plat.y, plat.z + 0.6))),
+    B.shot(ctx, 5, "S5_c5_knock", tj, [(tj, Hd(4.0, -6.2, 2.4), V((plat.x - 0.4, plat.y, plat.z + 0.5))),
                                        (t_jam + 20, Hd(3.0, -6.5, 3.0), Hd(9, -1, 3.5))], lens=26)
     # ------------------------------------------------------------------ 5.6 uprising
     tu = t_jam + 24
@@ -340,8 +340,8 @@ def build(ctx, F):
     # Hedda climbs out of her cage
     A.detach(h.rig, con_hc, tu + 4)
     hp = h.pos_at(tu + 4)
-    hfloor = V((hp.x, H.y - 1.9, H.z))
-    A.arc(h.rig, tu + 6, tu + 20, hp, hfloor, height=0.6)
+    hfloor = Hd(5.0, -2.0)  # clear of the cage doors and the control platform
+    A.arc(h.rig, tu + 6, tu + 20, hp, hfloor, height=0.9)
     h.pose(tu + 20, "stand")
     h.face(tu + 20, "happy")
     h.place(tu + 22, hfloor, math.degrees(A.yaw_towards(V((plat.x, plat.y)) - V((hfloor.x, hfloor.y)))))
@@ -349,13 +349,13 @@ def build(ctx, F):
     tE = t_jam + 30
     e.hold_all(tE - 1)
     ep = e.pos_at(tE)
-    efloor = Hd(ep.x - H.x - 0.5, 1.8)
-    A.arc(e.rig, tE, tE + 16, ep, efloor, height=0.8)
+    efloor = Hd(ep.x - H.x - 0.5, -1.9)  # leaps over the belt to the near side
+    A.arc(e.rig, tE, tE + 16, ep, efloor, height=1.4)
     A.event(tE + 16, "heavy_land")
     e.pose(tE + 16, {"body": (20, 0, 0)})
     e.pose(tE + 22, "stand")
     e.glow(tE + 16, 15.0, "iris")
-    tE2 = e.roll(tE + 24, [efloor, Hd(3.8, -2.0)], speed=2.2, lean=12)
+    tE2 = e.roll(tE + 24, [efloor, Hd(3.2, -2.6)], speed=2.2, lean=12)
     # the vacuum crosses his path: trip, spin, net over his own head, self-stamp
     ttr = tE2
     A.event(ttr, "bonk")
@@ -377,7 +377,7 @@ def build(ctx, F):
     # topples into Funke's (empty, open) cage – door slams
     c_root, c_door, _ = cages["funke"]
     cpos = A.world_matrix_at(c_root, ttr + 40).translation
-    A.arc(e.rig, ttr + 28, ttr + 42, e.pos_at(ttr + 28), cpos + V((0, 0, 0.05)), height=1.0)
+    A.arc(e.rig, ttr + 28, ttr + 42, e.pos_at(ttr + 28), cpos + V((0, 0, 0.05)), height=2.6)  # sails over Hedda
     e.bone_scale(ttr + 40, "body", (1, 1, 1))
     e.bone_scale(ttr + 44, "body", (1.3, 1.3, 0.42))
     e.pose(ttr + 44, "tangled")
@@ -390,12 +390,13 @@ def build(ctx, F):
     # Funke hops down to Hedda; she scoops him up
     tf = ttr + 20
     f.hold_all(tf - 1)
-    A.arc(f.rig, tf, tf + 16, f.pos_at(tf), hfloor + V((0.6, -0.3, 0)), height=0.6)
+    f_by_h = hfloor + V((-0.65, -0.3, 0))
+    A.arc(f.rig, tf, tf + 16, f.pos_at(tf), f_by_h, height=1.1)
     A.event(tf + 16, "land_spring")
     f.pose(tf + 16, "happy")
     tsc = ttr + 52
     h.pose(tsc - 6, "bend_down")
-    f.place(tsc, hfloor + V((0.6, -0.3, 0)), None)
+    f.place(tsc, f_by_h, None)
     hm = A.world_matrix_at(h.rig, tsc + 8, "chest")
     f.place(tsc + 8, hm @ V((0, 0.05, -0.32)) - V((0, 0, 0.25)), h.yaw_at(tsc + 8))
     con_c = A.attach_to(f.rig, h.rig, tsc + 8, bone="chest", name="carried5")
@@ -408,7 +409,9 @@ def build(ctx, F):
         for o in mach:
             o.keyframe_insert("location", frame=tu + 10)
             lp = V(o.location)
-            o.location = lp + V((0, -1.5, -0.95))
+            o.location = lp + V((0, 0.9, 0.35))  # hop off the far side of the belt
+            o.keyframe_insert("location", frame=tu + 19)
+            o.location = lp + V((0, 1.7, -0.95))
             o.keyframe_insert("location", frame=tu + 26)
             A.event(tu + 26, "clunk_land")
     B.shot(ctx, 5, "S5_c6_uprising", t_jam + 20, [(t_jam + 20, Hd(-3.5, -8.5, 2.2), Hd(4.0, -1.5, 1.2)),
@@ -434,7 +437,7 @@ def build(ctx, F):
     to = hx + 6
     h.cut(to, hole + V((0, 3.5, 0)), 180)
     h.pose(to, "carry")
-    ho = h.walk(to, [hole + V((0, 3.5, 0)), hole + V((0, -0.3, 0)), Dd(-8, -8), Dd(-14, -16)], speed=3.8, stride=0.85,
+    ho = h.walk(to, [hole + V((0, 3.5, 0)), hole + V((0, -1.2, 0)), Dd(-8, -8), Dd(-14, -16)], speed=3.8, stride=0.85,
                 style="run", end_pose=None)
     fr = to
     while fr < ho:
@@ -443,8 +446,17 @@ def build(ctx, F):
         fr += 6
     vroot.keyframe_insert("location", frame=to - 1)
     A.set_interp(vroot, "location", to - 1, "CONSTANT")
-    vroot.location = hole + V((0.8, 3.0, 0))
-    vroot.keyframe_insert("location", frame=to + 10)
+    vroot.location = hole + V((0.7, 4.6, 0))
+    A.hold_obj(vroot, to - 1, ("rotation_euler",))
+    vroot.rotation_euler = (0, 0, 0)
+    vroot.keyframe_insert("location", frame=to)
+    vroot.keyframe_insert("rotation_euler", frame=to)
+    A.set_interp(vroot, "rotation_euler", to - 1, "CONSTANT")
+    vroot.location = hole + V((0.2, -1.0, 0))
+    vroot.keyframe_insert("location", frame=to + 22)
+    vroot.keyframe_insert("rotation_euler", frame=to + 22)
+    vroot.rotation_euler.z = math.radians(-30)
+    vroot.keyframe_insert("rotation_euler", frame=to + 30)
     vroot.location = Dd(-12, -15)
     vroot.keyframe_insert("location", frame=ho + 20)
     siren = P.point_light("S5_siren", Dd(0, 4.5, 8.5), 0, (1, 0.05, 0.02), 1.0, coll=L)

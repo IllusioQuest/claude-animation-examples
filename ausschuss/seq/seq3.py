@@ -138,18 +138,23 @@ def build(ctx, F):
     w2.pose(F, "stand"); w2.pose(F, {"spine": (18, 0, 0), "head": (15, 0, 0), "upper_arm_R": (40, 0, 5),
                                      "forearm_R": (40, 0, 0)})
     w2.face(F, "neutral")
-    w1.cut(F, Wv(8, -6), 0)
+    w1.cut(F, Wv(1.8, -12.8), 0)
     w1.pose(F, "stand"); w1.face(F, "neutral")
-    w1.walk(T(0), [Wv(8, -6), Wv(4, -6.5), Wv(-1, -5.5), Wv(-5, -4.5)], speed=0.9, stride=0.45, end_pose="stand")
+    w1.walk(T(0), [Wv(1.8, -12.8), Wv(2.2, -7.0), Wv(-1, -5.5), Wv(-5, -4.5)], speed=0.9, stride=0.45,
+            end_pose="stand")
     w3.cut(F, Wv(-6.5, 5.5), 160)
     w3.pose(F, "stand"); w3.face(F, "neutral")
     w3.pose(F, {"upper_arm_L": (150, 0, 10), "upper_arm_R": (150, 0, 10), "head": (-20, 0, 0)})  # hanging laundry
     # kids: idle, bored, sitting on the fountain rim
-    for a, p, yw in ((k1, Wv(1.2, -1.45), 170), (k2, Wv(-0.9, -1.35), 200)):
-        a.cut(F, p, yw)
+    # on the fountain rim (r=1.6, 0.5 high), facing outward, legs dangling over the edge
+    kid_out = {}
+    for a, ang in ((k1, -59), (k2, -119)):
+        out_ = V((math.cos(math.radians(ang)), math.sin(math.radians(ang)), 0))
+        kid_out[a] = out_
+        a.cut(F, Wv(0, 0) + out_ * 1.42, math.degrees(A.yaw_towards(out_)))
         a.pose(F, "stand")
         a.pose(F, "sit")
-        a.bone_loc(F, "root", (0, 0, -0.08))
+        a.bone_loc(F, "root", (0, 0, 0.2))
         a.pose(F, {"head": (20, 0, 0), "upper_arm_L": (30, 0, 10), "upper_arm_R": (30, 0, 10), "forearm_L": (90, 0, 0),
                    "forearm_R": (90, 0, 0)})
         a.face(F, "sad")
@@ -246,11 +251,12 @@ def build(ctx, F):
         a.pose(td + d0, "stand")
         dance(a, td + d0, t_stop, seed=s_)
     for a, s_ in ((k1, 7), (k2, 8)):
-        a.bone_loc(td - 2, "root", (0, 0, -0.08))
+        a.bone_loc(td - 2, "root", (0, 0, 0.2))
         a.pose(td + 2, "stand")
         a.bone_loc(td + 2, "root", (0, 0, 0))
         a.face(td + 2, "happy")
-        a.place(td + 2, a.pos_at(td) + V((0, -0.6, 0)), None)
+        a.place(td - 2, a.pos_at(td - 2), None)
+        a.place(td + 2, a.pos_at(td) + kid_out[a] * 0.75, None)
         dance(a, td + 6, t_stop, seed=s_, style="dance")
     # old man wakes up and dances, the cat jumps off
     tw = td + C.sec(2.5)
@@ -339,7 +345,7 @@ def build(ctx, F):
            lens=26)
     B.shot(ctx, 3, "S3_c2_walk", T(4.5), [(T(4.5), Wv(3.0, -3.0, 1.6), Wv(0.6, -13, 1.2)),
                                           (T(8), Wv(3.2, -2.4, 1.6), Wv(1.6, -5, 1.1)),
-                                          (T(11), Wv(-0.6, -1.6, 1.5), Wv(3.0, 1.5, 1.2))], lens=30)
+                                          (T(11), Wv(3.7, -2.6, 1.6), Wv(3.2, 4.0, 1.2))], lens=30)
     B.shot(ctx, 3, "S3_c3_vendor", T(11), [(T(11), hstop + V((-1.6, -1.0, 1.0)), radio_pos + V((0, 0, 0.2))),
                                            (tout, hstop + V((-1.5, -0.9, 1.0)), radio_pos + V((0, 0, 0.1)))], lens=30)
     B.shot(ctx, 3, "S3_c4_radio", tout + 10, [(tout + 10, radio_pos + V((-0.9, -1.2, 0.35)), radio_pos + V((-0.2, 0, 0.1))),
@@ -354,17 +360,24 @@ def build(ctx, F):
            lens=30)
     side = (radio_pos - hstop).normalized()
     perp = V((-side.y, side.x, 0))
-    B.shot(ctx, 3, "S3_c5d_hedda", td + C.sec(8), [(td + C.sec(8), hstop + perp * 2.4 + side * 0.4 + V((0, 0, 1.3)),
-                                                    hstop + side * 0.7 + V((0, 0, 1.0))),
-                                                   (tp, hstop + perp * 2.2 + side * 0.5 + V((0, 0, 1.3)),
-                                                    hstop + side * 0.7 + V((0, 0, 1.0)))], lens=28)
+    to_c = (Wv(0, 0) - hstop)
+    to_c.z = 0
+    to_c.normalize()
+    pc = V((-to_c.y, to_c.x, 0))
+    B.shot(ctx, 3, "S3_c5d_hedda", td + C.sec(8), [(td + C.sec(8), hstop + to_c * 1.6 + pc * 2.3 + V((0, 0, 1.3)),
+                                                    hstop + (radio_pos - hstop) * 0.35 + V((0, 0, 1.0))),
+                                                   (tp, hstop + to_c * 1.5 + pc * 2.1 + V((0, 0, 1.25)),
+                                                    hstop + (radio_pos - hstop) * 0.35 + V((0, 0, 1.0)))], lens=28)
     pw = V(proot.location)
     B.shot(ctx, 3, "S3_c6_drone", tp, [(tp, pw + V((0.9, -1.4, -0.2)), pw + V((0, 0, 0.05)))], lens=55)
     B.shot(ctx, 3, "S3_c7_erf", T(32.5), [(T(32.5), Wv(2.8, 1.4, 1.6), Wv(0.3, -12, 1.8)),
                                           (t_stop + 10, Wv(2.6, 0.6, 1.6), Wv(0.3, -12, 1.8))], lens=32)
-    B.shot(ctx, 3, "S3_c7b_freeze", t_stop + 12, [(t_stop + 12, hstop - perp * 2.0 + side * 0.9 + V((0, 0, 1.3)),
-                                                   hstop + side * 0.5 + V((0, 0, 1.15))),
-                                                  (END, hstop - perp * 1.85 + side * 0.9 + V((0, 0, 1.3)),
-                                                   hstop + side * 0.5 + V((0, 0, 1.15)))], lens=30)
+    to_e = (Wv(0.3, -11.5) - hstop)
+    to_e.z = 0
+    to_e.normalize()
+    B.shot(ctx, 3, "S3_c7b_freeze", t_stop + 12, [(t_stop + 12, hstop + to_e * 2.3 + pc * 0.5 + V((0, 0, 1.4)),
+                                                   hstop + V((0, 0, 1.3))),
+                                                  (END, hstop + to_e * 2.0 + pc * 0.45 + V((0, 0, 1.38)),
+                                                   hstop + V((0, 0, 1.32)))], lens=32)
     ctx.s3 = {"hstop": hstop, "radio_pos": radio_pos, "table": table_spot, "erf_end": Wv(0.3, -11.5)}
     return END

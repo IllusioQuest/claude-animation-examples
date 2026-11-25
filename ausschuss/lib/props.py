@@ -410,7 +410,10 @@ def reclamation_truck(name, loc, yaw, coll=None):
           parent=hop_piv, bevel=0.0)
     plate_piv = C.empty(name + "_plate_pivot", loc=(0, 1.0, -0.9), parent=hop_piv)
     C.box(name + "_plate", (1.9, 0.1, 1.1), loc=(0, 0, -0.55), m=chrome, parent=plate_piv, bevel=0.02)
-    C.box(name + "_step", (2.2, 0.35, 0.06), loc=(0, 3.7 + 0.2, 0.75), m=chrome, parent=root, bevel=0.01)
+    C.box(name + "_step", (2.2, 0.6, 0.06), loc=(0, 4.05, 0.75), m=chrome, parent=root, bevel=0.01)
+    for sx in (-1, 1):
+        C.box(name + f"_stepbr{sx}", (0.06, 0.6, 0.12), loc=(1.0 * sx, 4.05, 0.84), m=M("dark_metal"),
+              parent=root, bevel=0.0)
     C.cyl(name + "_handle", 0.03, 1.4, loc=(0.95, 3.85, 1.6), m=chrome, parent=root)
     # beacon on cab
     bm = C.emission("truck_beacon", (1.0, 0.45, 0.05), 0.0)

@@ -106,7 +106,9 @@ def iris(ctx, cam, f0, f1, target, coll, d=0.1):
     cap.parent = cam
     A.hide(cap, 0, True)
     A.hide(cap, f1, False)
-    ring.hide_render = False
+    # the ring is only an object in front of the wink camera: keep it out of every other shot
+    A.hide(ring, 0, True)
+    A.hide(ring, f0, False)
     return ring
 
 
@@ -183,19 +185,25 @@ def build(ctx, F):
     f.place(tset + 12, fpos, h.yaw_at(tset))
     f.pose(tset + 12, "stand")
     # Hedda sits down on a drum by the slab
-    drum = P.scrap_item("drum", HL(-0.4, -2.6, 0.15), (90, 0, 20), 1.0, ctx.c_props)
+    sit_yaw = math.degrees(hr.rotation_euler.z) + 180 + 20
+    sd = V((math.sin(math.radians(sit_yaw)), -math.cos(math.radians(sit_yaw)), 0))
+    seat_pos = HL(-0.8, -2.75)
+    drum = P.scrap_item("crate", seat_pos - sd * 0.06 + V((0, 0, 0.25)), (0, 0, sit_yaw + 8), 1.0, ctx.c_props)
     A.hide(drum, 0, True)
     A.hide(drum, F, False)
     ts = tset + 20
     h.pose(ts, "stand")
     h.hold_place(ts)
-    h.walk(ts, [a1, HL(-0.4, -2.9)], speed=0.6, stride=0.35, style="shuffle", end_pose=None)
-    tsit = ts + 30
-    h.place(tsit, HL(-0.4, -2.9), math.degrees(hr.rotation_euler.z) + 180 + 20)
+    front = seat_pos + sd * 0.45
+    tw_ = h.walk(ts, [a1, front], speed=0.6, stride=0.35, style="shuffle", end_pose=None)
+    tsit = max(ts + 30, tw_ + 8)
+    h.place(tw_ + 6, front, sit_yaw)
+    h.place(tsit, seat_pos, sit_yaw)
     h.pose(tsit + 10, "sit")
     h.pose(tsit + 10, {"head": (30, 0, 0), "spine": (20, 0, 0), "upper_arm_L": (30, 0, 10), "upper_arm_R": (30, 0, 10),
                        "forearm_L": (80, 0, -20), "forearm_R": (80, 0, -20)})
-    h.bone_loc(tsit + 10, "root", (0, 0.05, -0.42))
+    h.bone_loc(tsit, "root", (0, 0, 0))
+    h.bone_loc(tsit + 10, "root", (0, 0.05, -0.32))
     h.face(tsit + 10, "sad")
     h.blink(tsit + 40, "sad")
     A.event(tsit + 10, "sigh")
@@ -207,8 +215,10 @@ def build(ctx, F):
     f.hold_all(tf - 1)
     sheet_src = hut["remains"][3]
     sp = A.world_matrix_at(sheet_src, tf).translation
-    f1 = f.walk(tf, [fpos, sp + V((0.4, -0.4, 0))], speed=0.8, stride=0.12, end_pose="stand")
-    f.place(f1 + 2, None, math.degrees(A.yaw_towards(sp - (sp + V((0.4, -0.4, 0))))))
+    spl = hr.matrix_world.inverted() @ sp
+    edge = HL(max(-2.0, min(2.0, spl.x)), -2.65)  # at the slab's edge, not on it
+    f1 = f.walk(tf, [fpos, edge], speed=0.8, stride=0.12, end_pose="stand")
+    f.place(f1 + 2, None, math.degrees(A.yaw_towards(sp - edge)))
     f.pose(f1 + 6, "reach_up")
     A.event(f1 + 6, "metal_scrape")
     # a fresh sheet he drags (copy)
@@ -217,15 +227,16 @@ def build(ctx, F):
     carry_sheet.keyframe_insert("location", frame=f1 + 7)
     A.set_interp(carry_sheet, "location", f1 + 7, "CONSTANT")
     hp = h.pos_at(tsit + 12)
-    fdst = hp + V((0.55, -0.35, 0))
-    f2 = f.walk(f1 + 12, [sp + V((0.4, -0.4, 0)), fdst], speed=0.5, stride=0.1, end_pose=None)
+    fdst = hp + (edge - hp).normalized() * 0.62
+    fdst.z = 0
+    f2 = f.walk(f1 + 12, [edge, fdst], speed=0.5, stride=0.1, end_pose=None)
     A.event(f1 + 12, "drag_metal", dur=f2 - f1 - 12)
     fr = f1 + 8
     while fr <= f2 + 2:
         fp = f.pos_at(fr)
         yw = math.radians(f.yaw_at(fr))
         back = V((-math.sin(yw), math.cos(yw), 0))
-        carry_sheet.location = fp + back * 0.35 + V((0, 0, 0.05))
+        carry_sheet.location = fp + back * 0.42 + V((0, 0, 0.14))
         carry_sheet.rotation_euler = (math.radians(-70), 0, yw)
         carry_sheet.keyframe_insert("location", frame=fr)
         carry_sheet.keyframe_insert("rotation_euler", frame=fr)
@@ -255,11 +266,12 @@ def build(ctx, F):
     A.event(tk + 40, "warm_chord")
     B.shot(ctx, 6, "S6_c2_sheet", tf, [(tf, HL(3.2, -5.5, 1.1), HL(0.2, -2.0, 0.5)), (f2, HL(2.8, -5.8, 1.0), HL(0, -2.6, 0.6))],
            lens=30)
-    B.shot(ctx, 6, "S6_c2b_knock", f2 - 6, [(f2 - 6, HL(-0.1, -1.2, 0.95), HL(-0.2, -3.0, 0.7)),
-                                            (tk + 60, HL(-0.1, -1.3, 1.0), HL(-0.2, -3.0, 0.75))], lens=28)
+    B.shot(ctx, 6, "S6_c2b_knock", f2 - 6, [(f2 - 6, HL(0.7, -0.5, 1.3), HL(-0.35, -2.7, 0.65)),
+                                            (tk + 60, HL(0.6, -0.6, 1.25), HL(-0.4, -2.75, 0.7))], lens=28)
     # ------------------------------------------------------------------ the freed machines arrive
     tm = tk + 50
-    road = [V((-24, 8, 0)), V((-19, 2, 0)), HL(1.5, -5.5)]
+    road = [V((-27, 8.5, 0)), V((-21, 7.5, 0)), V((-20.6, 0.5, 0))]
+    stops = [HL(1.5, -5.6), HL(2.6, -4.9), HL(0.4, -6.0), HL(3.4, -4.0)]
     machines = [machine_juke("free_juke", ctx.c_props), machine_quad("free_quad1", ctx.c_props),
                 machine_vacuum("free_vac2", ctx.c_props), machine_quad("free_quad2", ctx.c_props)]
     for i, mc in enumerate(machines):
@@ -267,8 +279,8 @@ def build(ctx, F):
         A.hide(mc, F, False)
         mc.location = (0, 0, -300)
         mc.keyframe_insert("location", frame=F)
-        off = V(((i % 2) * 0.9 - 0.4, -0.7 * i, 0))
-        trot(mc, tm + i * 10, [p + off for p in road], speed=1.4, hop=0.06 if i != 0 else 0.02)
+        off = V(((i % 2) * 1.1 - 0.55, 0, 0))
+        trot(mc, tm + i * 20, [p + off for p in road] + [stops[i]], speed=1.4, hop=0.06 if i != 0 else 0.02)
     A.event(tm, "jukebox_soft", beat=12)
     h.face(tm + 50, "surprised")
     A.look(h, tm + 50, road[1] + V((0, 0, 0.5)))

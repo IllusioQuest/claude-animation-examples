@@ -139,6 +139,10 @@ class Actor:
         if ob.animation_data and ob.animation_data.action:
             hold_obj(ob, f - 1, ("location", "rotation_euler"))
         self.place(f, loc, yaw)
+        # a cut always starts upright (no tilt left over from falls, flips, nets ...)
+        for i in (0, 1):
+            ob.rotation_euler[i] = 0.0
+            ob.keyframe_insert("rotation_euler", frame=f, index=i)
         set_interp(ob, "location", f - 1, "CONSTANT")
         set_interp(ob, "rotation_euler", f - 1, "CONSTANT")
 

@@ -55,14 +55,16 @@ def build(ctx, F):
     heap.scale = (0.01, 0.01, 0.01)
     heap.keyframe_insert("scale", frame=T(5.8))
     heap.scale = (1.8, 1.53, 1.1)
-    heap.keyframe_insert("scale", frame=T(6.9))
+    heap.keyframe_insert("scale", frame=T(6.25))
     rnd = C.R.__class__(4)
     junk = []
-    for i, k in enumerate(["tv", "tire", "crate", "drum", "panel2", "barrel_b", "tv", "gear", "pipe", "washer"]):
+    for i, k in enumerate(["tv", "tire", "crate", "drum", "panel2", "barrel_b", "tv", "gear", "crate", "washer"]):
         o = P.scrap_item(k, (0, 0, -300), (0, 0, 0), 0.7, ctx.c_props)
         a = rnd.uniform(0, 6.28)
         rr = rnd.uniform(0.2, 1.2)
-        dst = J + V((math.cos(a) * rr, math.sin(a) * rr * 0.8, 0.25 + 0.3 * (1.2 - rr)))
+        dx, dy = math.cos(a) * rr, math.sin(a) * rr * 0.8
+        zs = -0.385 + 1.1 * math.sqrt(max(0.0, 1 - (dx / 1.8) ** 2 - (dy / 1.53) ** 2))
+        dst = J + V((dx, dy, zs + 0.15))
         f0 = T(5.9 + i * 0.08)
         o.location = (6, 5.6, 2.0)
         o.keyframe_insert("location", frame=f0 - 1)
@@ -94,31 +96,41 @@ def build(ctx, F):
     A.event(T(5.4), "hydraulic")
     A.event(T(7.4), "hydraulic")
     # ------------------------------------------------------------------ Erfasser rides in on the rear step
-    step_world = V((6, 80 + 3.9, 0.78))
+    step_world = V((6, 80 + 4.2, 0.78))
     e.cut(F, step_world, 180)
     e.pose(F, "stand")
     con_e = A.attach_to(e.rig, tr["root"], F, name="ride")
-    A.detach(e.rig, con_e, T(6.4))
-    # hop down
-    e.place(T(6.4), (6, 5.9, 0.78), 180)
-    e.place(T(6.7), (6, 6.3, 0.0), 180)
-    e.pose(T(6.7), {"body": (12, 0, 0)})
-    e.pose(T(7.0), {"body": (0, 0, 0)})
-    A.event(T(6.7), "clank")
-    fe = e.roll(T(7.0), [(6, 6.3, 0), (8.6, 4.5, 0), (9.2, -4, 0), (9.4, -14, 0)], speed=2.6)
+    A.detach(e.rig, con_e, T(5.1))
+    # hop down to the side before the hopper tips (and out of the junk's way)
+    e.place(T(5.1), (6, 6.2, 0.78), 180)
+    A.arc(e.rig, T(5.1) + 1, T(5.45), (6, 6.2, 0.78), (7.7, 6.7, 0.0), height=0.35)
+    e.place(T(5.45), (7.7, 6.7, 0.0), 230)
+    e.pose(T(5.45), {"body": (12, 0, 0)})
+    e.pose(T(5.8), {"body": (0, 0, 0), "head": (10, 0, 25)})
+    A.event(T(5.45), "clank")
+    e.place(T(6.6), None, 210)
+    fe = e.roll(T(7.0), [(7.7, 6.7, 0), (8.7, 5.0, 0), (9.0, -3.0, 0)], speed=2.6)
     # ------------------------------------------------------------------ Hedda sneaks to the heap
-    h.cut(F, (-1.8, 15.2, 0), 120)
+    cover = P.scrap_item("fridge", (-1.0, 14.3, 0.33), (0, 90, 4), 1.0, ctx.c_props)
+    A.hide(cover, 0, True)
+    A.hide(cover, F, False)
+    A.hide(cover, END + 1, True)
+    HS = V((3.95, 10.89, 0))  # rummage spot at the foot of the fresh heap
+    h.cut(F, (-1.8, 15.2, 0), 30)
     h.pose(F, "stand")
     h.pose(F, "crouch")
     h.face(F, "neutral")
     h.pose(T(8.0), "crouch")
-    h.pose(T(8.4), "stand")
-    hw = h.walk(T(8.4), [(-1.8, 15.2, 0), (1.6, 12.9, 0), (4.4, 10.4, 0)], speed=1.1, stride=0.45,
+    A.look(h, T(8.3), (6, 2, 1.5), extra={"spine": (25, 0, 0)})
+    A.look(h, T(8.8), (6, 2, 1.5), extra={"spine": (25, 0, 0)})
+    h.pose(T(9.0), "crouch")
+    h.pose(T(9.3), "stand")
+    hw = h.walk(T(9.3), [(-1.8, 15.2, 0), (0.3, 14.9, 0), (1.6, 12.9, 0), HS], speed=1.1, stride=0.45,
                 style="sneak", end_pose=None)
     h.face(T(9), "worried")
     # rummage
-    yaw_heap = math.degrees(A.yaw_towards(J - V((4.4, 10.4, 0))))
-    h.place(hw + 2, (4.4, 10.4, 0), yaw_heap)
+    yaw_heap = math.degrees(A.yaw_towards(J - HS))
+    h.place(hw + 2, HS, yaw_heap)
     h.pose(hw + 2, "stand")
     h.pose(hw + 8, "bend_down")
     h.face(hw + 8, "neutral")
@@ -159,9 +171,9 @@ def build(ctx, F):
     h.pose(t_radio + 64, "stand")
     A.event(t_radio + 58, "pocket")
     # ------------------------------------------------------------------ Bello arrives
-    b.cut(F, (-12, 5, 0), -90)
+    b.cut(F, (-9.5, 7.4, 0), -90)
     b.pose(F, "stand")
-    bw = b.walk(T(13.2), [(-9, 5.5, 0), (-3, 7.2, 0), (2.5, 8.7, 0)], speed=1.2, stride=0.3, style="limp",
+    bw = b.walk(T(13.2), [(-9.5, 7.4, 0), (-3, 7.6, 0), (2.5, 8.7, 0)], speed=1.2, stride=0.3, style="limp",
                 end_pose="stand")
     b.pose(bw + 4, "sniff")
     b.pose(bw + 14, "stand")
@@ -175,7 +187,7 @@ def build(ctx, F):
     h.face(tn, "surprised")
     A.event(tn, "startle")
     h.face(tn + 14, "happy")
-    h.place(tn + 10, None, math.degrees(A.yaw_towards(V((2.5, 8.7)) - V((4.4, 10.4)))))
+    h.place(tn + 10, None, math.degrees(A.yaw_towards(V((2.5, 8.7, 0)) - HS)))
     h.pose(tn + 10, {"head": (10, 0, 0), "spine": (6, 0, 0)})
     b.pose(tn + 4, {"neck": (-20, 0, 0), "head": (-10, 0, 0)})
     # toss the bolt
@@ -198,15 +210,16 @@ def build(ctx, F):
     b.glow(ttoss + 60, 2.0, "bulb")
     h.face(ttoss + 20, "happy")
     # ------------------------------------------------------------------ Erfasser returns (T(21)…)
-    t4 = T(21.5)
-    er = e.roll(t4, [(9.4, -10, 0), (8.0, 1.5, 0), (4.4, 6.5, 0)], speed=2.4)
+    t4 = T(20.5)
+    E2 = V((4.1, 7.2, 0))
+    er = e.roll(t4, [(9.0, -3.0, 0), (8.8, 1.0, 0), (8.4, 7.3, 0), (5.4, 7.7, 0), E2], speed=3.0)
     A.event(t4, "squeak")
     # Hedda hears, ducks behind the heap
     tduck = T(22.4)
     A.look(h, tduck - 4, V((8, 0, 1.5)))
     h.face(tduck - 4, "worried")
     h.hold_place(tduck)
-    tcr = h.walk(tduck, [(4.4, 10.4, 0), (5.3, 11.2, 0), (5.9, 11.5, 0)], speed=1.6, stride=0.4, style="sneak",
+    tcr = h.walk(tduck, [HS, (5.0, 11.75, 0), (5.9, 11.5, 0)], speed=1.6, stride=0.4, style="sneak",
                  end_pose=None) + 2
     h.place(tcr, (5.9, 11.5, 0), math.degrees(A.yaw_towards(V((0, -1)))))
     h.pose(tcr, "crouch")
@@ -215,9 +228,9 @@ def build(ctx, F):
     b.pose(T(24.6), "cower")
     b.glow(T(24.6), 1.0, "bulb")
     # scanning
-    yaw_eb = math.degrees(A.yaw_towards(V((2.5, 8.7)) - V((4.4, 6.5))))
+    yaw_eb = math.degrees(A.yaw_towards(V((2.5, 8.7, 0)) - E2))
     e.place(er + 2, None, yaw_eb)
-    ts = T(25.6)
+    ts = max(T(25.6), er + 6)
     A.key(ctx.erf_beam.data, "energy", ts - 2, 0.0)
     A.key(ctx.erf_beam.data, "energy", ts + 2, 300.0)
     e.scan(ts, ts + C.sec(2.0), sweeps=1)
@@ -247,8 +260,8 @@ def build(ctx, F):
     # carry to hopper
     tc = tn2 + 24
     e.pose(tc, {"arm_R": (130, 0, 10), "fore_R": (10, 0, 0), "hand_R": (-10, 0, 0), "body": (-5, 0, 0)})
-    tcarry = e.roll(tc + 4, [(4.4, 6.5, 0), (5.2, 6.9, 0), (5.9, 7.6, 0)], speed=1.0, lean=4)
-    e.place(tcarry + 2, None, 180)
+    tcarry = e.roll(tc + 4, [E2, (5.1, 7.7, 0), (6.0, 7.5, 0)], speed=1.0, lean=4)
+    e.place(tcarry + 2, None, 0)
     e.pose(tcarry + 6, {"arm_R": (150, 0, 0), "fore_R": (-10, 0, 0), "hand_R": (30, 0, 0), "body": (-10, 0, 0)})
     tdrop = tcarry + 14
     e.pose(tdrop, {"arm_R": (120, 0, 0), "fore_R": (0, 0, 0), "hand_R": (70, 0, 0), "body": (6, 0, 0)})
@@ -276,7 +289,7 @@ def build(ctx, F):
     lens.keyframe_insert("location", frame=tpop - 1)
     A.set_interp(lens, "location", tpop - 1, "CONSTANT")
     A.event(tpop, "pop")
-    A.arc(lens, tpop, tpop + 20, (6.0, 6.4, 1.7), (5.1, 12.1, 0.05), height=2.0, spin=(14, 3, 0), steps=8)
+    A.arc(lens, tpop, tpop + 20, (6.0, 6.4, 1.9), (5.1, 12.1, 0.05), height=2.0, spin=(14, 3, 0), steps=8)
     A.event(tpop + 20, "lens_land")
     lens.rotation_euler = (math.radians(90), 0, 0)
     lens.keyframe_insert("rotation_euler", frame=tpop + 21)
@@ -292,9 +305,9 @@ def build(ctx, F):
     h.pose(tpop + 36, {"head": (40, 0, 0)})
     # Erfasser back onto the step, truck leaves
     tback = tp + 30
-    tb2 = e.roll(tback, [(5.9, 7.6, 0), (6.0, 6.4, 0)], speed=1.0, lean=3)
-    e.place(tb2 + 2, (6, 6.4, 0), 180)
-    e.place(tb2 + 8, (6, 6.0, 0.78), 180)
+    tb2 = e.roll(tback, [(6.0, 7.5, 0), (6.0, 6.9, 0)], speed=1.0, lean=3)
+    e.place(tb2 + 2, (6, 6.9, 0), 180)
+    e.place(tb2 + 8, (6, 6.2, 0.78), 180)
     A.event(tb2 + 8, "clank")
     e.pose(tb2 + 8, "stand")
     con_e2 = A.attach_to(e.rig, tr["root"], tb2 + 9, name="ride2")
@@ -335,8 +348,8 @@ def build(ctx, F):
     # ------------------------------------------------------------------ cameras
     B.shot(ctx, 1, "S1_c1_wide", F, [(F, (-13, -15, 2.3), (6, 40, 7), 26), (T(8), (-10, -10.5, 2.0), (5, 9, 2.5), 28)],
            lens=26)
-    B.shot(ctx, 1, "S1_c2_sneak", T(8), [(T(8), (0.4, 4.2, 1.1), (0.0, 13.5, 1.0)),
-                                         (T(14), (0.9, 4.6, 1.15), (4.0, 10.2, 0.8))], lens=35)
+    B.shot(ctx, 1, "S1_c2_sneak", T(8), [(T(8), (-3.6, 17.3, 1.05), (2.2, 12.2, 0.7)),
+                                         (T(14), (-2.4, 16.9, 1.15), (4.0, 10.6, 0.9))], lens=32)
     B.shot(ctx, 1, "S1_c3_bello", T(14), [(T(14), (0.4, 6.0, 1.05), (3.6, 9.6, 0.7)),
                                           (T(21.5), (0.2, 5.8, 1.0), (3.4, 9.6, 0.6))], lens=30)
     B.shot(ctx, 1, "S1_c4_erf", T(21.5), [(T(21.5), (7.6, 14.6, 1.0), (6.0, 3, 1.5)),
@@ -346,8 +359,8 @@ def build(ctx, F):
     B.shot(ctx, 1, "S1_c5b_stamp", hit - 6, [(hit - 6, (1.2, 6.9, 0.95), (2.7, 8.8, 0.6))], lens=35)
     B.shot(ctx, 1, "S1_c5c_net", hit + 14, [(hit + 14, (0.5, 4.4, 1.4), (3.8, 7.8, 1.4)),
                                             (tpop, (0.2, 2.8, 1.9), (5.5, 7.0, 1.8))], lens=28)
-    B.shot(ctx, 1, "S1_c6_lens", tpop + 6, [(tpop + 6, (3.9, 13.6, 0.3), (5.5, 11.9, 0.12)),
-                                            (tpick - 4, (4.0, 13.6, 0.4), (5.6, 11.8, 0.25))], lens=45)
+    B.shot(ctx, 1, "S1_c6_lens", tpop + 6, [(tpop + 6, (3.3, 13.9, 0.5), (5.4, 11.8, 0.35)),
+                                            (tpick - 4, (3.4, 13.9, 0.6), (5.6, 11.7, 0.45))], lens=30)
     B.shot(ctx, 1, "S1_c7_hold", tpick - 4, [(tpick - 4, (4.9, 9.6, 1.25), (5.9, 11.5, 0.9)),
                                              (END, (5.1, 9.9, 1.4), (5.9, 11.5, 1.35))], lens=42)
     return END

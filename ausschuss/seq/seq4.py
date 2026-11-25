@@ -65,10 +65,11 @@ def build(ctx, F):
                     "forearm_R": (80, 0, -25)})
         fr += 6
     # Erfasser pursues
-    te1 = e.roll(tgrab + 22, [s3["erf_end"], Wv(3.0, -6.0), Wv(10.0, -0.5), Wv(18, 0.0)], speed=3.6, lean=14)
+    te1 = e.roll(tgrab + 22, [s3["erf_end"], Wv(2.6, -5.5), Wv(3.4, -1.0), Wv(8.0, 0.4), Wv(12.5, 0.2), Wv(18, 0.0)],
+                 speed=3.6, lean=14)
     A.event(tgrab + 22, "chase_start")
     B.shot(ctx, 4, "S4_c1_grab", F, [(F, hstop + V((-2.0, -2.3, 1.3)), hstop + V((0.6, 0.6, 1.0))),
-                                     (tgrab + 30, hstop + V((-1.0, -3.2, 1.3)), Wv(9, 1, 1.0))], lens=28)
+                                     (tgrab + 30, hstop + V((0.4, -3.0, 1.4)), Wv(9, 1, 1.0))], lens=28)
     # ------------------------------------------------------------------ 4.2 laundry
     # Hedda runs through the alley under the laundry; the Erfasser gets a sheet on his hat
     run2 = [Wv(18, 0.0), Wv(26, 0.4), Wv(34, -0.2)]
@@ -139,26 +140,35 @@ def build(ctx, F):
     e.place(ts + 40, pos + V((0.7, 0.2, 0)), yaw0 + 720)
     e.pose(ts + 40, {"head": (0, 0, 0), "body": (-8, 0, 0)})
     ts_end = ts + 44
-    B.shot(ctx, 4, "S4_c3_bolts", t_sheet + 20, [(t_sheet + 20, bp + V((2.6, -1.4, 0.8)), bp + V((-1.5, 0.8, 0.8))),
-                                                 (ts_end, bp + V((2.8, -1.2, 0.9)), pos + V((0, 0, 1.0)))], lens=26)
+    B.shot(ctx, 4, "S4_c3_bolts", t_sheet + 20, [(t_sheet + 20, bp + V((2.4, -0.45, 0.9)), bp + V((-1.5, 0.8, 0.8))),
+                                                 (ts_end, bp + V((2.5, -0.4, 1.0)), pos + V((0, 0, 1.0)))], lens=24)
     # ------------------------------------------------------------------ 4.4 the barrel
     barrel_spot = Wv(37.0, 1.4)
-    barrel = P.scrap_item("barrel_rust", barrel_spot + V((0, 0, 0.44)), (0, 0, 0), 1.3, ctx.c_props)
-    th = tr2 + 4
+    barrel = P.scrap_item("barrel_rust", barrel_spot + V((0, 0, 0.704)), (0, 0, 0), 1.6, ctx.c_props)
+    # she pauses at the alley's end, looks back at the spinning Erfasser, then dives for the barrel
+    h.pose(tr2 + 3, "carry")
+    A.look(h, tr2 + 8, pos + V((0, 0, 1.2)), extra={"spine": (-6, 0, 0)})
+    h.face(tr2 + 8, "surprised")
+    th = max(tr2 + 4, ts + 26)
+    h.hold(th - 1)
     h.hold_place(th - 1)
-    hw = h.walk(th, [Wv(34, -0.2), barrel_spot + V((0.3, -0.6, 0))], speed=3.0, stride=0.8, style="run", end_pose=None)
+    b_in = barrel_spot + V((0.1, -1.05, 0))
+    hw = h.walk(th, [Wv(34, -0.2), b_in], speed=3.0, stride=0.8, style="run", end_pose=None)
     # hop in: she ducks into the barrel (lowered out of sight, only the goggles/Funke's antenna above the rim)
-    h.place(hw + 2, barrel_spot + V((0.3, -0.6, 0)), 0)
-    A.arc(h.rig, hw + 4, hw + 14, barrel_spot + V((0.3, -0.6, 0)), barrel_spot + V((0, 0, -0.42)), height=0.9)
-    h.pose(hw + 10, "crouch")
-    h.pose(hw + 10, {"upper_arm_L": (35, 0, 6), "upper_arm_R": (35, 0, 6), "forearm_L": (80, 0, -25),
-                     "forearm_R": (80, 0, -25), "head": (-10, 0, 0)})
+    h.place(hw + 2, b_in, 0)
+    A.arc(h.rig, hw + 4, hw + 14, b_in, barrel_spot + V((0, 0, -0.2)), height=1.9)
+    h.pose(hw + 6, {"thigh_L": (80, 0, 6), "thigh_R": (80, 0, 6), "shin_L": (-110, 0, 0), "shin_R": (-110, 0, 0)})
+    h.pose(hw + 12, {"hips": (5, 0, 0), "spine": (18, 0, 0), "chest": (10, 0, 0), "head": (-10, 0, 0),
+                     "thigh_L": (30, 0, 2), "thigh_R": (30, 0, 2), "shin_L": (-60, 0, 0), "shin_R": (-60, 0, 0),
+                     "foot_L": (30, 0, 0), "foot_R": (30, 0, 0), "upper_arm_L": (35, 0, 6), "upper_arm_R": (35, 0, 6),
+                     "forearm_L": (80, 0, -25), "forearm_R": (80, 0, -25)})
     A.event(hw + 14, "barrel_thunk")
     h.face(hw + 16, "worried")
     # Erfasser rolls up and scans the alley
     tes = max(ts_end, hw + 20)
-    te4 = e.roll(tes, [e.pos_at(tes), barrel_spot + V((-2.6, 0.9, 0))], speed=1.6, lean=6)
-    e.place(te4 + 2, None, math.degrees(A.yaw_towards(V((1, -0.6)))))
+    e_scan = Wv(33.8, 0.4)
+    te4 = e.roll(tes, [e.pos_at(tes), e_scan], speed=1.6, lean=6)
+    e.place(te4 + 2, None, math.degrees(A.yaw_towards(barrel_spot - e_scan)))
     A.key(ctx.erf_beam.data, "energy", te4, 0.0)
     A.key(ctx.erf_beam.data, "energy", te4 + 4, 600.0)
     e.scan(te4 + 2, te4 + C.sec(2.2), sweeps=1)
@@ -176,7 +186,7 @@ def build(ctx, F):
     e.glow(tbet + 4, 20.0, "iris")
     f.pose(tbet + 6, {"lid": (-20, 0, 0)})
     h.face(tbet + 6, "surprised")
-    B.shot(ctx, 4, "S4_c4_barrel", hw - 4, [(hw - 4, barrel_spot + V((2.8, -3.4, 1.3)), barrel_spot + V((-0.8, 0.3, 1.0))),
+    B.shot(ctx, 4, "S4_c4_barrel", max(hw - 6, ts + 40), [(max(hw - 6, ts + 40), barrel_spot + V((2.8, -3.4, 1.3)), barrel_spot + V((-0.8, 0.3, 1.0))),
                                             (tbet + 16, barrel_spot + V((2.6, -3.2, 1.3)), barrel_spot + V((-1.2, 0.4, 1.2)))],
            lens=24)
     # ------------------------------------------------------------------ 4.5 scrapyard: net misses Hedda, catches Funke
@@ -184,7 +194,7 @@ def build(ctx, F):
     e.bone_loc(t5, "neck", (0, 0, 0))
     e.glow(t5, 3.0, "iris")
     # cut to scrapyard: running between piles
-    p0 = V((-12, 16, 0)); p1 = V((-4, 9, 0)); p2 = V((2, 4.5, 0))
+    p0 = V((-16, 8.3, 0)); p1 = V((-6, 7.9, 0)); p2 = V((1.5, 5.5, 0))  # along the side road
     h.cut(t5, p0, math.degrees(A.yaw_towards(p1 - p0)))
     h.pose(t5, "stand")
     h.face(t5, "angry")
@@ -194,11 +204,11 @@ def build(ctx, F):
         h.pose(fr, {"upper_arm_L": (35, 0, 6), "upper_arm_R": (35, 0, 6), "forearm_L": (80, 0, -25),
                     "forearm_R": (80, 0, -25)})
         fr += 6
-    e.cut(t5 + 20, V((-14, 18, 0)), 0)
+    e.cut(t5 + 20, V((-19.5, 8.2, 0)), -90)
     e.pose(t5 + 20, "stand")
     e.glow(t5 + 20, 3.0, "iris")
     e.bone_loc(t5 + 20, "neck", (0, 0, 0))
-    ter = e.roll(t5 + 20, [V((-14, 18, 0)), V((-5.5, 10.5, 0)), V((-0.5, 6.2, 0))], speed=4.6, lean=14)
+    ter = e.roll(t5 + 20, [V((-19.5, 8.2, 0)), V((-6.5, 8.4, 0)), V((-0.5, 6.4, 0))], speed=4.6, lean=14)
     # remove sheet from hat at the cut
     for c in sheet.constraints:
         c.influence = 1.0
@@ -216,7 +226,7 @@ def build(ctx, F):
     A.detach(f.rig, con1, tn + 2)
     net = e.extra["net"]
     hoop = A.world_matrix_at(net, tn + 10).translation
-    A.arc(f.rig, tn + 2, tn + 10, f.pos_at(tn + 2), hoop - V((0, 0, 0.35)), height=0.6, spin=(4, 0, 0))
+    A.arc(f.rig, tn + 2, tn + 10, f.pos_at(tn + 2), hoop - V((0, 0, 0.35)), height=0.6, spin=(2 * math.pi + 0.4, 0, 0))
     f.pose(tn + 6, "scared")
     con_n = A.attach_to(f.rig, net, tn + 10, name="netted")
     A.event(tn + 10, "net_catch")
@@ -229,8 +239,8 @@ def build(ctx, F):
     h.rig.keyframe_insert("rotation_euler", frame=hr + 8, index=0)
     A.event(hr + 8, "thud")
     h.face(hr + 8, "closed")
-    B.shot(ctx, 4, "S4_c5_scrap", t5, [(t5, V((3.5, 2.5, 1.4)), V((-8, 13, 1.2)), 34),
-                                       (hr + 10, V((4.4, 1.2, 1.5)), V((0.5, 5.5, 0.8)), 30)], lens=34)
+    B.shot(ctx, 4, "S4_c5_scrap", t5, [(t5, V((3.4, 3.0, 1.3)), V((-12, 8.6, 1.3)), 34),
+                                       (hr + 10, V((4.8, 2.0, 1.5)), V((1.6, 6.0, 0.8)), 30)], lens=34)
     # ------------------------------------------------------------------ 4.6 stamp, truck leaves, Hedda in the dust
     tst = hr + 24
     e.hold_all(tst - 1)
@@ -250,9 +260,9 @@ def build(ctx, F):
     A.key_socket(C.emit_socket(tr["headlight_m"]), F, 0.0)
     tgo = hit + 26
     e.pose(tgo, {"arm_R": (130, 0, 10), "fore_R": (10, 0, 0), "hand_R": (-10, 0, 0)})
-    tstep = e.roll(tgo, [e.pos_at(tgo), V((3.5, 5.5, 0)), V((6.0, 4.6, 0))], speed=2.2, lean=6)
+    tstep = e.roll(tgo, [e.pos_at(tgo), V((3.2, 6.7, 0)), V((6.0, 4.6, 0))], speed=2.2, lean=6)
     e.place(tstep + 2, V((6.0, 4.6, 0)), 180)
-    e.place(tstep + 8, V((6.0, 3.0, 0.78)), 180)
+    e.place(tstep + 8, V((6.0, 3.2, 0.78)), 180)
     A.event(tstep + 8, "clank")
     con_r = A.attach_to(e.rig, tr["root"], tstep + 9, name="ride_s4")
     tl = tstep + 16

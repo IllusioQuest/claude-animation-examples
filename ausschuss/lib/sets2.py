@@ -129,18 +129,21 @@ def build_workshop(coll):
           coll=coll)
     out.update(gen=gen, gen_lamp_m=gen_lamp_m)
     # ---- collapsing shelf (right wall), pivot at its foot
-    shelf = C.empty("ws_shelf", loc=w((2.75, -0.4, 0.0)), coll=coll)
+    # pivot at the FRONT-bottom edge (it tips toward -X), boards offset by +0.2
+    shelf = C.empty("ws_shelf", loc=w((2.55, -0.4, 0.0)), coll=coll)
     sh_m = M("shelf_m", (0.3, 0.2, 0.12), rough=0.8, dirt=0.5)
     for z in (0.02, 0.6, 1.2, 1.8):
-        C.box(f"ws_shelfb{z}", (0.4, 1.4, 0.03), loc=(0, 0, z), m=sh_m, parent=shelf, bevel=0.003, coll=coll)
+        C.box(f"ws_shelfb{z}", (0.4, 1.4, 0.03), loc=(0.2, 0, z + 0.015), m=sh_m, parent=shelf, bevel=0.003,
+              coll=coll)
     for y in (-0.68, 0.68):
-        C.box(f"ws_shelfs{y}", (0.4, 0.03, 1.85), loc=(0, y, 0.92), m=sh_m, parent=shelf, bevel=0.003, coll=coll)
+        C.box(f"ws_shelfs{y}", (0.4, 0.03, 1.85), loc=(0.2, y, 0.925), m=sh_m, parent=shelf, bevel=0.003,
+              coll=coll)
     shelf_items = []
     for i, (k, y, z) in enumerate((("tv", -0.3, 0.88), ("crate", 0.3, 0.29), ("drum", -0.3, 0.2),
                                    ("tv", 0.35, 1.48), ("crate", -0.35, 1.45), ("gear", 0.2, 1.85))):
         o = P.scrap_item(k, (0, 0, 0), (0, 0, 90), 0.5, coll)
         o.parent = shelf
-        o.location = (0, y, z)
+        o.location = (0.2, y, z)
         shelf_items.append(o)
     out.update(shelf=shelf)
     # pot for the gag
@@ -400,6 +403,8 @@ def build_village(coll):
         stalls.append(st)
         # goods
         for j in range(6):
+            if i == 1 and j in (2, 3, 4):  # keep room for the radio and Funke's dance floor
+                continue
             kind = ["tv", "crate", "drum", "gear", "barrel_b", "tire"][(i + j) % 6]
             o = P.scrap_item(kind, (0, 0, 0), (0, 0, rnd.uniform(0, 360)), 0.35, coll)
             o.parent = st
@@ -580,15 +585,15 @@ def build_depot(coll):
         C.box(f"h_bale{i}", (1.0, 1.0, 0.8), loc=h((14.5 + rr.uniform(0, 4), rr.uniform(-4, 4), 0.4 + (i % 3) * 0.8)),
               rot=(0, 0, rr.uniform(0, 90)), m=m["rust"], bevel=0.05, coll=coll)
     # control box on platform at x=7, y=-3
-    C.box("h_platform", (2.0, 1.6, 1.4), loc=h((7, -2.6, 0.7)), m=m["dark"], bevel=0.02, coll=coll)
-    cb = C.box("h_controlbox", (0.8, 0.5, 1.0), loc=h((7, -2.6, 1.9)), m=M("cbox_m", (0.3, 0.35, 0.3), metal=0.5,
+    C.box("h_platform", (2.0, 1.6, 1.4), loc=h((7, -3.3, 0.7)), m=m["dark"], bevel=0.02, coll=coll)
+    cb = C.box("h_controlbox", (0.8, 0.5, 1.0), loc=h((7.2, -3.3, 1.9)), m=M("cbox_m", (0.3, 0.35, 0.3), metal=0.5,
                                                                          rust=0.3), bevel=0.02, coll=coll)
-    out["control_box"] = Vector(h((7, -2.6, 1.4)))
+    out["control_box"] = Vector(h((7, -3.3, 1.4)))
     cb_lights = []
     for i, col in enumerate(((1, 0.1, 0.05), (0.1, 1, 0.1), (1, 0.8, 0.1))):
         lm = C.emission(f"h_cbl{i}", col, 4.0)
         cb_lights.append(lm)
-        C.sphere(f"h_cbl{i}", 0.04, loc=h((6.8 + i * 0.2, -2.86, 2.15)), m=lm, coll=coll)
+        C.sphere(f"h_cbl{i}", 0.04, loc=h((6.79, -3.45 + i * 0.15, 2.15)), m=lm, coll=coll)
     out["cb_lights"] = cb_lights
     # catwalk along conveyor at y=+2.6, z=3.5 with railing and stairs at x=-18
     C.box("h_catwalk", (26, 1.2, 0.1), loc=h((-5, 2.8, 3.5)), m=M("grate_m", (0.3, 0.3, 0.3), metal=0.8), bevel=0,
