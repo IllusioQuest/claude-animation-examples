@@ -12,7 +12,7 @@ import bpy
 from mathutils import Vector
 
 DETAILS = ("_hem", "_pocket1", "_pocket-1", "_flap1", "_flap-1", "_front_seam", "_patch0", "_patch1")
-SETTLE = 14  # frames after a teleport before the cloth is trusted again
+SETTLE = 4  # frames after a segment start before the cloth is shown (initial sag)
 
 
 def _dup(o, name):
@@ -43,15 +43,32 @@ def _teleports(rig, f0, f1):
     return out
 
 
-def apply(ctx, f_end):
-    t0 = time.time()
-    h = ctx.hedda
-    rig = h.rig
-    sk = bpy.data.objects.get("Hedda_skirt")
-    if sk is None:
-        return
-    # ---- the simulated copy
-    cs = _dup(sk, "Hedda_skirt_cloth")
+def _segments(ctx, rig, f_end):
+    """Continuous stretches of the film: split at sequence starts, teleports and seated ranges."""
+    cuts = set(s_["f0"] for s_ in ctx.seq.values()) | set(_teleports(rig, 1, f_end))
+    blocked = set()
+    for (who, a, b) in ctx.ground_skip:
+        if who == "Hedda":
+            blocked |= set(range(a - 2, b + 6))
+    segs = []
+    cur = None
+    for f in range(1, f_end + 1):
+        if f in cuts or f in blocked:
+            if cur and f - cur >= 30:
+                segs.append((cur, f - 1))
+            cur = None if f in blocked else f
+        elif cur is None:
+            cur = f
+    if cur and f_end - cur >= 30:
+        segs.append((cur, f_end))
+    # rig offstage (far below) is useless to simulate
+    act = rig.animation_data.action
+    fz = act.fcurves.find("location", index=2)
+    return [(a, b) for a, b in segs if fz is None or fz.evaluate((a + b) / 2) > -50]
+
+
+def _make_cloth(sk, name, f0, f1):
+    cs = _dup(sk, name)
     for m in list(cs.modifiers):
         if m.type != "ARMATURE":
             cs.modifiers.remove(m)
@@ -60,9 +77,8 @@ def apply(ctx, f_end):
     ztop, zbot = max(zs), min(zs)
     for v in cs.data.vertices:
         t = (v.co.z - zbot) / (ztop - zbot)
-        # waist fully pinned; the rest gets a weak goal towards the skinned shape, so the coat can
-        # swing and sway but never creeps up the legs over thousands of frames
-        vg.add([v.index], max(0.1, min(1.0, (t - 0.72) / 0.2)), "REPLACE")
+        # waist pinned; the rest has a weak goal towards the skinned shape (no slow creep)
+        vg.add([v.index], max(0.06, min(1.0, (t - 0.72) / 0.2)), "REPLACE")
     cl = cs.modifiers.new("cloth", "CLOTH")
     s = cl.settings
     s.quality = 6
@@ -76,95 +92,104 @@ def apply(ctx, f_end):
     s.pin_stiffness = 1.0
     cl.collision_settings.distance_min = 0.008
     cs.modifiers.new("solid", "SOLIDIFY").thickness = 0.008
-    cl.point_cache.use_disk_cache = True  # blendcache_ausschuss/ next to the .blend (keeps the file small)
-    cl.point_cache.name = "hedda_coat"
-    cl.point_cache.frame_start = 1
-    cl.point_cache.frame_end = f_end
+    cl.point_cache.use_disk_cache = True
+    cl.point_cache.name = name
+    cl.point_cache.frame_start = f0
+    cl.point_cache.frame_end = f1
+    return cs, cl
+
+
+def apply(ctx, f_end):
+    t0 = time.time()
+    h = ctx.hedda
+    rig = h.rig
+    sk = bpy.data.objects.get("Hedda_skirt")
+    if sk is None:
+        return
     for n in ("thighL", "thighR", "shinL", "shinR", "kneeL", "kneeR"):
         o = bpy.data.objects.get("Hedda_" + n)
         if o and not any(m.type == "COLLISION" for m in o.modifiers):
             o.modifiers.new("coll", "COLLISION")
             o.collision.thickness_outer = 0.01
-            o.collision.cloth_friction = 0.0  # the hem slides off the knees instead of riding up
-    # ---- details glued to the cloth (bound in the rest pose, where skinned and cloth coincide)
-    dcopies = []
-    for suf in DETAILS:
-        o = bpy.data.objects.get("Hedda" + suf)
-        if o is None:
-            continue
-        c = _dup(o, o.name + "_cloth")
-        for m in list(c.modifiers):
-            if m.type == "ARMATURE":
-                c.modifiers.remove(m)
-        sd = c.modifiers.new("sd", "SURFACE_DEFORM")
-        sd.target = cs
-        # move it first in the stack
-        while c.modifiers[0].name != "sd":
-            c.modifiers.move(len(c.modifiers) - 1, 0)
-        dcopies.append((o, c))
+            o.collision.cloth_friction = 0.0
+    segs = _segments(ctx, rig, f_end)
     sc = next(iter(ctx.seq.values()))["scene"]
+    sets = []  # (f0, f1, [cloth parts])
+    originals = [bpy.data.objects.get("Hedda" + suf) for suf in DETAILS]
+    originals = [o for o in originals if o]
+    for i, (a, b) in enumerate(segs):
+        cs, cl = _make_cloth(sk, f"Hedda_skirt_cloth{i:02d}", a, b)
+        parts = [cs]
+        for o in originals:
+            c = _dup(o, f"{o.name}_cloth{i:02d}")
+            for m in list(c.modifiers):
+                if m.type == "ARMATURE":
+                    c.modifiers.remove(m)
+            sd = c.modifiers.new("sd", "SURFACE_DEFORM")
+            sd.target = cs
+            while c.modifiers[0].name != "sd":
+                c.modifiers.move(len(c.modifiers) - 1, 0)
+            parts.append(c)
+        sets.append((a, b, parts, cs, cl))
     rig.data.pose_position = "REST"
     sc.frame_set(1)
     bpy.context.view_layer.update()
-    for o, c in dcopies:
-        with bpy.context.temp_override(scene=sc, object=c, active_object=c):
-            bpy.ops.object.surfacedeform_bind(modifier="sd")
+    for a, b, parts, cs, cl in sets:
+        for c in parts[1:]:
+            with bpy.context.temp_override(scene=sc, object=c, active_object=c):
+                bpy.ops.object.surfacedeform_bind(modifier="sd")
     rig.data.pose_position = "POSE"
-    # ---- bake the whole film in one go
-    sc.frame_set(1)
-    with bpy.context.temp_override(scene=sc, object=cs, active_object=cs, point_cache=cl.point_cache):
-        bpy.ops.ptcache.bake(bake=True)
-    # ---- which set is visible when
-    bad = set()
-    for i, s_ in ctx.seq.items():
-        for f in range(s_["f0"], s_["f0"] + SETTLE):
-            bad.add(f)
-    for f in _teleports(rig, 1, f_end):
-        for k in range(f - 1, f + SETTLE):
-            bad.add(k)
-    for (who, a, b) in ctx.ground_skip:
-        if who == "Hedda":
-            for k in range(a - 2, b + SETTLE):
-                bad.add(k)
-    long_parts = [sk] + [o for o, _ in dcopies]
-    cloth_parts = [cs] + [c for _, c in dcopies]
+    for a, b, parts, cs, cl in sets:
+        sc.frame_set(a)
+        with bpy.context.temp_override(scene=sc, object=cs, active_object=cs, point_cache=cl.point_cache):
+            bpy.ops.ptcache.bake(bake=True)
+    # ---- visibility: one cloth set inside its segment (after a short settle), the skinned coat elsewhere
     seated = [o for o in rig.children if o.name.endswith(("_lapL", "_lapR", "_seatback"))]
     seat_frames = set()
     for o in seated:
         ad = o.animation_data
+        fc = ad.action.fcurves.find("hide_render") if ad and ad.action else None
+        if fc:
+            seat_frames |= {f for f in range(1, f_end + 1) if fc.evaluate(f) < 0.5}
+    long_parts = [sk] + originals
+    for o in long_parts:
+        ad = o.animation_data
         if ad and ad.action:
-            fc = ad.action.fcurves.find("hide_render")
-            if fc:
-                for f in range(1, f_end + 1):
-                    if fc.evaluate(f) < 0.5:
-                        seat_frames.add(f)
-    for o in long_parts + cloth_parts:
-        if o.animation_data and o.animation_data.action:
             for p in ("hide_render", "hide_viewport"):
-                fc = o.animation_data.action.fcurves.find(p)
+                fc = ad.action.fcurves.find(p)
                 if fc:
-                    o.animation_data.action.fcurves.remove(fc)
-    state = None
+                    ad.action.fcurves.remove(fc)
+
+    def keyvis(objs, intervals):
+        """visible exactly inside the given [a, b] intervals"""
+        for o in objs:
+            o.hide_render = o.hide_viewport = True
+            o.keyframe_insert("hide_render", frame=0)
+            o.keyframe_insert("hide_viewport", frame=0)
+            for a, b in intervals:
+                for f, hid in ((a, False), (b + 1, True)):
+                    o.hide_render = o.hide_viewport = hid
+                    o.keyframe_insert("hide_render", frame=f)
+                    o.keyframe_insert("hide_viewport", frame=f)
+            for fc in o.animation_data.action.fcurves:
+                if fc.data_path.startswith("hide"):
+                    for kp in fc.keyframe_points:
+                        kp.interpolation = "CONSTANT"
+    cloth_frames = set()
+    for a, b, parts, cs, cl in sets:
+        iv = (a + SETTLE, b)
+        keyvis(parts, [iv] if iv[0] <= b else [])
+        cloth_frames |= set(range(iv[0], b + 1))
+    skin_iv = []
+    cur = None
     for f in range(0, f_end + 2):
-        if f in seat_frames:
-            st = "none"
-        elif f in bad or f == 0:
-            st = "skin"
-        else:
-            st = "cloth"
-        if st != state:
-            for o in long_parts:
-                o.hide_render = o.hide_viewport = st != "skin"
-                o.keyframe_insert("hide_render", frame=f)
-                o.keyframe_insert("hide_viewport", frame=f)
-            for o in cloth_parts:
-                o.hide_render = o.hide_viewport = st != "cloth"
-                o.keyframe_insert("hide_render", frame=f)
-                o.keyframe_insert("hide_viewport", frame=f)
-            state = st
-    for o in long_parts + cloth_parts:
-        for fc in o.animation_data.action.fcurves:
-            if fc.data_path.startswith("hide"):
-                for kp in fc.keyframe_points:
-                    kp.interpolation = "CONSTANT"
-    print("cloth baked", f_end, "frames, cloth on", f_end - len(bad | seat_frames), "in", round(time.time() - t0, 1), "s")
+        on = f not in cloth_frames and f not in seat_frames
+        if on and cur is None:
+            cur = f
+        if not on and cur is not None:
+            skin_iv.append((cur, f - 1))
+            cur = None
+    if cur is not None:
+        skin_iv.append((cur, f_end + 1))
+    keyvis(long_parts, skin_iv)
+    print("cloth baked", len(sets), "segments,", len(cloth_frames), "cloth frames in", round(time.time() - t0, 1), "s")
