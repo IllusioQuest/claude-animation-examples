@@ -297,13 +297,16 @@ def shack(name, loc, w, d, h, yaw, coll, rnd, door=True, window=True, lit=False)
     # fill the gap between wall top and the raised back of the roof (lean-to)
     C.box(name + "_gable", (w, 0.06, rise + 0.04), loc=(0, d / 2 - 0.03, h + rise / 2), m=wall_m, parent=root,
           bevel=0, coll=coll)
+    door_x, win_x = 0.0, None
     if door:
-        C.box(name + "_door", (0.8, 0.06, 1.9), loc=(rnd.uniform(-w / 4, w / 4), -d / 2 - 0.01, 0.95),
+        door_x = rnd.uniform(-w / 4, w / 4)
+        C.box(name + "_door", (0.8, 0.06, 1.9), loc=(door_x, -d / 2 - 0.01, 0.95),
               m=rnd.choice([m["wood"], M("p_blue"), M("p_green")]), parent=root, bevel=0.01, coll=coll)
     if window:
         wm = C.emission("v_winlit", (1.0, 0.7, 0.35), 2.0) if lit else M("v_windark", (0.05, 0.06, 0.07),
                                                                           rough=0.2)
         x = w / 3 if rnd.random() < 0.5 else -w / 3
+        win_x = x
         C.box(name + "_win", (0.6, 0.05, 0.5), loc=(x, -d / 2 - 0.01, 1.5), m=wm, parent=root, bevel=0.0,
               coll=coll)
         C.box(name + "_winf", (0.7, 0.07, 0.06), loc=(x, -d / 2 - 0.02, 1.22), m=m["wood"], parent=root, bevel=0,
@@ -312,6 +315,9 @@ def shack(name, loc, w, d, h, yaw, coll, rnd, door=True, window=True, lit=False)
     if rnd.random() < 0.5:
         aw = C.box(name + "_awning", (w * 0.8, 1.0, 0.03), loc=(0, -d / 2 - 0.45, 2.1), rot=(-15, 0, 0),
                    m=rnd.choice([M("p_red"), M("p_yel"), M("p_blue")]), parent=root, bevel=0, coll=coll)
+    import dressing
+    dressing.shack_details(root, name, w, d, h, tilt, coll, door_x, win_x, lit, alley="alley" in name,
+                           back="back" in name)
     return root
 
 
@@ -506,7 +512,7 @@ def build_depot(coll):
     for i in range(14):
         x = -26 + i * 4
         C.cyl(f"d_fpost{i}", 0.05, 3.0, loc=w((x, 0, 1.5)), m=fence_m, coll=coll, verts=8)
-        if abs(x + 4) < 1:
+        if abs(x + 2 + 4) < 1:  # the panel spanning x=-6..-2 is the cut-open one (the hole)
             continue
         import bmesh
         bm = bmesh.new()

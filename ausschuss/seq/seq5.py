@@ -440,7 +440,7 @@ def build(ctx, F):
     # ------------------------------------------------------------------ 5.7 escape
     tx = tsc + 26
     h.hold_place(tx - 1)
-    hx = h.walk(tx, [hfloor, Hd(-6, -4.5), dep["exit"]], speed=3.8, stride=0.85, style="run", end_pose=None)
+    hx = h.walk(tx, [hfloor, Hd(-6, -4.5), dep["exit"], dep["exit"] + V((-2.6, 0, 0))], speed=3.8, stride=0.85, style="run", end_pose=None)
     fr = tx
     while fr < hx:
         h.pose(fr, {"upper_arm_L": (35, 0, 6), "upper_arm_R": (35, 0, 6), "forearm_L": (80, 0, -25),

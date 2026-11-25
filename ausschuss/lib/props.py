@@ -462,9 +462,9 @@ def drive(truck, f0, f1, p0, p1, yaw_deg):
 
 # --------------------------------------------------------------------------- smoke puffs
 def smoke(name, origin, f0, f1, coll=None, every=10, rise=3.0, life=60, size=0.25, color=(0.5, 0.5, 0.5),
-          drift=(0.5, 0.2, 0), seed=0):
+          drift=(0.5, 0.2, 0), seed=0, alpha=0.5):
     rnd = C.R.__class__(seed)
-    m = M(name + "_m", color, rough=1.0, dirt=0.0, bump=0, alpha=0.5)
+    m = M(name + "_m", color, rough=1.0, dirt=0.0, bump=0, alpha=alpha)
     try:
         m.surface_render_method = "BLENDED"
     except Exception:

@@ -565,6 +565,7 @@ def sfx_for(e):
         "land_spring": (X.boing, 0.6), "plop": (lambda: X.thud(80, 0.3), 0.9), "boing": (lambda: X.boing(180, 0.8), 0.7),
         "glass_break": (X.glass_break, 0.9), "creak": (X.creak, 0.7), "crash": (X.crash, 1.0),
         "pot_bong": (lambda: X.bong(420), 0.8), "pot_bong_small": (lambda: X.bong(520), 0.5),
+        "steam_hiss": (lambda: X.hiss(0.7), 0.25), "drip": (lambda: X.tink(1800), 0.12),
         "pop_up": (lambda: X.slide_whistle(400, 1400, 0.5), 0.6), "gen_sputter": (X.sputter, 0.8),
         "gen_die": (lambda: X.gen_engine(1.5, die=True), 0.9), "hammer_tiny": (lambda: X.tink(2500), 0.6),
         "screw": (X.ratchet, 0.6), "snore": (lambda: X.snore(1.4), 0.6), "snore_old": (lambda: X.snore(1.6, True), 0.5),

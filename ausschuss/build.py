@@ -177,6 +177,11 @@ def main():
     ctx.vil = S2.build_village(ctx.c_vil)
     ctx.c_dep = C.collection("Depot"); base.collection.children.link(ctx.c_dep)
     ctx.dep = S2.build_depot(ctx.c_dep)
+    import dressing
+    dressing.village(ctx.vil, ctx.c_vil, S2.VILLAGE)
+    dressing.scrapyard(ctx.scrap, ctx.c_scrap)
+    dressing.workshop(ctx.ws, ctx.c_ws, S2.WORKSHOP)
+    dressing.depot(ctx.dep, ctx.c_dep, S2.DEPOT, S2.HALL)
     ctx.c_props = C.collection("Props"); base.collection.children.link(ctx.c_props)
     C.set_coll(ctx.c_props)
     ctx.truck = P.reclamation_truck("truck", (0, 0, -300), 0, ctx.c_props)
@@ -196,6 +201,7 @@ def main():
         print(f"seq{i}", F, F_end, round(time.time() - t0, 1))
         F = F_end + 1
     total_end = F - 1
+    dressing.animate(ctx)
     import life
     life.apply(ctx, total_end)
     print("life pass", round(time.time() - t0, 1))
