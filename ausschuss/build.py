@@ -187,7 +187,10 @@ def main():
         if not os.path.exists(os.path.join(HERE, "seq", f"seq{i}.py")):
             break
         mod = importlib.import_module(f"seq{i}")
+        n_ev = len(A.EVENTS)
         F_end = mod.build(ctx, F)
+        for ev in A.EVENTS[n_ev:]:
+            ev["seq"] = i
         ctx.bounds[i] = (F, F_end)
         print(f"seq{i}", F, F_end, round(time.time() - t0, 1))
         F = F_end + 1
@@ -205,6 +208,8 @@ def main():
         st.frame_final_start = s["f0"]
         st.frame_final_end = s["f1"] + 1
     snd = os.path.join(HERE, "sound", "soundtrack.wav")
+    if not os.path.exists(snd):
+        snd = os.path.join(HERE, "sound", "soundtrack.ogg")
     if os.path.exists(snd):
         se.sequences.new_sound("soundtrack", snd, channel=2, frame_start=1)
     film.render.image_settings.file_format = "FFMPEG"

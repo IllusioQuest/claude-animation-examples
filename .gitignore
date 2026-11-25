@@ -2,3 +2,5 @@ __pycache__/
 *.blend1
 ausschuss/render/
 ausschuss/preview/frames/
+ausschuss/sound/*.wav
+ausschuss/sound/*.mid
