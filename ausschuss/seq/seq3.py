@@ -212,7 +212,7 @@ def build(ctx, F):
     peek = mw @ V((0.02, 0.02, -0.17))
     f.place(F, h.pos_at(F) + V((0.02, -0.14, 0.92)), h.yaw_at(F))
     con_f = A.attach_to(f.rig, h.rig, F, bone="chest", name="in_coat")
-    tout = max(T(17.0), hw + 36)
+    tout = max(T(17.5), hw + 86)
     for i, fr in enumerate(range(T(6), tout - 50, 30)):
         A.look(f, fr, Wv(rnd.uniform(-6, 6), rnd.uniform(-4, 6), 1.0), pitch=-10,
                extra={"lid": (-95, 0, 0), "body": (40, 0, 0)})
@@ -353,16 +353,43 @@ def build(ctx, F):
         a.face(t_stop + 20, "worried")
     h.face(t_stop + 14, "worried")
     A.look(h, t_stop + 14, Wv(0.3, -11.5, 2.0))
+    # the dance arms sink; Funke shrinks into himself, Hedda edges between him and the doorway
+    h.pose(t_stop + 44, {"upper_arm_L": (8, 0, 6), "forearm_L": (20, 0, 0), "upper_arm_R": (8, 0, 6),
+                         "forearm_R": (20, 0, 0), "spine": (4, 0, 0)})
+    f.pose(t_stop + 30, {"body": (25, 0, 0), "head": (20, 0, 0), "antenna": (80, 0, 0)})
+    f.bone_scale(t_stop + 30, "body", (1.0, 1.0, 0.85))
+    hp_ = h.pos_at(t_stop + 50)
+    step_to = hp_ + (table_spot - hp_).normalized() * 0.25
+    step_to.z = hp_.z
+    h.place(t_stop + 50, hp_, None)
+    h.place(t_stop + 62, step_to, None)
+    h.pose(t_stop + 50, {"thigh_L": (0, 0, 0), "shin_L": (0, 0, 0)})
+    h.pose(t_stop + 56, {"thigh_L": (28, 0, 0), "shin_L": (-40, 0, 0)})
+    h.pose(t_stop + 62, {"thigh_L": (0, 0, 0), "shin_L": (0, 0, 0)})
+    h.pose(t_stop + 62, {"upper_arm_R": (40, 0, -25), "forearm_R": (25, 0, 0), "hand_R": (0, 0, 0)})
+    h.blink(t_stop + 70, "worried")
     # ------------------------------------------------------------------ cameras
-    B.shot(ctx, 3, "S3_c1_wide", F, [(F, Wv(0.5, -17.5, 4.5), Wv(0, 3, 1.4)), (T(4.5), Wv(0.0, -15.5, 3.8), Wv(0, 2, 1.4))],
+    B.shot(ctx, 3, "S3_c1_wide", F, [(F, Wv(0.4, -18.5, 6.4), Wv(0, 3, 1.2)), (T(4.5), Wv(0.0, -16.0, 5.4), Wv(0, 2, 1.2))],
            lens=26)
     wk = []
-    for t_ in (T(4.5), T(7.5), T(11)):
+    t_v = max(T(11) + 12, hw - 12)  # follow her until she reaches the stall
+    for t_ in (T(4.5), T(7.5), T(11), t_v):
         hp_ = h.pos_at(t_)
         wk.append((t_, hp_ + V((1.9, 3.6, 1.5)), hp_ + V((0, 0, 1.05))))
     B.shot(ctx, 3, "S3_c2_walk", T(4.5), wk, lens=30)
-    B.shot(ctx, 3, "S3_c3_vendor", T(11), [(T(11), hstop + V((1.3, -2.1, 1.2)), radio_pos + V((-0.4, 0, 0.15))),
-                                           (tout, hstop + V((1.2, -2.0, 1.2)), radio_pos + V((-0.6, -0.2, 0.1)))], lens=28)
+    # over her shoulder: the vendor with his dead radio
+    back = hstop - radio_pos
+    back.z = 0
+    back.normalize()
+    sd = V((-back.y, back.x, 0))
+    B.shot(ctx, 3, "S3_c3_vendor", t_v, [(t_v, hstop + back * 2.3 - sd * 1.1 + V((0, 0, 1.55)), radio_pos + sd * 0.3 + V((0, 0, 0.25))),
+                                         (hw + 50, hstop + back * 2.1 - sd * 1.0 + V((0, 0, 1.52)),
+                                          radio_pos + sd * 0.3 + V((0, 0, 0.2)))], lens=28)
+    # close on the coat: the lens peeks out, finds the radio
+    fpk = A.world_matrix_at(f.rig, hw + 50, "head").translation.copy()
+    B.shot(ctx, 3, "S3_c3b_peek", hw + 50, [(hw + 50, fpk - back * 1.0 - sd * 0.5 + V((0, 0, 0.35)), fpk + V((0, 0, 0.05))),
+                                            (tout, fpk - back * 0.9 - sd * 0.45 + V((0, 0, 0.32)), fpk + V((0, 0, 0.05)))],
+           lens=38)
     B.shot(ctx, 3, "S3_c4_radio", tout + 10, [(tout + 10, radio_pos + V((-0.9, -1.2, 0.35)), radio_pos + V((-0.2, 0, 0.1))),
                                               (td, radio_pos + V((-0.85, -1.1, 0.4)), radio_pos + V((-0.2, 0, 0.1)))],
            lens=32)
@@ -370,9 +397,9 @@ def build(ctx, F):
            lens=24)
     B.shot(ctx, 3, "S3_c5b_kids", td + C.sec(4), [(td + C.sec(4), Wv(-1.6, -5.0, 1.0), Wv(0.2, -1.8, 0.7)),
                                                   (td + C.sec(6), Wv(-1.2, -5.2, 1.0), Wv(0.2, -2.0, 0.8))], lens=30)
-    B.shot(ctx, 3, "S3_c5c_oldman", td + C.sec(6), [(td + C.sec(6), om_pos + V((2.0, -3.0, 1.3)), om_pos + V((0, -0.5, 0.95))),
-                                                    (td + C.sec(8), om_pos + V((1.8, -2.8, 1.3)), om_pos + V((0, -0.6, 1.0)))],
-           lens=24)
+    B.shot(ctx, 3, "S3_c5c_oldman", td + C.sec(6), [(td + C.sec(6), om_pos + V((2.4, -2.0, 1.3)), om_pos + V((0, -0.5, 0.95))),
+                                                    (td + C.sec(8), om_pos + V((2.25, -1.9, 1.3)), om_pos + V((0, -0.6, 1.0)))],
+           lens=30)
     side = (radio_pos - hstop).normalized()
     perp = V((-side.y, side.x, 0))
     to_c = (Wv(0, 0) - hstop)

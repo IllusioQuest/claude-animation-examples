@@ -334,6 +334,20 @@ def build(ctx, F):
     h.face(tpick + 16, "sad")
     h.blink(tpick + 40, "sad")
     h.pose(tpick + 40, {"upper_arm_L": (45, 0, -10), "forearm_L": (75, 0, -15)})
+    # she looks after the truck, then back at the lens and rubs the dust off it with her thumb
+    h.pose(tpick + 58, {"head": (6, 34, 0), "spine": (2, 8, 0)})
+    h.face(tpick + 58, "worried")
+    h.blink(tpick + 72, "worried")
+    h.pose(tpick + 84, {"head": (16, -6, 6), "spine": (6, 0, 0)})
+    h.face(tpick + 84, "sad")
+    for i, fw in enumerate(range(tpick + 90, END - 34, 7)):
+        h.pose(fw, {"upper_arm_L": (48, 0, -18 if i % 2 else -4), "hand_L": (0, 0, 12 if i % 2 else -12)})
+    h.pose(END - 32, {"upper_arm_L": (45, 0, -10), "hand_L": (0, 0, 0)})
+    # ... and the eye answers: a flicker. Surprise, then the tiniest smile.
+    h.pose(END - 24, {"head": (-4, -4, 0), "spine": (-3, 0, 0), "upper_arm_L": (30, 0, -20)})
+    h.face(END - 24, "surprised")
+    h.pose(END - 10, {"head": (10, -4, -8), "spine": (3, 0, 0)})
+    h.face(END - 10, "happy")
     A.key_socket(C.emit_socket(lens_iris), END - 30, 0.8)
     A.key_socket(C.emit_socket(lens_iris), END - 26, 4.0)
     A.key_socket(C.emit_socket(lens_iris), END - 23, 0.8)

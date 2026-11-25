@@ -546,8 +546,8 @@ def build(ctx, F):
     t6c_end = hw3 + 50
     B.shot(ctx, 2, "S2_c6c_dark", tc, [(tc, W(-1.1, -1.7, 1.5), W(1.4, 0.4, 0.9)),
                                        (tr_on + 40, W(-0.9, -1.6, 1.45), W(1.6, 0.5, 0.8))], lens=28)
-    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(2.65, -0.6, 1.7), W(1.75, 0.8, 0.65), 22),
-                                               (t6c_end, W(2.6, -0.55, 1.65), W(1.8, 0.85, 0.65), 22)], lens=22)
+    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(0.6, 2.05, 2.3), W(1.7, 0.75, 0.85), 22),
+                                               (t6c_end, W(0.65, 2.0, 2.25), W(1.7, 0.75, 0.8), 22)], lens=22)
     # ------------------------------------------------------------------ 2.7 later: both asleep
     ts = t6c_end + 2
     ctx.ground_skip.append(("Hedda", ts, ts + C.sec(6)))
@@ -559,8 +559,8 @@ def build(ctx, F):
     h.cut(ts, cpos, 35)
     h.pose(ts, "stand")
     h.pose(ts, "sit")
-    h.pose(ts, {"head": (25, 0, -15), "spine": (-6, 0, 0), "chest": (-4, 0, 0), "upper_arm_L": (25, 0, 25),
-                "forearm_L": (60, 0, -20), "upper_arm_R": (25, 0, 25), "forearm_R": (60, 0, -20)})
+    h.pose(ts, {"head": (34, 0, -18), "spine": (-6, 0, 0), "chest": (-4, 0, 0), "upper_arm_L": (14, 0, 16),
+                "forearm_L": (62, 0, -38), "upper_arm_R": (14, 0, 16), "forearm_R": (62, 0, -38)})
     h.bone_loc(ts, "root", (0, 0.05, -0.33))
     h.face(ts, "closed")
     crate = ws["crate"]
@@ -583,7 +583,14 @@ def build(ctx, F):
             A.event(fr, "snore")
         fr += 30
         k += 1
-    B.shot(ctx, 2, "S2_c7_sleep", ts, [(ts, W(0.6, -0.1, 1.4), W(-1.2, -1.5, 0.45)),
-                                       (END, W(0.3, -0.3, 1.25), W(-1.2, -1.5, 0.45))], lens=26)
+    # the head sinks, sinks ... jerks up, and slowly sinks again
+    h.pose(ts + 50, {"head": (40, 0, -18)})
+    h.pose(ts + 66, {"head": (52, 0, -14)})
+    h.pose(ts + 70, {"head": (14, 0, -6)}, interp="LINEAR")
+    h.face(ts + 70, "surprised")
+    h.face(ts + 78, "closed")
+    h.pose(ts + 110, {"head": (34, 0, -18)})
+    B.shot(ctx, 2, "S2_c7_sleep", ts, [(ts, W(0.75, 0.0, 1.6), W(-1.2, -1.45, 0.82)),
+                                       (END, W(0.5, -0.2, 1.5), W(-1.2, -1.45, 0.85))], lens=22)
     ctx.pot = pot
     return END

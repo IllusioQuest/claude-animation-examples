@@ -288,9 +288,15 @@ def shack(name, loc, w, d, h, yaw, coll, rnd, door=True, window=True, lit=False)
     C.box(name + "_body", (w, d, h), loc=(0, 0, h / 2), m=wall_m, parent=root, bevel=0.02, coll=coll)
     roof = P.corrugated(name + "_roof", w + 0.5, d + 0.6, (0, -d / 2 - 0.3, h + 0.05), (0, 0, 0),
                         rnd.choice([m["corr1"], m["corr2"]]), coll=coll)
-    roof.rotation_euler = (math.radians(-90 + rnd.uniform(4, 9)), 0, 0)
-    roof.location = (0, d / 2 + 0.3, h + 0.05)
+    tilt = rnd.uniform(4, 9)
+    roof.rotation_euler = (math.radians(-90 + tilt), 0, 0)
+    # the sheet grows towards +y from its origin: start at the front overhang, rise towards the back
+    roof.location = (0, -d / 2 - 0.3, h + 0.05)
     roof.parent = root
+    rise = (d + 0.3) * math.sin(math.radians(tilt))
+    # fill the gap between wall top and the raised back of the roof (lean-to)
+    C.box(name + "_gable", (w, 0.06, rise + 0.04), loc=(0, d / 2 - 0.03, h + rise / 2), m=wall_m, parent=root,
+          bevel=0, coll=coll)
     if door:
         C.box(name + "_door", (0.8, 0.06, 1.9), loc=(rnd.uniform(-w / 4, w / 4), -d / 2 - 0.01, 0.95),
               m=rnd.choice([m["wood"], M("p_blue"), M("p_green")]), parent=root, bevel=0.01, coll=coll)

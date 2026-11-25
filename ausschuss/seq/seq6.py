@@ -82,7 +82,7 @@ def iris(ctx, cam, f0, f1, target, coll, d=0.1):
     bm = bmesh.new()
     seg = 96
     inner = [bm.verts.new((math.cos(2 * math.pi * i / seg), math.sin(2 * math.pi * i / seg), 0)) for i in range(seg)]
-    outer = [bm.verts.new((60 * math.cos(2 * math.pi * i / seg), 60 * math.sin(2 * math.pi * i / seg), 0))
+    outer = [bm.verts.new((800 * math.cos(2 * math.pi * i / seg), 800 * math.sin(2 * math.pi * i / seg), 0))
              for i in range(seg)]
     for i in range(seg):
         j = (i + 1) % seg
@@ -269,12 +269,12 @@ def build(ctx, F):
     A.event(tk + 40, "warm_chord")
     B.shot(ctx, 6, "S6_c2_sheet", tf, [(tf, HL(-2.7, -6.0, 1.35), HL(0.2, -2.4, 0.5)), (f2, HL(-2.5, -5.8, 1.3), HL(-0.2, -2.8, 0.55))],
            lens=28)
-    B.shot(ctx, 6, "S6_c2b_knock", f2 - 6, [(f2 - 6, seat_pos + sd * 2.1 + V((0, 0, 1.2)), seat_pos + V((0, 0, 0.9))),
-                                            (tk + 60, seat_pos + sd * 2.0 + V((0, 0, 1.2)), seat_pos + V((0, 0, 0.95)))], lens=26)
+    B.shot(ctx, 6, "S6_c2b_knock", f2 - 6, [(f2 - 6, seat_pos + sd * 2.3 + V((0, 0, 1.1)), seat_pos + V((0, 0, 0.72))),
+                                            (tk + 60, seat_pos + sd * 2.2 + V((0, 0, 1.1)), seat_pos + V((0, 0, 0.78)))], lens=24)
     # ------------------------------------------------------------------ the freed machines arrive
     tm = tk + 50
     road = [V((-25.5, 8.4, 0)), V((-21, 7.5, 0)), V((-20.6, 0.5, 0))]
-    stops = [HL(1.5, -5.6), HL(2.6, -4.9), HL(0.4, -6.0), HL(3.4, -4.0)]
+    stops = [V((-20.45, -3.3, 0)), HL(2.6, -4.9), HL(0.4, -6.0), HL(3.4, -4.0)]  # juke stays out of the wink shot
     machines = [machine_juke("free_juke", ctx.c_props), machine_quad("free_quad1", ctx.c_props),
                 machine_vacuum("free_vac2", ctx.c_props), machine_quad("free_quad2", ctx.c_props)]
     for i, mc in enumerate(machines):
@@ -392,8 +392,8 @@ def build(ctx, F):
     f.pose(tw, {"lid": (-95, 0, 0), "head": (-6, 0, 0)})
     tk2 = tw + 30
     f.pose(tk2, {"lid": (-95, 0, 0)})
-    f.pose(tk2 + 4, {"lid": (-40, 0, 0), "head": (-6, 0, 12)})
-    f.pose(tk2 + 12, {"lid": (-40, 0, 0), "head": (-6, 0, 12)})
+    f.pose(tk2 + 4, {"lid": (-6, 0, 0), "head": (-6, 0, 12)})
+    f.pose(tk2 + 12, {"lid": (-6, 0, 0), "head": (-6, 0, 12)})
     f.pose(tk2 + 16, {"lid": (-95, 0, 0), "head": (-6, 0, 0)})
     A.event(tk2 + 4, "wink")
     f.glow(tk2 + 18, 4.0, "iris")

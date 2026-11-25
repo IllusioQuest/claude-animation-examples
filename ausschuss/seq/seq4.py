@@ -247,7 +247,7 @@ def build(ctx, F):
     A.event(hr + 8, "thud")
     h.face(hr + 8, "closed")
     B.shot(ctx, 4, "S4_c5_scrap", t5, [(t5, V((3.4, 3.0, 1.3)), V((-12, 8.6, 1.3)), 34),
-                                       (hr + 10, V((4.8, 2.0, 1.5)), V((1.6, 6.0, 0.8)), 30)], lens=34)
+                                       (hr + 10, V((4.7, 1.7, 1.8)), V((1.0, 6.0, 0.6)), 24)], lens=34)
     # ------------------------------------------------------------------ 4.6 stamp, truck leaves, Hedda in the dust
     tst = hr + 24
     e.hold_all(tst - 1)
@@ -288,7 +288,7 @@ def build(ctx, F):
     h.rig.keyframe_insert("rotation_euler", frame=tl - 10, index=0)
     kp = h.pos_at(tl - 30)
     kp.z = 0.0
-    h.place(tl - 10, V((kp.x, kp.y, 0)), None)
+    h.place(tl - 10, V((kp.x, kp.y, 0)), math.degrees(A.yaw_towards(V((6.0, -14.0, 0)) - V((kp.x, kp.y, 0)))))
     h.pose(tl - 10, "crouch")
     h.pose(tl - 10, {"thigh_L": (90, 0, 4), "thigh_R": (90, 0, 4), "shin_L": (-150, 0, 0), "shin_R": (-150, 0, 0)})
     h.bone_loc(tl - 10, "root", (0, 0, -0.35))
@@ -301,7 +301,12 @@ def build(ctx, F):
     A.event(END - 24, "wind")
     B.shot(ctx, 4, "S4_c6_stamp", tst - 4, [(tst - 4, V((-3.6, 8.8, 1.5)), V((-0.5, 6.0, 1.3))),
                                             (tgo, V((-3.4, 8.6, 1.5)), V((-0.5, 6.0, 1.4)))], lens=30)
-    B.shot(ctx, 4, "S4_c6b_leave", tgo, [(tgo, kp + V((-2.6, 2.9, 1.2)), V((6, 2, 1.5))),
-                                         (END, kp + V((-2.8, 3.1, 1.25)), V((6, -40, 2.0)))], lens=24)
+    # over her shoulder: the truck shrinks down the road to the city, Hedda stays in the dust
+    kq = V((kp.x, kp.y, 0))
+    back = (kq - V((6.0, -14.0, 0))).normalized()
+    side = V((-back.y, back.x, 0))
+    B.shot(ctx, 4, "S4_c6b_leave", tgo, [(tgo, kq + back * 3.4 + side * 1.0 + V((0, 0, 1.25)), V((6.0, -14.0, 0.9))),
+                                         (END, kq + back * 2.9 + side * 0.8 + V((0, 0, 1.15)), V((6.0, -14.0, 1.1)))],
+           lens=32)
     ctx.s4 = {"hedda_end": kp}
     return END

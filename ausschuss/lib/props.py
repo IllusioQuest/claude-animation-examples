@@ -448,11 +448,15 @@ def drive(truck, f0, f1, p0, p1, yaw_deg):
     root.location = p1
     root.keyframe_insert("location", frame=f1)
     root.keyframe_insert("rotation_euler", frame=f1)
+    # a key re-inserted on top of a CONSTANT hold keeps CONSTANT: the truck would teleport at f1
+    A.set_interp(root, "location", f0, "BEZIER")
+    A.set_interp(root, "rotation_euler", f0, "BEZIER")
     dist = (Vector(p1) - Vector(p0)).length
     for w in truck["wheels"]:
         w.keyframe_insert("rotation_euler", frame=f0, index=0)
         w.rotation_euler.x -= dist / 0.55
         w.keyframe_insert("rotation_euler", frame=f1, index=0)
+        A.set_interp(w, "rotation_euler", f0, "BEZIER", index=0)
     A.event(f0, "truck", dur=f1 - f0)
 
 
