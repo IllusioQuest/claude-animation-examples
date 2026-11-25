@@ -201,9 +201,9 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
                                                  rough=0.45, dirt=0.1, bump=0), coll=coll))
     for s, sx in (("L", 1), ("R", -1)):
         ec = Vector(S((0.055 * sx, -0.128, 1.625)))
-        er = (0.04 if not is_kid else 0.048) * h
+        er = (0.037 if not is_kid else 0.045) * h
         P.add("eye_" + s, C.sphere(n("eye" + s), er, loc=ec, scale=(0.85, 0.6, 1.2), m=white, coll=coll))
-        P.add("eye_" + s, C.sphere(n("pupil" + s), er * 0.56, loc=ec + Vector((0, -er * 0.55, -er * 0.1)),
+        P.add("eye_" + s, C.sphere(n("pupil" + s), er * 0.62, loc=ec + Vector((0, -er * 0.55, -er * 0.1)),
                                    scale=(1, 0.6, 1.25), m=black, coll=coll))
         P.add("brow_" + s, C.box(n("brow" + s), S((0.055, 0.016, 0.014)),
                                  loc=S((0.06 * sx, -0.15, 1.685)), rot=(0, -8 * sx, 0), m=hair, bevel=0.006,
@@ -213,10 +213,10 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
     # hair cap
     prof = []
     for i in range(9):
-        a = math.radians(-5 + i * 95 / 8)
+        a = math.radians(0 + i * 90 / 8)
         prof.append(((hr + 0.008 * h) * math.cos(a), (hr + 0.008 * h) * math.sin(a)))
     prof[-1] = (0.001, prof[-1][1])
-    cap = C.lathe(n("haircap"), prof, loc=hc + Vector((0, 0.012 * h, 0.01 * h)), rot=(28, 0, 0), m=hair,
+    cap = C.lathe(n("haircap"), prof, loc=hc + Vector((0, 0.012 * h, 0.01 * h)), rot=(-32, 0, 0), m=hair,
                   coll=coll)
     if style in ("hedda", "woman", "kid", "oldman"):
         P.add("head", cap)

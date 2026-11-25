@@ -206,9 +206,8 @@ def build(ctx, F):
     A.look(h, tduck - 4, V((8, 0, 1.5)))
     h.face(tduck - 4, "worried")
     h.hold_place(tduck)
-    h.walk(tduck, [(4.4, 10.4, 0), (5.3, 11.2, 0), (5.9, 11.5, 0)], speed=1.6, stride=0.4, style="sneak",
-           end_pose=None)
-    tcr = tduck + 22
+    tcr = h.walk(tduck, [(4.4, 10.4, 0), (5.3, 11.2, 0), (5.9, 11.5, 0)], speed=1.6, stride=0.4, style="sneak",
+                 end_pose=None) + 2
     h.place(tcr, (5.9, 11.5, 0), math.degrees(A.yaw_towards(V((0, -1)))))
     h.pose(tcr, "crouch")
     h.face(tcr, "worried")

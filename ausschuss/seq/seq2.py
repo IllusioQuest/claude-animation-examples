@@ -96,7 +96,7 @@ def build(ctx, F):
     P.smoke("S2_smoke", ch_top, F - 40, T(4.5), coll=ctx.c_props, every=8, rise=3.0, life=70, size=0.22,
             color=(0.3, 0.3, 0.33), seed=2)
     S.spin(hut["mill_rotor"], F, T(4.5), axis=1, turns_per_sec=0.25)
-    B.shot(ctx, 2, "S2_c1_hut", F, [(F, (-9.5, -9.5, 1.5), (-15, -3, 2.0)), (T(4), (-10.3, -8.8, 1.55), (-15, -3, 1.9))],
+    B.shot(ctx, 2, "S2_c1_hut", F, [(F, (-22.5, -7.5, 1.4), (-15, -3, 2.0)), (T(4), (-21.6, -7.0, 1.5), (-15, -3, 1.9))],
            lens=30)
     # ------------------------------------------------------------------ Funke on the bench (assembly)
     bench = ws["bench_spot"]
@@ -268,8 +268,8 @@ def build(ctx, F):
     t_imit_end = he + 52
     B.shot(ctx, 2, "S2_c5_steps", t5, [(t5, W(1.7, -1.6, 1.15), W(0.1, 0.8, 0.65)),
                                        (he, W(1.6, -1.7, 1.05), W(-0.1, 0.3, 0.6))], lens=28)
-    B.shot(ctx, 2, "S2_c5b_imit", he + 10, [(he + 10, W(1.3, -0.6, 0.55), W(-0.1, 0.2, 0.75)),
-                                            (t_imit_end, W(1.25, -0.55, 0.6), W(-0.1, 0.2, 0.8))], lens=28)
+    B.shot(ctx, 2, "S2_c5b_imit", he + 10, [(he + 10, W(1.6, -1.4, 0.8), W(0.0, 0.17, 0.6)),
+                                            (t_imit_end, W(1.5, -1.3, 0.8), W(0.0, 0.17, 0.65))], lens=28)
     # ------------------------------------------------------------------ 2.6a hammer smashes the desk lamp
     ta = t_imit_end + 4
     h.pose(ta, "stand")
@@ -486,8 +486,8 @@ def build(ctx, F):
     t6c_end = hw3 + 50
     B.shot(ctx, 2, "S2_c6c_dark", tc, [(tc, W(-1.1, -1.7, 1.5), W(1.4, 0.4, 0.9)),
                                        (tr_on + 40, W(-0.9, -1.6, 1.45), W(1.6, 0.5, 0.8))], lens=28)
-    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(0.7, -0.4, 0.95), W(2.0, 1.0, 0.6)),
-                                               (t6c_end, W(0.75, -0.35, 1.0), W(2.0, 1.0, 0.65))], lens=30)
+    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(0.25, 0.65, 1.05), W(2.0, 1.0, 0.6)),
+                                               (t6c_end, W(0.3, 0.7, 1.1), W(2.0, 1.0, 0.65))], lens=30)
     # ------------------------------------------------------------------ 2.7 later: both asleep
     ts = t6c_end + 2
     END = ts + C.sec(5.5)
@@ -521,7 +521,7 @@ def build(ctx, F):
             A.event(fr, "snore")
         fr += 30
         k += 1
-    B.shot(ctx, 2, "S2_c7_sleep", ts, [(ts, W(0.4, -2.3, 1.3), W(-1.3, -1.4, 0.6)),
-                                       (END, W(0.0, -2.2, 1.15), W(-1.3, -1.4, 0.6))], lens=30)
+    B.shot(ctx, 2, "S2_c7_sleep", ts, [(ts, W(0.6, -0.1, 1.4), W(-1.2, -1.5, 0.45)),
+                                       (END, W(0.3, -0.3, 1.25), W(-1.2, -1.5, 0.45))], lens=26)
     ctx.pot = pot
     return END
