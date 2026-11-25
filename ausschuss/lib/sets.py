@@ -250,7 +250,7 @@ def build_hut(coll, loc, yaw=0):
     roof.rotation_euler = (math.radians(-90 + 4), 0, 0)
     roof.parent = root
     parts.append(roof)
-    roof2 = P.corrugated("hut_roofpatch", 1.4, 1.5, (0.9, 0.2, H + 0.3), (math.radians(-90 + 4), 0, 0),
+    roof2 = P.corrugated("hut_roofpatch", 1.4, 1.5, (0.9, 0.6, H + 0.3), (-90 + 4, 0, 0),
                          m["corr2"], coll=coll)
     roof2.parent = root
     parts.append(roof2)
@@ -311,8 +311,8 @@ def build_hut(coll, loc, yaw=0):
     for i in range(7):
         rr = C.R.__class__(i)
         o = P.corrugated(f"hut_rem{i}", rr.uniform(0.8, 1.4), rr.uniform(0.6, 1.2),
-                         (rr.uniform(-2, 2), rr.uniform(-1.6, 1.6), 0.14), (math.radians(-88), 0,
-                                                                              math.radians(rr.uniform(0, 180))),
+                         (rr.uniform(-2, 2), rr.uniform(-1.6, 1.6), 0.16), (-88 + rr.uniform(-6, 6), 0,
+                                                                              rr.uniform(0, 180)),
                          cols[i % 4], coll=coll)
         o.parent = root
         remains.append(o)

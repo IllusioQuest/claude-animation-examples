@@ -133,8 +133,9 @@ class Actor:
                 set_interp(ob, "rotation_euler", f, interp, 2)
 
     def cut(self, f, loc, yaw):
-        """Teleport at a cut: hold previous at f-1, jump at f."""
+        """Teleport at a cut: hold previous at f-1, jump at f. Releases attachments."""
         ob = self.rig
+        release_all(ob, f)
         if ob.animation_data and ob.animation_data.action:
             hold_obj(ob, f - 1, ("location", "rotation_euler"))
         self.place(f, loc, yaw)
@@ -350,8 +351,11 @@ def attach_to(ob, target, f, bone=None, name=None):
     return con
 
 
-def detach(ob, con, f):
-    """At frame f stop following; ob stays where it is (keys its own transform)."""
+def detach(ob, con, f, upright=None):
+    """At frame f stop following; ob stays where it is (keys its own transform).
+    upright: keep only the Z rotation (default for armatures/actors)."""
+    if upright is None:
+        upright = ob.type == "ARMATURE"
     mw = world_matrix_at(ob, f)
     # hold own transform until f-1
     for p in ("location", "rotation_euler", "scale"):
@@ -363,7 +367,12 @@ def detach(ob, con, f):
     ob.matrix_world = mw  # with influence 0 the basis = world (no parent assumed)
     loc, rot, sc_ = mw.decompose()
     ob.location = loc
-    ob.rotation_euler = rot.to_euler()
+    eul = rot.to_euler()
+    if upright:
+        eul.x = 0.0
+        eul.y = 0.0
+        sc_ = Vector((1, 1, 1))
+    ob.rotation_euler = eul
     ob.scale = sc_
     for p in ("location", "rotation_euler", "scale"):
         ob.keyframe_insert(p, frame=f)
@@ -405,3 +414,19 @@ def look(actor, f, target, pitch=None, bone="head", interp=None, limit=70, extra
         p.update(extra)
     actor.pose(f, p, interp)
     return rel
+
+
+def release_all(ob, f):
+    """Key every constraint influence to 0 from frame f (if it was active)."""
+    for con in ob.constraints:
+        fc = _fcurve(ob, f'constraints["{con.name}"].influence', 0)
+        cur = fc.evaluate(f - 1) if fc else con.influence
+        if cur > 0:
+            con.influence = cur
+            con.keyframe_insert("influence", frame=f - 1)
+            con.influence = 0.0
+            con.keyframe_insert("influence", frame=f)
+            for fcu in ob.animation_data.action.fcurves:
+                if "influence" in fcu.data_path:
+                    for kp in fcu.keyframe_points:
+                        kp.interpolation = "CONSTANT"

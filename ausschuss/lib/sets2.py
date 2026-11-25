@@ -484,11 +484,11 @@ def build_depot(coll):
     for i in range(9):
         C.box(f"d_wallpillar{i}", (1.2, 1.4, 9.5), loc=w((-36 + i * 9, 5.8, 0)), origin="bottom", m=conc, bevel=0.05,
               coll=coll)
-    sign = C.box("d_sign", (12, 0.2, 1.6), loc=w((0, 5.4, 7.0)), m=M("d_sign_m", (0.04, 0.07, 0.15), metal=0.4,
+    sign = C.box("d_sign", (12, 0.2, 1.6), loc=w((0, 4.9, 7.0)), m=M("d_sign_m", (0.04, 0.07, 0.15), metal=0.4,
                                                                      rough=0.3), bevel=0.02, coll=coll)
-    C.text("d_signtxt", "CITY RECLAMATION DEPOT 4", size=0.7, loc=w((0, 5.28, 7.15)), rot=(90, 0, 0),
+    C.text("d_signtxt", "CITY RECLAMATION DEPOT 4", size=0.7, loc=w((0, 4.78, 7.15)), rot=(90, 0, 0),
            m=C.emission("d_signtxt", (0.9, 0.95, 1.0), 3.0), coll=coll)
-    C.text("d_signtxt2", "Out with the old.", size=0.35, loc=w((0, 5.28, 6.5)), rot=(90, 0, 0),
+    C.text("d_signtxt2", "Out with the old.", size=0.35, loc=w((0, 4.78, 6.5)), rot=(90, 0, 0),
            m=C.emission("d_signtxt2", (1.0, 0.7, 0.2), 2.0), coll=coll)
     # chain-link fence in front at y=0 with a hole at x=-4
     fence_m = M("fence_m", (0.4, 0.4, 0.42), metal=1.0, rough=0.4, rust=0.3)
