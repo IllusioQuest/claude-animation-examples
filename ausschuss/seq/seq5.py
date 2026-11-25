@@ -32,10 +32,12 @@ def build(ctx, F):
     wld = S.world("W_S5_night", horizon=(0.06, 0.07, 0.12), zenith=(0.01, 0.012, 0.03), ground=(0.02, 0.02, 0.02),
                   strength=0.5)
     sc, L, cams = B.new_seq_scene(ctx, 5, "S5_Depot_Night", F, END, wld, [ctx.chars, ctx.c_dep, ctx.c_props])
-    S.sun("S5_moon", (60, 0, 30), 0.3, (0.45, 0.6, 1.0), L, angle=5)
+    S.sun("S5_moon", (60, 0, 30), 0.9, (0.45, 0.6, 1.0), L, angle=5)
+    ext_key = P.point_light("S5_extkey", Dd(-3, -9, 6), 6000, (0.75, 0.85, 1.0), 2.0, coll=L, kind="SPOT", spot=60,
+                            rot=(55, 0, -20))
     S.fog_box("S5_fog_out", L, D + V((0, -20, 0)), (200, 120, 40), 0.012, (0.6, 0.65, 0.8))
     S.fog_box("S5_fog_in", L, H, (43, 23, 11.5), 0.02, (0.9, 0.7, 0.5), height_falloff=False)
-    fill_in = P.point_light("S5_hallfill", Hd(0, -6, 6), 1500, (1.0, 0.65, 0.35), 6.0, coll=L, kind="AREA",
+    fill_in = P.point_light("S5_hallfill", Hd(0, -6, 6), 4000, (1.0, 0.65, 0.35), 6.0, coll=L, kind="AREA",
                             rot=(30, 0, 0))
     fill_in.data.size = 12
     P.point_light("S5_exitlight", Hd(-19, -6, 4), 800, (0.5, 0.65, 1.0), 1.0, coll=L)
@@ -170,6 +172,9 @@ def build(ctx, F):
     for d in ctx.decal_funke:
         A.hide(d, F, False)
     con_fc = A.attach_to(f.rig, c_f, F, name="in_cage")
+    cage_lamp = P.point_light("S5_cagelamp", H + V((belt_x(9.2, F), -0.8, bz + 0.9)), 25, (1.0, 0.7, 0.4), 0.1,
+                              coll=L)
+    A.attach_to(cage_lamp, c_f, F, name="cagelamp")
     f.blink(T(10.5))
     # ------------------------------------------------------------------ 5.1 exterior: Hedda slips through the hole
     hole = dep["hole"]
@@ -199,8 +204,8 @@ def build(ctx, F):
     # ------------------------------------------------------------------ 5.2 interior: belt, press, Funke caged
     B.shot(ctx, 5, "S5_c2_hall", T(5), [(T(5), Hd(-19, -10, 7.5), Hd(6, 0, 2.0)), (T(9.5), Hd(-16, -10.5, 6.5), Hd(7, 0, 2.5))],
            lens=22)
-    B.shot(ctx, 5, "S5_c2b_funke", T(9.5), [(T(9.5), Hd(belt_x(9.2, T(9.5)) - 0.3, -1.7, 1.35), Hd(belt_x(9.2, T(9.5)), 0, 1.3)),
-                                            (T(12.5), Hd(belt_x(9.2, T(12.5)) - 0.2, -1.6, 1.35), Hd(belt_x(9.2, T(12.5)), 0, 1.3))],
+    B.shot(ctx, 5, "S5_c2b_funke", T(9.5), [(T(9.5), Hd(belt_x(9.2, T(9.5)) - 0.3, -1.7, 1.6), Hd(belt_x(9.2, T(9.5)), 0, 1.3)),
+                                            (T(12.5), Hd(belt_x(9.2, T(12.5)) - 0.2, -1.6, 1.6), Hd(belt_x(9.2, T(12.5)), 0, 1.3))],
            lens=45)
     # ------------------------------------------------------------------ 5.3 Hedda on the catwalk, netted, stamped
     cz = dep["catwalk_z"]
@@ -423,8 +428,8 @@ def build(ctx, F):
     vroot.keyframe_insert("location", frame=tx + 20)
     vroot.location = dep["exit"] + V((1.5, 0.5, 0))
     vroot.keyframe_insert("location", frame=hx + 20)
-    B.shot(ctx, 5, "S5_c7_run", tx, [(tx, Hd(-14, -9, 1.6), Hd(0, -3, 1.2)), (hx, Hd(-18, -9, 1.6), dep["exit"] + V((0, 0, 1.2)))],
-           lens=26)
+    B.shot(ctx, 5, "S5_c7_run", tx, [(tx, Hd(-4, -8.5, 1.6), hfloor + V((0, 0, 1.0))),
+                                     (hx, Hd(-12, -9.5, 1.6), dep["exit"] + V((0, 0, 1.0)))], lens=26)
     # exterior: out through the hole, sirens
     to = hx + 6
     h.cut(to, hole + V((0, 3.5, 0)), 180)

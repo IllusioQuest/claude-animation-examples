@@ -73,55 +73,41 @@ def trot(ob, f0, pts, speed=1.0, hop=0.08, period=8):
 
 
 def iris(ctx, cam, f0, f1, target, coll, d=0.1):
-    """Black card with a shrinking round hole, centred on target (world point)."""
-    m = bpy.data.materials.new("iris_m")
-    m.use_nodes = True
-    nt = m.node_tree
-    for n in list(nt.nodes):
-        nt.nodes.remove(n)
-    N, L = nt.nodes, nt.links
-    out = N.new("ShaderNodeOutputMaterial")
-    em = N.new("ShaderNodeEmission"); em.inputs[0].default_value = (0, 0, 0, 1); em.inputs[1].default_value = 0
-    tr = N.new("ShaderNodeBsdfTransparent")
-    mix = N.new("ShaderNodeMixShader")
-    tc = N.new("ShaderNodeTexCoord")
+    """Opaque black ring with a shrinking round hole, centred on target (world point)."""
+    import bmesh
     sc = bpy.data.scenes[ctx.seq[6]["scene"].name]
     sc.frame_set(f0)
     u = world_to_camera_view(sc, cam, V(target))
     fw = cam.data.sensor_width / cam.data.lens * d
     fh = fw * 9 / 16
     cx, cy = (u.x - 0.5) * fw, (u.y - 0.5) * fh
-    sub = N.new("ShaderNodeVectorMath"); sub.operation = "SUBTRACT"
-    sub.inputs[1].default_value = (cx, cy, 0)
-    L.new(tc.outputs["Object"], sub.inputs[0])
-    ln = N.new("ShaderNodeVectorMath"); ln.operation = "LENGTH"
-    L.new(sub.outputs[0], ln.inputs[0])
-    rad = N.new("ShaderNodeValue"); rad.name = "radius"
-    gt = N.new("ShaderNodeMath"); gt.operation = "GREATER_THAN"
-    L.new(ln.outputs["Value"], gt.inputs[0]); L.new(rad.outputs[0], gt.inputs[1])
-    L.new(gt.outputs[0], mix.inputs[0])
-    L.new(tr.outputs[0], mix.inputs[1]); L.new(em.outputs[0], mix.inputs[2])
-    L.new(mix.outputs[0], out.inputs[0])
-    try:
-        m.surface_render_method = "BLENDED"
-    except Exception:
-        m.blend_method = "BLEND"
-    me = C.mesh_box("iris_card", 0.5, 0.5, 0.0001)
-    card = bpy.data.objects.new("iris_card", me)
+    m = C.emission("iris_black", (0, 0, 0), 0.0)
+    bm = bmesh.new()
+    seg = 96
+    inner = [bm.verts.new((math.cos(2 * math.pi * i / seg), math.sin(2 * math.pi * i / seg), 0)) for i in range(seg)]
+    outer = [bm.verts.new((60 * math.cos(2 * math.pi * i / seg), 60 * math.sin(2 * math.pi * i / seg), 0))
+             for i in range(seg)]
+    for i in range(seg):
+        j = (i + 1) % seg
+        bm.faces.new((inner[i], inner[j], outer[j], outer[i]))
+    me = bpy.data.meshes.new("iris_ring")
+    bm.to_mesh(me)
+    bm.free()
     me.materials.append(m)
-    coll.objects.link(card)
-    card.parent = cam
-    card.location = (0, 0, -d)
+    ring = bpy.data.objects.new("iris_ring", me)
+    coll.objects.link(ring)
+    ring.parent = cam
+    ring.location = (cx, cy, -d)
     rmax = math.hypot(fw, fh) * 0.6 + math.hypot(cx, cy)
-    sock = rad.outputs[0]
-    sock.default_value = rmax
-    sock.keyframe_insert("default_value", frame=f0)
-    sock.default_value = fw * 0.03
-    sock.keyframe_insert("default_value", frame=f1 - 10)
-    sock.keyframe_insert("default_value", frame=f1 - 4)
-    sock.default_value = 0.0
-    sock.keyframe_insert("default_value", frame=f1)
-    return card
+    for fr, r in ((f0, rmax), (f1 - 10, fw * 0.03), (f1 - 4, fw * 0.03), (f1, 0.00001)):
+        ring.scale = (r, r, r)
+        ring.keyframe_insert("scale", frame=fr)
+    cap = C.box("iris_cap", (1.0, 1.0, 0.0001), loc=(0, 0, -d * 1.01), m=m, bevel=0, coll=coll)
+    cap.parent = cam
+    A.hide(cap, 0, True)
+    A.hide(cap, f1, False)
+    ring.hide_render = False
+    return ring
 
 
 def build(ctx, F):
@@ -293,8 +279,8 @@ def build(ctx, F):
         h.pose(tm + 90 + k * 6, {"chest": (-6, 0, 0), "head": (-12, 0, 0)})
         h.pose(tm + 93 + k * 6, {"chest": (4, 0, 0), "head": (-4, 0, 0)})
     A.event(tm + 90, "laugh")
-    B.shot(ctx, 6, "S6_c3_machines", tm + 20, [(tm + 20, V((-16.6, -6.8, 2.6)), V((-20.5, 4, 0.6))),
-                                               (tm + 100, V((-16.4, -7.2, 2.5)), V((-19.5, -2.0, 0.7)))], lens=30)
+    B.shot(ctx, 6, "S6_c3_machines", tm + 20, [(tm + 20, V((-14.5, -1.0, 3.6)), V((-21.0, 3.0, 0.5))),
+                                               (tm + 100, V((-14.8, -1.6, 3.4)), V((-19.0, -3.0, 0.6)))], lens=28)
     # ------------------------------------------------------------------ 6.3 building again, the wink, iris out
     tb = tm + 110
     h.pose(tb, "stand")
