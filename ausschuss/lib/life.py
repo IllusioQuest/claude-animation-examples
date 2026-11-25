@@ -176,11 +176,11 @@ def atmosphere(ctx):
     if 2 in s:
         W = S2.WORKSHOP
         dust("dust_s2", s[2]["lights"], W + Vector((-2.8, -2.3, 0.3)), W + Vector((2.8, 2.3, 2.5)), 90,
-             (1.0, 0.8, 0.55), strength=0.8, seed=2)
+             (1.0, 0.8, 0.55), r=(0.003, 0.007), strength=0.25, seed=2)
     if 5 in s:
         H = S2.HALL
         dust("dust_s5", s[5]["lights"], H + Vector((-18, -7, 0.5)), H + Vector((12, 4, 8)), 160,
-             (1.0, 0.75, 0.5), r=(0.008, 0.02), strength=0.9, seed=5)
+             (1.0, 0.75, 0.5), r=(0.006, 0.014), strength=0.4, seed=5)
     if 6 in s:
         hr = ctx.scrap["hut"]["root"]
         bpy.context.view_layer.update()
