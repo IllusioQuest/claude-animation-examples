@@ -324,15 +324,19 @@ def build(ctx, F):
     lens.keyframe_insert("rotation_euler", frame=tpick)
     A.set_interp(lens, "location", tpick - 1, "CONSTANT")
     con_l = A.attach_to(lens, h.rig, tpick, bone="hand_R")
+    lens.keyframe_insert("scale", frame=tpick)
+    lens.scale = (1.5, 1.5, 1.5)  # reads at a distance; it is THE prop of the film
+    lens.keyframe_insert("scale", frame=tpick + 6)
+    A.key_socket(C.emit_socket(lens_iris), tpick + 10, 0.8)
     h.pose(tpick + 16, "stand")
     h.pose(tpick + 16, {"upper_arm_R": (62, 0, -18), "forearm_R": (95, 0, -10), "hand_R": (-30, 0, 0),
                         "head": (12, -10, 0), "spine": (4, 0, 0)})
     h.face(tpick + 16, "sad")
     h.blink(tpick + 40, "sad")
     h.pose(tpick + 40, {"upper_arm_L": (45, 0, -10), "forearm_L": (75, 0, -15)})
-    A.key_socket(C.emit_socket(lens_iris), END - 30, 0.15)
-    A.key_socket(C.emit_socket(lens_iris), END - 26, 2.5)
-    A.key_socket(C.emit_socket(lens_iris), END - 23, 0.15)
+    A.key_socket(C.emit_socket(lens_iris), END - 30, 0.8)
+    A.key_socket(C.emit_socket(lens_iris), END - 26, 4.0)
+    A.key_socket(C.emit_socket(lens_iris), END - 23, 0.8)
     A.event(END - 26, "tiny_flicker")
     ctx.lens_con = con_l
     # background life: pigeons on the power line, windmill

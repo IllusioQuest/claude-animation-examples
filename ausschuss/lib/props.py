@@ -415,6 +415,16 @@ def reclamation_truck(name, loc, yaw, coll=None):
         C.box(name + f"_stepbr{sx}", (0.06, 0.6, 0.12), loc=(1.0 * sx, 4.05, 0.84), m=M("dark_metal"),
               parent=root, bevel=0.0)
     C.cyl(name + "_handle", 0.03, 1.4, loc=(0.95, 3.85, 1.6), m=chrome, parent=root)
+    # the driver: a faceless city drone behind the windscreen, two cold eyes
+    drv = M("driver_m", (0.08, 0.09, 0.11), metal=0.6, rough=0.35)
+    C.box(name + "_drv_body", (0.45, 0.35, 0.55), loc=(-0.5, -2.95, 1.75), m=drv, parent=root, bevel=0.06)
+    C.sphere(name + "_drv_head", 0.17, loc=(-0.5, -3.0, 2.25), scale=(1, 0.9, 1.1), m=drv, parent=root, seg=16, rings=8)
+    eye_m = C.emission("driver_eye", (0.5, 0.85, 1.0), 6.0)
+    for sx in (-1, 1):
+        C.sphere(name + f"_drv_eye{sx}", 0.025, loc=(-0.5 + 0.06 * sx, -3.15, 2.28), m=eye_m, parent=root, seg=8,
+                 rings=4)
+    C.cyl(name + "_drv_wheel", 0.17, 0.03, loc=(-0.5, -3.25, 1.95), rot=(60, 0, 0), m=M("dark_metal"), parent=root,
+          verts=16)
     # beacon on cab
     bm = C.emission("truck_beacon", (1.0, 0.45, 0.05), 0.0)
     beacon = C.cyl(name + "_beacon", 0.12, 0.15, loc=(0, -2.6, 3.1), m=bm, parent=root)

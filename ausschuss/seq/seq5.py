@@ -68,6 +68,24 @@ def build(ctx, F):
             root.keyframe_insert("location", frame=t)
             A.set_interp(root, "location", t, "LINEAR")
         cages[name] = (root, door, xj)
+    # moving belt: dark slats travelling with the belt (cyclic, one spacing per cycle) until the jam
+    slat_m = C.mat("belt_slat", (0.02, 0.02, 0.02), rough=0.6, dirt=0.2)
+    sp = 0.5
+    per = sp / BELT_V * C.FPS
+    for i in range(56):
+        x0 = -19.8 + i * sp
+        sl = C.box(f"belt_slat{i}", (0.06, 1.78, 0.012), loc=H + V((x0, 0, bz + 0.006)), m=slat_m, bevel=0,
+                   coll=ctx.c_props)
+        sl.keyframe_insert("location", frame=t0, index=0)
+        sl.location.x += sp
+        sl.keyframe_insert("location", frame=t0 + per, index=0)
+        fc = sl.animation_data.action.fcurves.find("location", index=0)
+        for kp in fc.keyframe_points:
+            kp.interpolation = "LINEAR"
+        cyc = fc.modifiers.new("CYCLES")
+        cyc.use_restricted_range = True
+        cyc.frame_start = t0
+        cyc.frame_end = t0 + per * int((t_jam - t0) / per)  # stop on a cycle boundary: no jump
     # junk stream ahead of Funke's cage, crushed one by one by the press
     ram = dep["ram"]
     ram_up_z = ram.location.z

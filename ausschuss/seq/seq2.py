@@ -78,6 +78,16 @@ def build(ctx, F):
     S.fog_box("S2_fog", L, (0, 0, 0), (400, 400, 40), 0.004, (0.5, 0.6, 0.8))
     ws = ctx.ws
     B.offstage_all(ctx, F, keep=(h, f))
+    # the radio from the scrapyard now lives on the workshop shelf (gone again next morning)
+    rd = ctx.radio
+    rd.location = V(ws["radio_spot"]) + V((0, 0, 0.085))
+    rd.rotation_euler = (0, 0, math.radians(-80))
+    rd.keyframe_insert("location", frame=F)
+    rd.keyframe_insert("rotation_euler", frame=F)
+    A.set_interp(rd, "location", F, "CONSTANT")
+    rd.location = (0, 0, -300)
+    rd.keyframe_insert("location", frame=END + 400)
+    A.set_interp(rd, "location", END + 400, "CONSTANT")
     S2.animate_workshop_gadgets(ws, F, END)
     hut = ctx.scrap["hut"]
     # ------------------------------------------------------------------ 2.1 exterior
@@ -183,8 +193,8 @@ def build(ctx, F):
     h.hold_place(t_away)
     aw_end = h.walk(t_away, [W(0.2, 1.05), W(-0.4, 0.2), W(-1.0, -0.5)], speed=0.6, stride=0.4, style="shuffle",
                     end_pose="sigh")
-    B.shot(ctx, 2, "S2_c3_insert", T(14), [(T(14), W(1.9, 0.95, 1.4), W(0.2, 1.5, 1.12)),
-                                           (t_away, W(1.8, 0.9, 1.4), W(0.15, 1.45, 1.15))], lens=32)
+    B.shot(ctx, 2, "S2_c3_insert", T(14), [(T(14), W(1.9, 0.85, 1.2), W(0.2, 1.55, 1.15)),
+                                           (t_away, W(1.8, 0.8, 1.2), W(0.15, 1.5, 1.18))], lens=32)
     # ------------------------------------------------------------------ 2.4 awakening
     tw = T(21.0)
     f.glow(tw, 0.0, "iris")

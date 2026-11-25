@@ -299,20 +299,79 @@ def build(ctx, F):
     # ------------------------------------------------------------------ 6.3 building again, the wink, iris out
     tb = tm + 110
     ctx.ground_skip.append(("Hedda", tsit, tm + 82))
+    # she picks up Funke's sheet, carries it to the slab, stands it up and nails it to a post:
+    # the first wall of the new hut
+    yaw_in = math.degrees(A.yaw_towards(HL(0, 1) - HL(0, 0)))  # facing the slab
+    fwd_in = (HL(0, 1) - HL(0, 0)).normalized()
+    sheet_at = V([carry_sheet.animation_data.action.fcurves.find("location", index=i).evaluate(tb) for i in range(3)])
+    sheet_at.z = 0
+    hpos_tb = h.pos_at(tb)
+    pick = sheet_at + (hpos_tb - sheet_at).normalized() * 0.55
+    pick.z = 0
     h.pose(tb, "stand")
     h.hold_place(tb)
-    h.place(tb + 4, None, math.degrees(hr.rotation_euler.z) + 180)
-    h.pose(tb + 10, "arms_up")
-    carry_sheet.keyframe_insert("location", frame=tb + 6)
-    carry_sheet.keyframe_insert("rotation_euler", frame=tb + 6)
-    hand_h = A.world_matrix_at(h.rig, tb + 14, "hand_R").translation
-    carry_sheet.location = hand_h + V((-0.45, 0, -0.1))
-    carry_sheet.rotation_euler = (0, 0, hr.rotation_euler.z)
-    carry_sheet.keyframe_insert("location", frame=tb + 14)
-    carry_sheet.keyframe_insert("rotation_euler", frame=tb + 14)
-    A.event(tb + 14, "hammer_tiny")
-    A.event(tb + 30, "hammer_tiny")
-    A.event(tb + 46, "hammer_tiny")
+    tp1 = h.walk(tb + 2, [hpos_tb, pick], speed=0.8, stride=0.4, end_pose=None)
+    h.place(tp1 + 2, pick, math.degrees(A.yaw_towards(sheet_at - pick)))
+    h.pose(tp1 + 6, "bend_down")
+    tl_ = tp1 + 12
+    post = HL(-0.2, -1.95, 0.12)  # on the slab's front edge
+    stand_at = post - fwd_in * 0.55
+    stand_at.z = 0
+    h.pose(tl_ + 4, "stand")
+    h.pose(tl_ + 4, {"upper_arm_L": (70, 0, 20), "upper_arm_R": (70, 0, 20), "forearm_L": (40, 0, 0),
+                     "forearm_R": (40, 0, 0)})
+    tp2 = h.walk(tl_ + 6, [pick, stand_at], speed=0.7, stride=0.4, end_pose=None)
+    fr = tl_ + 6
+    while fr <= tp2:
+        h.pose(fr, {"upper_arm_L": (70, 0, 20), "upper_arm_R": (70, 0, 20), "forearm_L": (40, 0, 0),
+                    "forearm_R": (40, 0, 0)})
+        fr += 6
+    h.place(tp2 + 2, stand_at, yaw_in)
+    # the sheet: lifted at tl_, carried upright in front of her, set on the slab at tp2+6
+    carry_sheet.keyframe_insert("location", frame=tl_)
+    carry_sheet.keyframe_insert("rotation_euler", frame=tl_)
+    fr = tl_ + 4
+    while fr <= tp2 + 2:
+        hp_ = h.pos_at(fr)
+        yw = math.radians(h.yaw_at(fr))
+        fw_ = V((math.sin(yw), -math.cos(yw), 0))
+        carry_sheet.location = hp_ + fw_ * 0.42 + V((0, 0, 0.45))
+        carry_sheet.rotation_euler = (0, 0, yw)
+        carry_sheet.keyframe_insert("location", frame=fr)
+        carry_sheet.keyframe_insert("rotation_euler", frame=fr)
+        fr += 4
+    rz = math.radians(yaw_in)
+    carry_sheet.location = post
+    carry_sheet.rotation_euler = (0, 0, rz)
+    carry_sheet.keyframe_insert("location", frame=tp2 + 8)
+    carry_sheet.keyframe_insert("rotation_euler", frame=tp2 + 8)
+    A.event(tp2 + 8, "metal_scrape")
+    # a post to nail it to (a pipe from the remains, already standing there)
+    C.set_coll(ctx.c_props)
+    pst = C.cyl("new_post", 0.04, 1.2, loc=post + V((0, 0, 0.6)) + V((math.cos(rz), math.sin(rz), 0)) * 0.47,
+                m=P.mats()["wood"], coll=ctx.c_props)
+    A.hide(pst, 0, True)
+    A.hide(pst, F, False)
+    # hammer in her right hand, nailing (keeps going under the final close-up)
+    hammer = C.empty("hedda_hammer", loc=(0, 0, -300), coll=ctx.c_props)
+    C.box("hh_head", (0.11, 0.04, 0.04), loc=(0, 0, 0.12), m=C.mat("dark_metal"), parent=hammer, bevel=0.005)
+    C.cyl("hh_handle", 0.012, 0.2, loc=(0, 0, 0.03), m=P.mats()["wood"], parent=hammer)
+    th = tp2 + 10
+    hammer.keyframe_insert("location", frame=th - 1)
+    A.set_interp(hammer, "location", th - 1, "CONSTANT")
+    hammer.location = A.world_matrix_at(h.rig, th, "hand_R").translation
+    hammer.keyframe_insert("location", frame=th)
+    A.attach_to(hammer, h.rig, th, bone="hand_R")
+    h.pose(th, {"upper_arm_L": (75, 0, 25), "forearm_L": (30, 0, 0), "head": (5, 0, 8)})
+    fr = th + 6
+    k = 0
+    while fr < tb + C.sec(9.5):
+        h.pose(fr, {"upper_arm_R": (125, 0, 15), "forearm_R": (40, 0, 0), "hand_R": (-30, 0, 0)})
+        h.pose(fr + 5, {"upper_arm_R": (80, 0, 15), "forearm_R": (15, 0, 0), "hand_R": (20, 0, 0)},
+               interp="LINEAR")
+        A.event(fr + 5, "hammer_tiny")
+        fr += 12 if k % 4 != 3 else 30
+        k += 1
     # Funke on top of the drum, waving
     f.hold_all(tb - 1)
     crate = P.scrap_item("crate", HL(1.7, -3.7, 0.25), (0, 0, 15), 1.0, ctx.c_props)
@@ -322,7 +381,7 @@ def build(ctx, F):
     A.arc(f.rig, tb, tb + 14, f.pos_at(tb), dpos, height=0.4)
     A.event(tb + 14, "land_spring")
     f.pose(tb + 14, "happy")
-    tw = tb + C.sec(3.0)
+    tw = max(tb + C.sec(3.0), th + 40)
     END = tw + C.sec(7.0)
     B.set_end(ctx, 6, END)
     B.shot(ctx, 6, "S6_c4_wide", tb, [(tb, HL(3.4, -7.6, 1.7), HL(0.2, -2.4, 1.0)), (tw, HL(4.4, -9.6, 2.2), HL(0.2, -2.0, 1.1))], lens=28)

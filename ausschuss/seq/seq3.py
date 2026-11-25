@@ -150,7 +150,7 @@ def build(ctx, F):
     for a, ang in ((k1, -59), (k2, -119)):
         out_ = V((math.cos(math.radians(ang)), math.sin(math.radians(ang)), 0))
         kid_out[a] = out_
-        a.cut(F, Wv(0, 0) + out_ * 1.56, math.degrees(A.yaw_towards(out_)))
+        a.cut(F, Wv(0, 0) + out_ * 1.47, math.degrees(A.yaw_towards(out_)))
         a.pose(F, "stand")
         a.pose(F, "sit")
         a.bone_loc(F, "root", (0, 0, 0.2))
@@ -170,6 +170,15 @@ def build(ctx, F):
         root, head = CH.build_pigeon_drone(ctx.c_props, f"pigeon_v{i}", pt, yaw=math.radians(170 + i * 10))
         CH.animate_pigeon(head, F, T(30), seed=10 + i)
         pigeons.append((root, head))
+    # laundry and awnings stir in the wind
+    for i, cl in enumerate(vl["laundry"]):
+        cl.keyframe_insert("rotation_euler", frame=F)
+        for ax, amp in ((0, 0.12), (2, 0.05)):
+            fc = cl.animation_data.action.fcurves.find("rotation_euler", index=ax)
+            md = fc.modifiers.new("NOISE")
+            md.scale = 18 + (i % 5) * 3
+            md.strength = amp
+            md.phase = i * 7.3
     # hologram flicker
     hs = C.emit_socket(vl["holo_m"])
     rnd = C.R.__class__(8)

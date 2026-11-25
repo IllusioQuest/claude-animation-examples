@@ -1,6 +1,6 @@
 {
 "fps": 24,
-"end": 6442,
+"end": 6500,
 "bounds": {
 "1": [
 1,
@@ -24,7 +24,7 @@
 ],
 "6": [
 5575,
-6442
+6500
 ]
 },
 "events": [
@@ -3786,17 +3786,82 @@
 "seq": 6
 },
 {
-"frame": 6216,
+"frame": 6204,
+"kind": "step",
+"who": "Hedda",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 6222,
+"kind": "step",
+"who": "Hedda",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 6240,
+"kind": "step",
+"who": "Hedda",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 6261,
+"kind": "step",
+"who": "Hedda",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 6282,
+"kind": "step",
+"who": "Hedda",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 6290,
+"kind": "metal_scrape",
+"seq": 6
+},
+{
+"frame": 6303,
 "kind": "hammer_tiny",
 "seq": 6
 },
 {
-"frame": 6232,
+"frame": 6315,
 "kind": "hammer_tiny",
 "seq": 6
 },
 {
-"frame": 6248,
+"frame": 6327,
+"kind": "hammer_tiny",
+"seq": 6
+},
+{
+"frame": 6339,
+"kind": "hammer_tiny",
+"seq": 6
+},
+{
+"frame": 6369,
+"kind": "hammer_tiny",
+"seq": 6
+},
+{
+"frame": 6381,
+"kind": "hammer_tiny",
+"seq": 6
+},
+{
+"frame": 6393,
+"kind": "hammer_tiny",
+"seq": 6
+},
+{
+"frame": 6405,
 "kind": "hammer_tiny",
 "seq": 6
 },
@@ -3806,22 +3871,22 @@
 "seq": 6
 },
 {
-"frame": 6308,
+"frame": 6366,
 "kind": "wink",
 "seq": 6
 },
 {
-"frame": 6325,
+"frame": 6383,
 "kind": "glint",
 "seq": 6
 },
 {
-"frame": 6334,
+"frame": 6392,
 "kind": "iris_out",
 "seq": 6
 },
 {
-"frame": 6392,
+"frame": 6450,
 "kind": "final_chord",
 "seq": 6
 }
