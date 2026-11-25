@@ -228,6 +228,9 @@ def main():
     handheld_pass(ctx)
     import life
     life.apply(ctx, total_end)
+    import cloth
+    bpy.ops.wm.save_as_mainfile(filepath=out, compress=True)  # the cloth cache lives next to the saved file
+    cloth.apply(ctx, total_end)
     print("life pass", round(time.time() - t0, 1))
     # FILM scene with sequencer
     film = bpy.data.scenes.new("FILM")

@@ -16,6 +16,12 @@ lib/sets.py       Render-/World-Setup, Nebel, Schrottfeld + Hütte
 lib/sets2.py      Werkstatt, Dorfplatz, Depot + Halle
 lib/life.py       Lebendigkeit nach der Animation: Atmen/Kopfdrift (Noise-Modifier), Auto-Blinzeln,
                   Antennen-/Einrad-Wackeln, Staubpartikel, Vögel über dem Sonnenaufgang
+lib/humanparts.py modellierte Köpfe, Augen mit Iris/Lid, Hände, Stiefel, Mantel-Details, Schal, Skinning
+lib/junk.py       detaillierte Schrott-Vorlagen (Fässer, Reifen, Kisten, Fernseher, Waschmaschine …)
+lib/dressing.py   Set-Dressing: Hüttenverkleidung, Details, Pfützen, Gras, Steine, Wracks, animierte Details
+lib/relief.py     unebener Boden außerhalb der gemessenen Laufwege
+lib/pov.py        Scanner-Sicht des Erfassers (Kamera, roter Look, HUD)
+lib/cloth.py      Stoff-Simulation von Heddas Mantel (mit Fallback rund um Schnitte)
 seq/seq1..6.py    die sechs Sequenzen (Animation + Kameras + Licht pro Szene)
 sound/            make_sound.py (Score als MIDI → fluidsynth, Foley synthetisch, Mix, Mastering)
 tools/            Vorschau-Render, Stills, Kontaktbögen
@@ -37,6 +43,11 @@ python3 sound/make_sound.py
 
 `build.py --final` stellt die Szenen direkt auf finale Qualität: 100 % Auflösung, 64 Samples,
 volle Shadow-Maps und Raytracing.
+
+Heddas Mantel ist eine echte Stoff-Simulation (`lib/cloth.py`). Der Build backt sie über den ganzen
+Film in `blendcache_ausschuss/` neben der .blend (nicht im Repo). Wer nur die .blend kopiert, muss den
+Ordner mitnehmen oder den Build einmal laufen lassen. Rund um Schnitte und beim Sitzen zeigt der Film
+automatisch den mitverformten (geskinnten) Mantel, weil eine Simulation keine Teleports übersteht.
 
 ## Hochwertig rendern
 
