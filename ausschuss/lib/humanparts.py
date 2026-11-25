@@ -201,3 +201,64 @@ def scarf(n, h, hc, m, coll):
                                        loc=V(((dx - 0.025 + k * 0.017) * h, -0.142 * h - 0.03 * h * math.sin(math.radians(14)),
                                               1.09 * h)), rot=(-14, 0, rz), m=m, coll=coll, verts=5)))
     return out
+
+
+def dense_profile(prof, n=14):
+    """Resample a (r, z) lathe profile to n points (bottom -> top) so it can bend smoothly."""
+    out = []
+    for i in range(n):
+        t = i / (n - 1) * (len(prof) - 1)
+        k = min(int(t), len(prof) - 2)
+        u = t - k
+        r = prof[k][0] * (1 - u) + prof[k + 1][0] * u
+        z = prof[k][1] * (1 - u) + prof[k + 1][1] * u
+        out.append((r, z))
+    return out
+
+
+def coat_weight(p, h):
+    """Skin weights of a coat point (rest pose, world units): hips above the hip joint, the thighs below,
+    the front following the legs more than the back; left/right blended across the middle."""
+    z_hip, z_knee = 0.9 * h, 0.5 * h
+    t = min(1.0, max(0.0, (z_hip - p.z) / (z_hip - z_knee)))
+    t = t ** 0.9
+    r = max(1e-4, math.hypot(p.x, p.y))
+    front = (1 - p.y / r) / 2  # 1 at the front (-y), 0 at the back
+    wt = t * (0.55 + 0.45 * front)
+    xl = min(1.0, max(0.0, (p.x + 0.07 * h) / (0.14 * h)))
+    xl = xl * xl * (3 - 2 * xl)
+    return {"hips": 1.0 - wt, "thigh_L": wt * xl, "thigh_R": wt * (1 - xl)}
+
+
+def skin(ob, rig, h):
+    """Bind a rest-pose mesh to the rig with coat weights (Armature modifier, smooth deform)."""
+    from mathutils import Matrix
+    bpy.context.view_layer.update()
+    me = ob.data
+    me.transform(ob.matrix_world)  # bake transform: weights and binding in rig rest space (rig at origin)
+    ob.matrix_world = Matrix.Identity(4)
+    groups = {n: ob.vertex_groups.new(name=n) for n in ("hips", "thigh_L", "thigh_R")}
+    for v in me.vertices:
+        for n, w in coat_weight(v.co, h).items():
+            if w > 1e-4:
+                groups[n].add([v.index], w, "REPLACE")
+    ob.parent = rig
+    ob.matrix_parent_inverse = rig.matrix_world.inverted()
+    # armature first, then the existing modifiers (subsurf/solidify) again after it
+    keep = []
+    for m_ in list(ob.modifiers):
+        spec = {"type": m_.type, "name": m_.name}
+        for a in ("levels", "render_levels", "thickness", "offset", "width", "segments", "limit_method"):
+            if hasattr(m_, a):
+                spec[a] = getattr(m_, a)
+        keep.append(spec)
+        ob.modifiers.remove(m_)
+    md = ob.modifiers.new("arm", "ARMATURE")
+    md.object = rig
+    md.use_vertex_groups = True
+    for spec in keep:
+        m_ = ob.modifiers.new(spec["name"], spec["type"])
+        for a in ("levels", "render_levels", "thickness", "offset", "width", "segments", "limit_method"):
+            if a in spec:
+                setattr(m_, a, spec[a])
+    return ob

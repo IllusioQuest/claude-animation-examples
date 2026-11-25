@@ -234,8 +234,9 @@ def village(vil, coll, O):
         C.cyl(f"v_cartw{sx}", 0.3, 0.05, loc=(sx, 0.1, 0.3), rot=(0, 90, 0), m=m["wood"], parent=cart, coll=coll)
     C.cyl("v_carth", 0.025, 1.2, loc=(0, -0.9, 0.55), rot=(80, 0, 0), m=m["wood"], parent=cart, coll=coll)
     for k in range(3):
-        P.scrap_item(["tv", "gear", "drum"][k], w((7.5, -8.0, 0)), (0, 0, k * 70), 0.35, coll).location = \
-            cart.matrix_world @ V((-0.35 + k * 0.35, 0, 0.82))
+        it = P.scrap_item(["tv", "gear", "drum"][k], (0, 0, 0), (0, 0, k * 70), 0.35, coll)
+        it.parent = cart  # (cart.matrix_world is not evaluated yet – parent instead of baking a world position)
+        it.location = (-0.35 + k * 0.35, 0, 0.82)
     # sleeping cat on a roof edge
     cat = C.empty("v_cat", loc=w((-7.6, 8.6, 2.75)), rot=(0, 0, 200), coll=coll)
     fur = M("cat_fur", (0.55, 0.35, 0.18), rough=0.9, dirt=0.2)
@@ -496,7 +497,7 @@ def depot(dep, coll, O, H):
             pts.append(w((x0 + t * (x1 - x0), math.sin(a) * 0.18, 3.15 + math.cos(a) * 0.18)))
         C.curve_tube(f"d_barbed{seg}", pts, radius=0.006, m=bw, coll=coll, res=2, bevel_res=1)
     # puddles in front of the fence reflecting the floodlights
-    puddle = M("puddle_night", (0.25, 0.27, 0.3), metal=0.2, rough=0.2, dirt=0.0, bump=0)
+    puddle = M("puddle_night", (0.34, 0.35, 0.38), metal=0.0, rough=0.22, dirt=0.0, bump=0, spec=0.9)
     for i, (x, y, r) in enumerate(((-9, -4, 1.4), (-1, -6.5, 1.0), (6, -3, 1.6), (-16, -7, 1.2))):
         C.cyl(f"d_puddle{i}", r, 0.004, loc=w((x, y, 0.02)), m=puddle, coll=coll, verts=20).scale = (1, 0.6, 1)
     # CCTV cameras on the wall pillars (they pan; see animate)

@@ -222,6 +222,8 @@ def main():
         print(f"seq{i}", F, F_end, round(time.time() - t0, 1))
         F = F_end + 1
     total_end = F - 1
+    import relief
+    relief.apply(ctx)
     dressing.animate(ctx)
     handheld_pass(ctx)
     import life

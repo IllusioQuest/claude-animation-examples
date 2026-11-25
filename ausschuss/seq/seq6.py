@@ -354,6 +354,7 @@ def build(ctx, F):
             a.pose(tw_ + 8, {"upper_arm_L": (60, 0, 30), "upper_arm_R": (60, 0, 30)})
     A.event(tm + 60, "laugh")
     ctx.ground_skip.append(("Hedda", tsit, tm + 82))
+    h.coat_seated(tsit + 7, tm + 80)
     # she picks up Funke's sheet, carries it to the slab, stands it up and nails it to a post:
     # the first wall of the new hut
     yaw_in = math.degrees(A.yaw_towards(HL(0, 1) - HL(0, 0)))  # facing the slab

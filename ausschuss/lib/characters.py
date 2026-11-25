@@ -83,6 +83,28 @@ class Human(A.Actor):
             self.bone_scale(f, "eye_" + s, (d[0], d[1], 0.08))
             self.bone_scale(f + 3, "eye_" + s, d)
 
+    LONG_COAT = ("_skirt", "_hem", "_pocket1", "_pocket-1", "_flap1", "_flap-1", "_front_seam", "_patch0", "_patch1")
+    SEATED_COAT = ("_lapL", "_lapR", "_seatback")
+
+    def _coat_parts(self, suffixes):
+        return [c for c in self.rig.children if c.name.endswith(suffixes)]
+
+    def coat_seated(self, f0, f1):
+        """Swap the long rigid coat for the seated coat between f0 and f1."""
+        long_, seat = self._coat_parts(self.LONG_COAT), self._coat_parts(self.SEATED_COAT)
+        if not seat:
+            return
+        for o in long_:
+            A.hide(o, f0, True)
+            A.hide(o, f1, False)
+        for o in seat:
+            A.hide(o, f0, False)
+            A.hide(o, f1, True)
+
+    def coat_init(self):
+        for o in self._coat_parts(self.SEATED_COAT):
+            A.hide(o, 0, True)
+
     def dance_cycle(self, f, phase):
         tw = 2 * math.pi * phase
         s1 = math.sin(tw)
@@ -311,28 +333,46 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
     tor = C.lathe(n("torso"), [(r * h, z * h) for r, z in torso_prof], m=coat, coll=coll)
     tor.scale = (1, 0.8, 1)
     P.add("spine", tor)
+    skinned = []  # coat skirts deform with hips and thighs (Armature modifier), like cloth on a body
     if style in ("hedda", "oldman", "man"):
         skirt_prof = [(0.33 * g, 0.38), (0.29 * g, 0.55), (0.23 * g, 0.82), (0.195 * g, 1.02)]
         if style != "hedda":
             skirt_prof = [(0.22 * g, 0.72), (0.2 * g, 0.85), (0.19 * g, 1.02)]
-        sk = C.lathe(n("skirt"), [(r * h, z * h) for r, z in skirt_prof], m=coat, coll=coll)
+        sk = C.lathe(n("skirt"), HP.dense_profile([(r * h, z * h) for r, z in skirt_prof]), m=coat, coll=coll, seg=40)
         sk.scale = (1, 0.85, 1)
-        P.add("hips", sk)
+        sk.modifiers.new("solid", "SOLIDIFY").thickness = 0.008 * h
+        skinned.append(sk)
     elif style in ("woman",):
-        sk = C.lathe(n("skirt"), [(r * h, z * h) for r, z in [(0.3, 0.42), (0.25, 0.7), (0.19, 1.02)]],
-                     m=coat2, coll=coll)
+        sk = C.lathe(n("skirt"), HP.dense_profile([(r * h, z * h) for r, z in [(0.3, 0.42), (0.25, 0.7), (0.19, 1.02)]]),
+                     m=coat2, coll=coll, seg=40)
         sk.scale = (1, 0.85, 1)
-        P.add("hips", sk)
+        sk.modifiers.new("solid", "SOLIDIFY").thickness = 0.008 * h
+        skinned.append(sk)
     else:
         sk = C.lathe(n("skirt"), [(r * h, z * h) for r, z in [(0.17, 0.8), (0.18, 0.9), (0.18, 1.02)]],
                      m=trou, coll=coll)
         P.add("hips", sk)
     P.add("chest", C.torus(n("collar"), 0.1 * h, 0.035 * h, loc=S((0, 0.005, 1.39)), m=coat, coll=coll))
+    if style == "hedda":
+        # seated coat: panels over the thighs and a short back skirt, swapped in while she sits
+        # (a skinned long skirt flares into a disc when the thighs swing up by 90 degrees)
+        for s, sx in (("L", 1), ("R", -1)):
+            lap = C.box(n("lap" + s), (0.165 * h, 0.05 * h, 0.4 * h), loc=S((0.095 * sx, -0.035, 0.68)), m=coat,
+                        bevel=0.02 * h, coll=coll)
+            C.subsurf(lap, 1)
+            P.add("thigh_" + s, lap)
+        sb = C.lathe(n("seatback"), [(r * h, z * h) for r, z in [(0.25 * g, 0.74), (0.22 * g, 0.86), (0.19 * g, 1.0)]],
+                     m=coat, coll=coll)
+        sb.scale = (1, 0.82, 1)
+        P.add("hips", sb)
     if style in ("hedda", "oldman", "man", "woman"):
         long_coat = style == "hedda"
         for bone, o in HP.coat_details(n, h, g, coat, trim, coll, long_coat=long_coat,
                                        hem_z=0.385, hem_r=0.325):
-            P.add(bone, o)
+            if bone == "hips" and long_coat:
+                skinned.append(o)
+            else:
+                P.add(bone, o)
     belt = M("belt_m", (0.14, 0.09, 0.05), rough=0.6, dirt=0.3)
     bt = C.torus(n("belt"), 0.19 * h * g, 0.022 * h, loc=S((0, 0, 0.99)), m=belt, coll=coll)
     bt.scale = (1, 0.82, 0.7)
@@ -349,7 +389,7 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
             bone = "hips" if pz < 1.0 else "spine"
             pm = M(n(f"patch{i}"), pc, rough=0.95, dirt=0.4, bump=0.4, scale=10)
             ang = math.asin(max(-1, min(1, px / rr)))
-            P.add(bone, C.box(n(f"patch{i}"), S((0.09, 0.012, 0.08)),
+            (skinned.append if bone == "hips" else (lambda o, b=bone: P.add(b, o)))(C.box(n(f"patch{i}"), S((0.09, 0.012, 0.08)),
                               loc=(px * h, -math.cos(ang) * rr * h * 0.83, pz * h), rot=(rnd.uniform(-8, 8) - 6, 0,
                                                                                           math.degrees(ang)),
                               m=pm, bevel=0.004, coll=coll))
@@ -383,7 +423,10 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
         for o in HP.boot(n, s, sx, h, boots, coll):
             P.add("foot_" + s, o)
     P.attach_all(rig)
+    for o in skinned:
+        HP.skin(o, rig, h)
     act = Human(rig, h)
+    act.coat_init()
     gpv = bpy.data.objects.get(n("goggle_pivot"))
     if gpv:
         act.extra["goggles"] = gpv

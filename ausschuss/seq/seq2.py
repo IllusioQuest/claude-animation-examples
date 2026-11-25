@@ -554,6 +554,7 @@ def build(ctx, F):
     # ------------------------------------------------------------------ 2.7 later: both asleep
     ts = t6c_end + 2
     ctx.ground_skip.append(("Hedda", ts, ts + C.sec(6)))
+    h.coat_seated(ts, ts + C.sec(6))
     END = ts + C.sec(5.5)
     B.set_end(ctx, 2, END)
     chair = ws["chair"]
