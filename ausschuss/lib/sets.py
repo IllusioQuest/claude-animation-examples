@@ -228,7 +228,7 @@ def build_hut(coll, loc, yaw=0):
     sheet("hut_front_high", 1.6, 0.6, (0.6, -D / 2, 1.95), (0, 0, 0), cols[1])
     sheet("hut_front2", 0.8, H + 0.3, (1.8, -D / 2, 0), (0, 0, 0), cols[3])
     # window: warm glowing glass with frame
-    warm = C.emission("hut_window_glow", (1.0, 0.62, 0.28), 4.0)
+    warm = C.emission("hut_window_glow", (1.0, 0.62, 0.28), 10.0)
     win = C.box("hut_window", (1.5, 0.04, 1.0), loc=(0.6, -D / 2 + 0.06, 1.42), m=warm, parent=root, bevel=0,
                 coll=coll)
     parts.append(win)
@@ -300,7 +300,7 @@ def build_hut(coll, loc, yaw=0):
                          (90 if k == "tire" else 0, 0, rz), 1.0, coll)
         o.parent = root
         parts.append(o)
-    lamp = P.point_light("hut_inner_light", (0.6, 0.4, 1.8), 120, (1.0, 0.6, 0.3), 0.3, coll=coll)
+    lamp = P.point_light("hut_inner_light", (0.6, -2.4, 1.8), 120, (1.0, 0.6, 0.3), 0.3, coll=coll)
     lamp.parent = root
     parts.append(lamp)
     # flattened remains (for sequence 6) – hidden by default

@@ -119,6 +119,11 @@ def new_seq_scene(ctx, idx, name, f0, f1, world, colls):
     return sc, lights, cams
 
 
+def set_end(ctx, idx, f1):
+    ctx.seq[idx]["f1"] = f1
+    ctx.seq[idx]["scene"].frame_end = f1
+
+
 def shot(ctx, idx, name, f0, keys, lens=35, dof=None):
     """keys: list of (frame, loc, target[, lens]). Adds marker binding at f0."""
     s = ctx.seq[idx]

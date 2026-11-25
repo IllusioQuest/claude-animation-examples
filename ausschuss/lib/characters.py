@@ -83,7 +83,26 @@ class Human(A.Actor):
             self.bone_scale(f, "eye_" + s, (d[0], d[1], 0.08))
             self.bone_scale(f + 3, "eye_" + s, d)
 
+    def dance_cycle(self, f, phase):
+        tw = 2 * math.pi * phase
+        s1 = math.sin(tw)
+        c2 = math.cos(2 * tw)
+        up = 1 if s1 > 0 else -1
+        pose = {
+            "hips": (0, 0, 12 * s1), "spine": (-4, 10 * s1, 6 * s1), "chest": (-4, -14 * s1, 0),
+            "head": (-6, 12 * s1, -10 * s1),
+            "upper_arm_L": (90 + 50 * s1, 0, 50 - 20 * s1), "upper_arm_R": (90 - 50 * s1, 0, 50 + 20 * s1),
+            "forearm_L": (50 + 20 * s1, 0, 0), "forearm_R": (50 - 20 * s1, 0, 0),
+            "thigh_L": (14 * max(0, s1) + 6, 0, 4), "thigh_R": (14 * max(0, -s1) + 6, 0, 4),
+            "shin_L": (-30 * max(0, s1) - 10 * (1 - c2) / 2, 0, 0), "shin_R": (-30 * max(0, -s1) - 10 * (1 - c2) / 2, 0, 0),
+            "foot_L": (8 * max(0, s1), 0, 0), "foot_R": (8 * max(0, -s1), 0, 0),
+        }
+        self.pose(f, pose)
+        self.bone_loc(f, "root", (0, 0, (0.03 * (1 + c2) / 2 - 0.03) / self.h))
+
     def walk_cycle(self, f, phase, style):
+        if style == "dance":
+            return self.dance_cycle(f, phase)
         st = {"walk": (24, 40, 0.7, 4, 0.02, 0), "run": (45, 85, 1.0, 14, 0.05, 1),
               "sneak": (30, 70, 0.3, 18, 0.0, 2), "shuffle": (14, 25, 0.4, 8, 0.01, 0),
               "dance": (20, 50, 1.2, -4, 0.04, 3)}[style]

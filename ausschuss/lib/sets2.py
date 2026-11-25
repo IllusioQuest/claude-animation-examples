@@ -386,6 +386,7 @@ def build_village(coll):
     stalls = []
     for i, (x, y, yaw, col) in enumerate(((-5, 4, 200, (0.6, 0.15, 0.1)), (5, 5, 160, (0.15, 0.35, 0.55)),
                                           (-6, -3, 290, (0.7, 0.55, 0.1)), (6, -3.5, 70, (0.25, 0.45, 0.25)))):
+        yaw = math.degrees(math.atan2(-x, y))  # front (-Y local) faces the square centre
         st = C.empty(f"v_stall{i}", loc=w((x, y, 0)), rot=(0, 0, yaw), coll=coll)
         for sx in (-1, 1):
             for sy in (-1, 1):
