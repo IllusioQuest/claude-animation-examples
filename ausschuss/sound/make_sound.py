@@ -627,18 +627,37 @@ def ambience(mix):
     # SEQ1 dawn wind + distant city hum
     a, b = seq_t(1)
     mix.add(a, X.wind(b - a, 1.0, 1), 0.8)
+    rng1 = np.random.default_rng(1)
+    t = a + 3.0
+    while t < b:
+        mix.add(t, X.drone_chirp(), 0.4, pan=rng1.uniform(-0.6, 0.6))
+        t += rng1.uniform(4, 9)
     mix.add(a, X.hum(b - a, 55, 0.03), 1.0)
     # SEQ2: outside wind first 4 s, then interior generator hum until it dies, again after roar
     a, b = seq_t(2)
     mix.add(a, X.wind(4.5, 0.8, 2), 0.7)
+    mix.add(a, X.crickets(4.5), 0.8)
+    t_sl = first("snore", 2)
+    if t_sl:
+        mix.add(t_sl - 1.0, X.crickets(b - t_sl + 1.0), 0.4)
     t_die = first("gen_die", 2, b)
     t_roar = first("gen_roar", 2, b)
     mix.add(a + 4.0, X.gen_engine(max(0.1, t_die - a - 4.0)), 0.25)
     mix.add(t_roar + 1.4, X.gen_engine(max(0.1, b - t_roar - 1.4)), 0.25)
     mix.add(a + 4.0, X.crackle(b - a - 4.0, 8) * 0.5, 0.4)
-    # SEQ3 village: light wind
+    # SEQ3 village: light wind, tin chickens, drone chirps
     a, b = seq_t(3)
     mix.add(a, X.wind(b - a, 0.6, 3), 0.7)
+    rng = np.random.default_rng(3)
+    t = a + 1.0
+    t_stop = first("music_radio_stop", 3, b)
+    while t < t_stop:
+        mix.add(t, X.cluck(), 0.7, pan=rng.uniform(-0.7, 0.7))
+        t += rng.uniform(1.5, 4.0)
+    t = a + 2.0
+    while t < b:
+        mix.add(t, X.drone_chirp(), 0.6, pan=rng.uniform(-0.5, 0.5))
+        t += rng.uniform(3, 7)
     # SEQ4 wind
     a, b = seq_t(4)
     mix.add(a, X.wind(b - a, 0.8, 4), 0.7)

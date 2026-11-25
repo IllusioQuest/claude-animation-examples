@@ -399,3 +399,28 @@ def meow():
     x = signal.sawtooth(2 * np.pi * np.cumsum(f) / SR)
     out = bp(x, 700, 2500) * np.sin(np.pi * t / 0.7)
     return norm(out, 0.25)
+
+
+def cluck():
+    """Tin-chicken cluck: short metallic formant blips."""
+    out = []
+    for k in range(_rng.integers(2, 5)):
+        t = t_(0.07)
+        f = _rng.uniform(500, 700)
+        x = signal.sawtooth(2 * np.pi * f * t) * np.exp(-t / 0.03)
+        x = bp(x, 900, 3000) + 0.3 * modal([2400], [0.02], [1], 0.07)
+        out.append(x)
+        out.append(np.zeros(int(_rng.uniform(0.04, 0.1) * SR)))
+    return norm(np.concatenate(out), 0.25)
+
+
+def crickets(dur):
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    carrier = np.sin(2 * np.pi * 4700 * t)
+    gate = (np.sin(2 * np.pi * 30 * t) > 0.3) * (np.sin(2 * np.pi * 1.1 * t) > 0.2)
+    return norm(carrier * gate, 0.05)
+
+
+def drone_chirp():
+    return norm(sine_glide(2200, 3200, 0.06) * env(int(0.06 * SR), 0.002, 0.03), 0.12)
