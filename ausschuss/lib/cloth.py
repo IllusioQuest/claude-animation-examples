@@ -60,7 +60,9 @@ def apply(ctx, f_end):
     ztop, zbot = max(zs), min(zs)
     for v in cs.data.vertices:
         t = (v.co.z - zbot) / (ztop - zbot)
-        vg.add([v.index], max(0.0, min(1.0, (t - 0.72) / 0.2)), "REPLACE")
+        # waist fully pinned; the rest gets a weak goal towards the skinned shape, so the coat can
+        # swing and sway but never creeps up the legs over thousands of frames
+        vg.add([v.index], max(0.1, min(1.0, (t - 0.72) / 0.2)), "REPLACE")
     cl = cs.modifiers.new("cloth", "CLOTH")
     s = cl.settings
     s.quality = 6
@@ -78,12 +80,12 @@ def apply(ctx, f_end):
     cl.point_cache.name = "hedda_coat"
     cl.point_cache.frame_start = 1
     cl.point_cache.frame_end = f_end
-    for n in ("thighL", "thighR", "shinL", "shinR", "kneeL", "kneeR", "bootL", "bootR", "bootshaftL", "bootshaftR",
-              "lapL", "lapR"):
+    for n in ("thighL", "thighR", "shinL", "shinR", "kneeL", "kneeR"):
         o = bpy.data.objects.get("Hedda_" + n)
         if o and not any(m.type == "COLLISION" for m in o.modifiers):
             o.modifiers.new("coll", "COLLISION")
             o.collision.thickness_outer = 0.01
+            o.collision.cloth_friction = 0.0  # the hem slides off the knees instead of riding up
     # ---- details glued to the cloth (bound in the rest pose, where skinned and cloth coincide)
     dcopies = []
     for suf in DETAILS:
