@@ -154,7 +154,7 @@ def build(ctx, F):
 
     # ------------------------------------------------------------------ 6.1 arrival
     a0 = HL(2.0, -9.0)
-    a1 = HL(0.5, -3.2)
+    a1 = HL(0.9, -3.4)
     h.cut(F, a0, 0)
     h.pose(F, "stand")
     h.pose(F, "carry")
@@ -181,7 +181,7 @@ def build(ctx, F):
     tset = hw + 40
     h.pose(tset, "bend_down")
     A.detach(f.rig, con, tset + 6)
-    fpos = HL(1.1, -3.0)
+    fpos = HL(1.6, -3.1)
     f.place(tset + 12, fpos, h.yaw_at(tset))
     f.pose(tset + 12, "stand")
     # Hedda sits down on a drum by the slab
@@ -280,7 +280,7 @@ def build(ctx, F):
         mc.location = (0, 0, -300)
         mc.keyframe_insert("location", frame=F)
         off = V(((i % 2) * 1.1 - 0.55, 0, 0))
-        trot(mc, tm + i * 20, [p + off for p in road] + [stops[i]], speed=1.4, hop=0.06 if i != 0 else 0.02)
+        trot(mc, tm + i * 28, [p + off for p in road] + [stops[i]], speed=1.4, hop=0.06 if i != 0 else 0.02)
     A.event(tm, "jukebox_soft", beat=12)
     h.face(tm + 50, "surprised")
     A.look(h, tm + 50, road[1] + V((0, 0, 0.5)))

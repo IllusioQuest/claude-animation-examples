@@ -14,6 +14,8 @@ lib/characters.py Hedda, Funke, der Erfasser, Bello, Dorfbewohner, Hühner, Droh
 lib/props.py      Schrott-Bibliothek, Haufen, Strommasten, Stadt, Laster, Rauch
 lib/sets.py       Render-/World-Setup, Nebel, Schrottfeld + Hütte
 lib/sets2.py      Werkstatt, Dorfplatz, Depot + Halle
+lib/life.py       Lebendigkeit nach der Animation: Atmen/Kopfdrift (Noise-Modifier), Auto-Blinzeln,
+                  Antennen-/Einrad-Wackeln, Staubpartikel, Vögel über dem Sonnenaufgang
 seq/seq1..6.py    die sechs Sequenzen (Animation + Kameras + Licht pro Szene)
 sound/            make_sound.py (Score als MIDI → fluidsynth, Foley synthetisch, Mix, Mastering)
 tools/            Vorschau-Render, Stills, Kontaktbögen
@@ -60,3 +62,24 @@ tools/assemble_preview.sh
 
 Jedes 2. Frame wird gerendert (12 fps); `assemble_preview.sh` legt den Soundtrack darunter
 → `preview/ausschuss_preview.mp4`.
+
+## Prüfwerkzeuge
+
+```bash
+blender -b ausschuss.blend -S S4_Chase -P tools/collide.py -- 8 preview/coll/S4.json
+```
+
+`tools/collide.py` prüft jedes 8. Frame einer Szene auf Durchdringungen. Bewegte Objekte bzw.
+Gruppen (Rig samt angehängter Teile) werden per BVH gegen alles andere getestet; ausgegeben wird
+die Eindringtiefe je Paar und Framebereich. Gewollte Kontakte (Figur im Fass, Netz, Käfig)
+tauchen dort auch auf und müssen von Hand bewertet werden.
+
+```bash
+blender -b ausschuss.blend -P tools/shotframes.py -- preview/shotframes.txt
+```
+
+```bash
+tools/shots.sh
+```
+
+Rendert je Kameraeinstellung drei Stichproben-Frames und legt Kontaktbögen nach `preview/shots/`.

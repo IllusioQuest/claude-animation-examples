@@ -151,7 +151,7 @@ def build(ctx, F):
     for a, ang in ((k1, -59), (k2, -119)):
         out_ = V((math.cos(math.radians(ang)), math.sin(math.radians(ang)), 0))
         kid_out[a] = out_
-        a.cut(F, Wv(0, 0) + out_ * 1.42, math.degrees(A.yaw_towards(out_)))
+        a.cut(F, Wv(0, 0) + out_ * 1.56, math.degrees(A.yaw_towards(out_)))
         a.pose(F, "stand")
         a.pose(F, "sit")
         a.bone_loc(F, "root", (0, 0, 0.2))

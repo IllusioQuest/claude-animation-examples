@@ -668,9 +668,17 @@ def ambience(mix):
     mix.add(a + 5.0, X.hum(max(0.1, t_jam - a - 5.0), 48, 0.08), 1.0)
     mix.add(a + 5.0, X.engine(max(0.5, t_jam - a - 5.0), 22) * 0.5, 0.5)
     mix.add(t_jam, X.hum(max(0.1, b - t_jam), 48, 0.05), 1.0)
-    # SEQ6 dawn wind
+    # SEQ6 dawn wind – and, for the first time in the film, real birds (sparse, then more and more)
     a, b = seq_t(6)
     mix.add(a, X.wind(b - a, 0.7, 6), 0.7)
+    rng6 = np.random.default_rng(6)
+    t = a + 2.5
+    k = 0
+    while t < b - 2.0:
+        prog = (t - a) / (b - a)
+        mix.add(t, X.birdsong(60 + k), 0.25 + 0.35 * prog, pan=rng6.uniform(-0.8, 0.8))
+        t += rng6.uniform(5.0, 9.0) * (1.0 - 0.7 * prog)
+        k += 1
 
 
 def radio_filter(st, strength=1.0):

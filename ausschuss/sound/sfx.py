@@ -424,3 +424,24 @@ def crickets(dur):
 
 def drone_chirp():
     return norm(sine_glide(2200, 3200, 0.06) * env(int(0.06 * SR), 0.002, 0.03), 0.12)
+
+
+def birdsong(seed=0):
+    """A real (organic) bird phrase: a few warbled FM syllables, slightly irregular."""
+    r = np.random.default_rng(seed)
+    out = []
+    base = r.uniform(2600, 4200)
+    for k in range(r.integers(3, 7)):
+        d = r.uniform(0.05, 0.14)
+        n = int(d * SR)
+        t = np.arange(n) / SR
+        f0 = base * r.uniform(0.85, 1.2)
+        sweep = r.uniform(-0.35, 0.35)
+        vib = r.uniform(25, 60)
+        f = f0 * (1 + sweep * t / d) * (1 + 0.04 * np.sin(2 * np.pi * vib * t))
+        ph = 2 * np.pi * np.cumsum(f) / SR
+        x = np.sin(ph) + 0.15 * np.sin(2 * ph)
+        x *= np.sin(np.pi * np.arange(n) / n) ** 1.5
+        out.append(x)
+        out.append(np.zeros(int(r.uniform(0.02, 0.09) * SR)))
+    return norm(np.concatenate(out), 0.16)

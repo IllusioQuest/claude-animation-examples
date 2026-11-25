@@ -195,6 +195,9 @@ def main():
         print(f"seq{i}", F, F_end, round(time.time() - t0, 1))
         F = F_end + 1
     total_end = F - 1
+    import life
+    life.apply(ctx, total_end)
+    print("life pass", round(time.time() - t0, 1))
     # FILM scene with sequencer
     film = bpy.data.scenes.new("FILM")
     film.frame_start = 1

@@ -1,6 +1,6 @@
 {
 "fps": 24,
-"end": 6400,
+"end": 6425,
 "bounds": {
 "1": [
 1,
@@ -24,7 +24,7 @@
 ],
 "6": [
 5552,
-6400
+6425
 ]
 },
 "events": [
@@ -3703,133 +3703,140 @@
 "seq": 6
 },
 {
-"frame": 5579,
+"frame": 5577,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5591,
+"frame": 5589,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5603,
+"frame": 5601,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5616,
+"frame": 5612,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5628,
+"frame": 5624,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5640,
+"frame": 5636,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5652,
+"frame": 5648,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5665,
+"frame": 5659,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5677,
+"frame": 5671,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5689,
+"frame": 5683,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5702,
+"frame": 5694,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5714,
+"frame": 5706,
 "kind": "step",
 "who": "Hedda",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5774,
+"frame": 5766,
 "kind": "step",
 "who": "Hedda",
 "style": "shuffle",
 "seq": 6
 },
 {
-"frame": 5788,
+"frame": 5780,
 "kind": "step",
 "who": "Hedda",
 "style": "shuffle",
 "seq": 6
 },
 {
-"frame": 5801,
+"frame": 5795,
 "kind": "step",
 "who": "Hedda",
 "style": "shuffle",
 "seq": 6
 },
 {
-"frame": 5815,
+"frame": 5809,
 "kind": "step",
 "who": "Hedda",
 "style": "shuffle",
 "seq": 6
 },
 {
-"frame": 5828,
+"frame": 5823,
 "kind": "step",
 "who": "Hedda",
 "style": "shuffle",
 "seq": 6
 },
 {
-"frame": 5842,
+"frame": 5838,
 "kind": "step",
 "who": "Hedda",
 "style": "shuffle",
 "seq": 6
 },
 {
-"frame": 5860,
+"frame": 5852,
+"kind": "step",
+"who": "Hedda",
+"style": "shuffle",
+"seq": 6
+},
+{
+"frame": 5870,
 "kind": "sigh",
 "seq": 6
 },
@@ -3840,28 +3847,7 @@
 "seq": 6
 },
 {
-"frame": 5870,
-"kind": "step",
-"who": "Funke",
-"style": "walk",
-"seq": 6
-},
-{
-"frame": 5874,
-"kind": "step",
-"who": "Funke",
-"style": "walk",
-"seq": 6
-},
-{
-"frame": 5877,
-"kind": "step",
-"who": "Funke",
-"style": "walk",
-"seq": 6
-},
-{
-"frame": 5881,
+"frame": 5880,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
@@ -3875,14 +3861,14 @@
 "seq": 6
 },
 {
-"frame": 5888,
+"frame": 5887,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5892,
+"frame": 5891,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
@@ -3896,14 +3882,14 @@
 "seq": 6
 },
 {
-"frame": 5899,
+"frame": 5898,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5903,
+"frame": 5902,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
@@ -3917,28 +3903,28 @@
 "seq": 6
 },
 {
-"frame": 5910,
+"frame": 5909,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5914,
+"frame": 5913,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5917,
+"frame": 5916,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5921,
+"frame": 5920,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
@@ -3952,14 +3938,14 @@
 "seq": 6
 },
 {
-"frame": 5928,
+"frame": 5927,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5932,
+"frame": 5931,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
@@ -3973,7 +3959,7 @@
 "seq": 6
 },
 {
-"frame": 5939,
+"frame": 5938,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
@@ -3994,7 +3980,7 @@
 "seq": 6
 },
 {
-"frame": 5950,
+"frame": 5949,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
@@ -4008,26 +3994,42 @@
 "seq": 6
 },
 {
-"frame": 5957,
+"frame": 5956,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5963,
-"kind": "metal_scrape",
-"seq": 6
-},
-{
-"frame": 5969,
+"frame": 5960,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5973,
+"frame": 5964,
+"kind": "step",
+"who": "Funke",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 5967,
+"kind": "step",
+"who": "Funke",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 5971,
+"kind": "step",
+"who": "Funke",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 5975,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
@@ -4048,81 +4050,114 @@
 "seq": 6
 },
 {
-"frame": 5986,
+"frame": 5988,
+"kind": "metal_scrape",
+"seq": 6
+},
+{
+"frame": 5994,
 "kind": "step",
 "who": "Funke",
 "style": "walk",
 "seq": 6
 },
 {
-"frame": 5969,
+"frame": 5998,
+"kind": "step",
+"who": "Funke",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 6002,
+"kind": "step",
+"who": "Funke",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 6007,
+"kind": "step",
+"who": "Funke",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 6011,
+"kind": "step",
+"who": "Funke",
+"style": "walk",
+"seq": 6
+},
+{
+"frame": 5994,
 "kind": "drag_metal",
 "dur": 17,
 "seq": 6
 },
 {
-"frame": 6003,
+"frame": 6028,
 "kind": "knock_soft",
 "seq": 6
 },
 {
-"frame": 6010,
+"frame": 6035,
 "kind": "knock_soft",
 "seq": 6
 },
 {
-"frame": 6040,
+"frame": 6065,
 "kind": "warm_chord",
 "seq": 6
 },
 {
-"frame": 6050,
+"frame": 6075,
 "kind": "jukebox_soft",
 "beat": 12,
 "seq": 6
 },
 {
-"frame": 6140,
+"frame": 6165,
 "kind": "laugh",
 "seq": 6
 },
 {
-"frame": 6174,
+"frame": 6199,
 "kind": "hammer_tiny",
 "seq": 6
 },
 {
-"frame": 6190,
+"frame": 6215,
 "kind": "hammer_tiny",
 "seq": 6
 },
 {
-"frame": 6206,
+"frame": 6231,
 "kind": "hammer_tiny",
 "seq": 6
 },
 {
-"frame": 6174,
+"frame": 6199,
 "kind": "land_spring",
 "seq": 6
 },
 {
-"frame": 6266,
+"frame": 6291,
 "kind": "wink",
 "seq": 6
 },
 {
-"frame": 6283,
+"frame": 6308,
 "kind": "glint",
 "seq": 6
 },
 {
-"frame": 6292,
+"frame": 6317,
 "kind": "iris_out",
 "seq": 6
 },
 {
-"frame": 6350,
+"frame": 6375,
 "kind": "final_chord",
 "seq": 6
 }
