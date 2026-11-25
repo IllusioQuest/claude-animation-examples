@@ -578,11 +578,6 @@
 "seq": 1
 },
 {
-"frame": 665,
-"kind": "verdict_buzz",
-"seq": 1
-},
-{
 "frame": 690,
 "kind": "stamp",
 "seq": 1
@@ -659,6 +654,42 @@
 {
 "frame": 1031,
 "kind": "tiny_flicker",
+"seq": 1
+},
+{
+"frame": 631,
+"kind": "scan_lock",
+"seq": 1
+},
+{
+"frame": 633,
+"kind": "hud_tick",
+"seq": 1
+},
+{
+"frame": 641,
+"kind": "hud_tick",
+"seq": 1
+},
+{
+"frame": 649,
+"kind": "hud_tick",
+"seq": 1
+},
+{
+"frame": 657,
+"kind": "hud_tick",
+"seq": 1
+},
+{
+"frame": 665,
+"kind": "verdict_buzz",
+"seq": 1
+},
+{
+"frame": 623,
+"kind": "pov_in",
+"dur": 60,
 "seq": 1
 },
 {
@@ -1818,6 +1849,42 @@
 "seq": 3
 },
 {
+"frame": 3363,
+"kind": "scan_lock",
+"seq": 3
+},
+{
+"frame": 3347,
+"kind": "hud_tick",
+"seq": 3
+},
+{
+"frame": 3365,
+"kind": "hud_tick",
+"seq": 3
+},
+{
+"frame": 3373,
+"kind": "hud_tick",
+"seq": 3
+},
+{
+"frame": 3381,
+"kind": "hud_tick",
+"seq": 3
+},
+{
+"frame": 3389,
+"kind": "verdict_buzz",
+"seq": 3
+},
+{
+"frame": 3341,
+"kind": "pov_in",
+"dur": 58,
+"seq": 3
+},
+{
 "frame": 3502,
 "kind": "whoosh_small",
 "seq": 4
@@ -2386,6 +2453,42 @@
 {
 "frame": 4402,
 "kind": "wind",
+"seq": 4
+},
+{
+"frame": 3981,
+"kind": "scan_lock",
+"seq": 4
+},
+{
+"frame": 3941,
+"kind": "hud_tick",
+"seq": 4
+},
+{
+"frame": 3953,
+"kind": "hud_tick",
+"seq": 4
+},
+{
+"frame": 3965,
+"kind": "hud_tick",
+"seq": 4
+},
+{
+"frame": 3980,
+"kind": "hud_tick",
+"seq": 4
+},
+{
+"frame": 3985,
+"kind": "verdict_buzz",
+"seq": 4
+},
+{
+"frame": 3935,
+"kind": "pov_in",
+"dur": 58,
 "seq": 4
 },
 {
@@ -3399,6 +3502,37 @@
 "kind": "step",
 "who": "Hedda",
 "style": "run",
+"seq": 5
+},
+{
+"frame": 4974,
+"kind": "scan_lock",
+"seq": 5
+},
+{
+"frame": 4974,
+"kind": "hud_tick",
+"seq": 5
+},
+{
+"frame": 4979,
+"kind": "hud_tick",
+"seq": 5
+},
+{
+"frame": 4984,
+"kind": "hud_tick",
+"seq": 5
+},
+{
+"frame": 4989,
+"kind": "verdict_buzz",
+"seq": 5
+},
+{
+"frame": 4968,
+"kind": "pov_in",
+"dur": 30,
 "seq": 5
 },
 {

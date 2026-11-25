@@ -469,3 +469,59 @@ def limb(name, p0, p1, r0, r1=None, m=None, parent=None, verts=16, coll=None):
     # mesh_cyl: radius1 at -z (p0 side), radius2 at +z (p1 side)
     _autosmooth(ob)
     return ob
+
+
+def fabric(name, color, rough=0.88, dirt=0.35, weave=90.0, bump=0.3, sheen=0.5, knit=False, scale=4.0):
+    """Cloth: procedural material + woven (or knitted) micro bump and sheen."""
+    new = name not in _mats
+    m = mat(name, color, rough=rough, dirt=dirt, scale=scale, bump=0.0)
+    if not new:
+        return m
+    nt = m.node_tree
+    N, L = nt.nodes, nt.links
+    bsdf = next(n for n in N if n.type == "BSDF_PRINCIPLED")
+    tc = next(n for n in N if n.type == "TEX_COORD")
+    try:
+        bsdf.inputs["Sheen Weight"].default_value = sheen
+        bsdf.inputs["Sheen Roughness"].default_value = 0.4
+    except KeyError:
+        pass
+    waves = []
+    for i, ax in enumerate(("X", "Y" if not knit else "Z")):
+        w = N.new("ShaderNodeTexWave"); w.location = (-200, -700 - i * 200)
+        w.wave_type = "BANDS"
+        w.bands_direction = ax
+        w.inputs["Scale"].default_value = weave * (1.0 if not knit else (0.6 if i else 1.4))
+        w.inputs["Distortion"].default_value = 1.5 if knit else 0.4
+        w.inputs["Detail"].default_value = 1.0
+        L.new(tc.outputs["Object"], w.inputs["Vector"])
+        waves.append(w)
+    mu = N.new("ShaderNodeMath"); mu.operation = "MULTIPLY"; mu.location = (0, -800)
+    L.new(waves[0].outputs["Fac"], mu.inputs[0]); L.new(waves[1].outputs["Fac"], mu.inputs[1])
+    bp = N.new("ShaderNodeBump"); bp.location = (300, -800)
+    bp.inputs["Strength"].default_value = bump
+    bp.inputs["Distance"].default_value = 0.004
+    L.new(mu.outputs[0], bp.inputs["Height"])
+    L.new(bp.outputs[0], bsdf.inputs["Normal"])
+    return m
+
+
+def skin(name, color, rough=0.5):
+    new = name not in _mats
+    m = mat(name, color, rough=rough, dirt=0.08, scale=8, bump=0.03, spec=0.45)
+    if new:
+        bsdf = next(n for n in m.node_tree.nodes if n.type == "BSDF_PRINCIPLED")
+        try:
+            bsdf.inputs["Subsurface Weight"].default_value = 0.18
+            bsdf.inputs["Subsurface Radius"].default_value = (1.0, 0.35, 0.2)
+            bsdf.inputs["Subsurface Scale"].default_value = 0.02
+        except KeyError:
+            pass
+    return m
+
+
+def subsurf(ob, levels=1):
+    md = ob.modifiers.new("sub", "SUBSURF")
+    md.levels = levels
+    md.render_levels = levels
+    return ob

@@ -48,7 +48,14 @@ def scrap_library(coll):
         return _LIB
     m = mats()
     C.set_coll(coll)
-    lib = {}
+    import junk
+    lib = junk.build_library(coll, m)
+    for o in lib.values():
+        o.hide_render = True
+        o.hide_viewport = True
+        o.location = (0, 0, -100)
+    _LIB.update(lib)
+    return _LIB
     lib["barrel_r"] = C.cyl("lib_barrel_r", 0.3, 0.88, m=m["paint_red"], verts=20, bevel=0.01)
     lib["barrel_b"] = C.cyl("lib_barrel_b", 0.3, 0.88, m=m["paint_blue"], verts=20, bevel=0.01)
     lib["barrel_rust"] = C.cyl("lib_barrel_rust", 0.3, 0.88, m=m["rust"], verts=20, bevel=0.01)
@@ -83,7 +90,7 @@ def scrap_item(kind, loc, rot, scale=1.0, coll=None):
     ob.hide_render = False
     ob.hide_viewport = False
     if kind == "tv":
-        scr = C.instance("scrap_tvs", _LIB["tv_screen"], (0, -0.25, 0.02), (0, 0, 0), 1.0, parent=ob, coll=coll)
+        scr = C.instance("scrap_tvs", _LIB["tv_screen"], (-0.03, -0.262, 0.01), (0, 0, 0), 1.0, parent=ob, coll=coll)
         scr.hide_render = scr.hide_viewport = False
     return ob
 
@@ -123,6 +130,19 @@ def scrap_pile(name, center, radius=4.0, height=2.0, n=40, seed=0, coll=None):
         if k in ("tire", "panel", "panel2", "sign", "car_door"):
             rot = (rnd.uniform(-90, 90), rnd.uniform(-30, 30), rnd.uniform(0, 360))
         obs.append(scrap_item(k, (x, y, z), rot, rnd.uniform(0.8, 1.2), coll))
+    # a dense skin of smaller debris so the mound reads as junk, not as a hill
+    rd = C.R.__class__(seed + 1000)
+    small = ["panel", "panel2", "pipe", "gear", "crate", "tire", "beam", "sign", "car_door", "barrel_rust", "tv"]
+    for i in range(int(n * 1.6)):
+        a = rd.uniform(0, 2 * math.pi)
+        rr = math.sqrt(rd.random()) * radius * 0.97
+        x = c.x + math.cos(a) * rr
+        y = c.y + math.sin(a) * rr * 0.85
+        t = min(1.0, rr / radius)
+        z = c.z - height * 0.35 + height * math.sqrt(max(0.0, 1 - t * t)) - 0.04
+        k = rd.choice(small)
+        rot = (rd.uniform(-80, 80), rd.uniform(-80, 80), rd.uniform(0, 360))
+        obs.append(scrap_item(k, (x, y, z), rot, rd.uniform(0.35, 0.6), coll))
     return obs
 
 

@@ -46,6 +46,9 @@ def build(ctx, F):
         A.hide(d, F, True)
     # ------------------------------------------------------------------ cages on the belt
     t_jam = T(28.0)
+    S.key_sat(sc, F, 0.72)
+    S.key_sat(sc, t_jam, 0.72)
+    S.key_sat(sc, t_jam + 24, 1.15)  # the machines rise
     t0 = F
     bz = dep["belt_z"]
     by = H.y
@@ -488,4 +491,20 @@ def build(ctx, F):
     B.set_end(ctx, 5, END)
     B.shot(ctx, 5, "S5_c8_out", to, [(to, Dd(-2, -6, 1.4), hole + V((0, 0, 1.2))), (END, Dd(-4, -9, 1.5), Dd(-12, -14, 1.0))],
            lens=24)
+
+    def sweep(base_fn, f0_, lock_, amp=1.6, z=0.0):
+        """look around (decaying side-to-side search) until the lock, then sit on the target"""
+        def fn(fr):
+            b_ = base_fn(fr)
+            k = max(0.0, 1.0 - (fr - f0_) / max(1, lock_ - f0_))
+            return b_ + V((math.cos(fr * 0.11) * amp * k, math.sin(fr * 0.07) * amp * 0.4 * k, z * k))
+        return fn
+    # ---- the Erfasser's eyes: now it scans her
+    import pov
+    pf0, pf1 = tn + 6, hit - 3
+    pov.pov_shot(ctx, 5, "S5_pov_hedda", pf0, pf1, pov.erf_eye(e),
+                 sweep(pov.bone_pos(h, "head", 0.12), pf0, tn + 12, amp=0.6), lens=50, lock=tn + 12,
+                 lines=[(tn + 12, "HUMAN", None), (tn + 17, "AGE       71", None),
+                        (tn + 22, "OUTPUT    0 UNITS / DAY", (1, 0.6, 0.2))],
+                 verdict=(tn + 27, "OBSOLETE"))
     return END

@@ -236,7 +236,6 @@ def build(ctx, F):
     e.scan(ts, ts + C.sec(2.0), sweeps=1)
     A.key(ctx.erf_beam.data, "energy", ts + C.sec(2.2), 300.0)
     A.key(ctx.erf_beam.data, "energy", ts + C.sec(2.5), 0.0)
-    A.event(ts + C.sec(2.0), "verdict_buzz")
     e.glow(ts + C.sec(2.0), 20.0, "iris")
     e.glow(ts + C.sec(2.6), 3.0, "iris")
     # stamp
@@ -280,6 +279,13 @@ def build(ctx, F):
     pl.keyframe_insert("rotation_euler", frame=tp + 40)
     A.event(tp, "press_start")
     A.event(tp + 16, "crunch")
+    # colour: the crunch takes half of the dawn away; the lens flicker brings a little back
+    S.key_sat(sc, F, 1.0)
+    S.key_sat(sc, tp + 15, 1.0)
+    S.key_sat(sc, tp + 17, 0.68, "CONSTANT")
+    S.key_sat(sc, tp + 18, 0.68)
+    S.key_sat(sc, END - 27, 0.68)
+    S.key_sat(sc, END - 20, 0.85)
     A.shake(tr["root"], tp + 14, tp + 24, amp=0.05, freq=1.5)
     h.face(tp + 18, "closed")
     h.pose(tp + 18, {"head": (35, 0, 0), "spine": (35, 0, 0)})
@@ -382,4 +388,21 @@ def build(ctx, F):
     B.shot(ctx, 1, "S1_c7_hold", tpick - 4, [(tpick - 4, (4.5, 9.0, 1.2), (5.9, 11.5, 0.75), 30),
                                              (tpick + 20, (4.6, 9.2, 1.35), (5.9, 11.5, 1.2), 32),
                                              (END, (4.95, 9.75, 1.45), (5.9, 11.5, 1.38), 40)], lens=30)
+
+    def sweep(base_fn, f0_, lock_, amp=1.6, z=0.0):
+        """look around (decaying side-to-side search) until the lock, then sit on the target"""
+        def fn(fr):
+            b_ = base_fn(fr)
+            k = max(0.0, 1.0 - (fr - f0_) / max(1, lock_ - f0_))
+            return b_ + V((math.cos(fr * 0.11) * amp * k, math.sin(fr * 0.07) * amp * 0.4 * k, z * k))
+        return fn
+    # ---- the Erfasser's eyes: Bello under the scanner
+    import pov
+    pf0, pf1 = ts + 6, hit - 7
+    plock = ts + 14
+    pov.pov_shot(ctx, 1, "S1_pov_scan", pf0, pf1, pov.erf_eye(e),
+                 sweep(pov.bone_pos(b, "head", 0.05), pf0, plock), lens=45, lock=plock,
+                 lines=[(ts + 16, "UNIT      CANINE ASSIST MK II", None), (ts + 24, "SERIAL    B-11", None),
+                        (ts + 32, "MFG       2009", None), (ts + 40, "OWNER     UNREGISTERED", (1, 0.6, 0.2))],
+                 verdict=(ts + 48, "OBSOLETE"))
     return END

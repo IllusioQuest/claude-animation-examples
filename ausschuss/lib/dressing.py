@@ -42,8 +42,57 @@ def shack_details(root, name, w, d, h, tilt, coll, door_x, win_x, lit, alley=Fal
     """root: shack empty (front faces local -y, origin on the ground in the middle)."""
     rnd = rng(name)
     m = P.mats()
-    front = -d / 2
     out = 0.25 if alley else 0.4  # how far things may stick out in front (alley: the chase runs there)
+    # ---- cladding: corrugated shacks get real sheets (a patchwork of panels), plaster ones trims
+    body = bpy.data.objects.get(name + "_body")
+    wm = body.active_material if body else None
+    fo = 0.0
+    if wm is not None and wm.name.startswith("p_corr"):
+        fo = 0.06
+        corr = [m["corr1"], m["corr2"], m["corr3"], m["rust"]]
+        k = 0
+        for side, (L_, place) in enumerate(((w, lambda x, j: ((x, -d / 2 - 0.025 - 0.007 * (j % 2), 0), 0.0)),
+                                            (w, lambda x, j: ((-x, d / 2 + 0.025 + 0.007 * (j % 2), 0), math.pi)),
+                                            (d, lambda x, j: ((w / 2 + 0.025 + 0.007 * (j % 2), x, 0), math.pi / 2)),
+                                            (d, lambda x, j: ((-w / 2 - 0.025 - 0.007 * (j % 2), -x, 0), -math.pi / 2)))):
+            n_ = max(1, int(round(L_ / 1.05)))
+            pw = L_ / n_
+            for j in range(n_):
+                x = -L_ / 2 + pw * (j + 0.5)
+                mat_ = wm if rnd.random() < 0.72 else rnd.choice(corr)
+                hh = h - rnd.uniform(0.0, 0.12)
+                (px, py, pz), rz = place(x, j)
+                sh = P.corrugated(f"{name}_clad{k}", pw + 0.06, hh, (0, 0, 0), (0, 0, 0), mat_, coll=coll,
+                                  depth=0.022)
+                sh.parent = root
+                sh.location = (px, py, rnd.uniform(-0.02, 0.06))
+                sh.rotation_euler = (0, math.radians(rnd.uniform(-1.2, 1.2)), rz)
+                k += 1
+        for o in (bpy.data.objects.get(name + s) for s in ("_door", "_win", "_winf", "_awning")):
+            if o:
+                o.location.y -= fo
+    else:
+        # plaster: a dirty base band, corner pilasters and a cornice
+        base = M("plaster_base", (0.18, 0.15, 0.12), rough=0.95, dirt=0.6, bump=0.3)
+        C.box(name + "_base", (w + 0.04, d + 0.04, 0.32), loc=(0, 0, 0.16), m=base, parent=root, bevel=0.01, coll=coll)
+        C.box(name + "_cornice", (w + 0.08, d + 0.08, 0.1), loc=(0, 0, h - 0.05), m=body.active_material if body else base,
+              parent=root, bevel=0.02, coll=coll)
+        crack = M("seam_dark", (0.03, 0.025, 0.02), rough=0.9, dirt=0.0, bump=0.0)
+        for c_ in range(rnd.randint(1, 3)):
+            cx = rnd.uniform(-w / 2 + 0.3, w / 2 - 0.3)
+            if abs(cx - door_x) < 0.6:
+                continue
+            pts = [V((cx, -d / 2 - 0.005, h - 0.1))]
+            for s_ in range(4):
+                pts.append(pts[-1] + V((rnd.uniform(-0.12, 0.12), 0, -rnd.uniform(0.15, 0.3))))
+            C.curve_tube(f"{name}_crack{c_}", pts, radius=0.006, m=crack, parent=root, coll=coll, res=2)
+    # wooden corner posts on every shack
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            C.box(f"{name}_post{sx}{sy}", (0.09, 0.09, h + 0.05), loc=(sx * (w / 2 + fo * 0.5), sy * (d / 2 + fo * 0.5),
+                                                                       (h + 0.05) / 2),
+                  m=m["wood"], parent=root, bevel=0.01, coll=coll)
+    front = -d / 2 - fo
 
     def roof_z(y):  # roof underside at local y
         return h + 0.05 + (y - (front - 0.3)) * math.sin(math.radians(tilt))
@@ -242,6 +291,21 @@ def scrapyard(scrap, coll):
                   rot=(rnd.uniform(-30, 30), rnd.uniform(-30, 30), 0), r2=0.001, m=grass, coll=coll, verts=4)
         n += 1
         if n >= 90:
+            break
+    # stones and pebbles (low-poly, slightly squashed), off the paths
+    stone = M("stone_m", (0.32, 0.29, 0.26), rough=0.9, dirt=0.6, bump=0.5, scale=6)
+    n = 0
+    for i in range(600):
+        x, y = rnd.uniform(-26, 26), rnd.uniform(-20, 26)
+        if not free(x, y, 0.15):
+            continue
+        s = rnd.uniform(0.05, 0.22)
+        st = C.sphere(f"s_stone{n}", s, loc=(x, y, s * 0.25), scale=(1.0, rnd.uniform(0.7, 1.1), rnd.uniform(0.45, 0.7)),
+                      rot=(0, 0, rnd.uniform(0, 360)), m=stone, coll=coll, seg=7, rings=5)
+        for p in st.data.polygons:
+            p.use_smooth = False
+        n += 1
+        if n >= 160:
             break
     # a car wreck on its belly, a bathtub, a shopping trolley, a mattress, a fridge on its back
     car = C.empty("s_car", loc=(-24.0, 2.5, 0), rot=(0, 3, 35), coll=coll)
@@ -473,6 +537,17 @@ def depot(dep, coll, O, H):
         for k in range(2 if i % 2 else 3):
             C.box(f"h_pallet{i}_{k}", (1.2, 1.0, 0.14), loc=h((x, 10.6, 0.07 + k * 0.15)), rot=(0, 0, rnd.uniform(-4, 4)),
                   m=m["wood"], bevel=0.005, coll=coll)
+    # steel columns along the long walls, under every truss
+    colm = M("column_m", (0.22, 0.2, 0.18), metal=0.7, rough=0.5, rust=0.35, scale=2)
+    for i in range(9):
+        x = -20 + i * 5
+        for sy in (-1, 1):
+            y = sy * 11.55
+            C.box(f"h_colweb{i}{sy}", (0.06, 0.3, 11.4), loc=h((x, y, 5.7)), m=colm, bevel=0, coll=coll)
+            for fx in (-0.13, 0.13):
+                C.box(f"h_colfl{i}{sy}{fx}", (0.02, 0.32, 11.4), loc=h((x + fx, y, 5.7)), m=colm, bevel=0, coll=coll)
+            C.box(f"h_colbase{i}{sy}", (0.4, 0.45, 0.25), loc=h((x, y, 0.125)), m=bpy.data.materials.get("depot_concrete"),
+                  bevel=0.02, coll=coll)
     # oil stains under the conveyor
     oil = M("oil_m", (0.02, 0.02, 0.02), rough=0.1, dirt=0.0, bump=0)
     for i in range(7):

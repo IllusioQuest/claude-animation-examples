@@ -201,10 +201,12 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
     rig = RG.build_armature(name, bones, coll)
     P = RG.Parts(name, coll)
     n = lambda s: f"{name}_{s}"
-    skin = M(n("skin"), pal["skin"], rough=0.55, dirt=0.15, scale=8, bump=0.05)
-    coat = M(n("coat"), pal["coat"], rough=0.9, dirt=0.5, scale=4, bump=0.08)
-    coat2 = M(n("coat2"), pal["coat2"], rough=0.9, dirt=0.4, scale=4, bump=0.08)
-    trou = M(n("trousers"), pal["trousers"], rough=0.9, dirt=0.35, bump=0.2)
+    import humanparts as HP
+    skin = C.skin(n("skin"), pal["skin"])
+    coat = C.fabric(n("coat"), pal["coat"], dirt=0.5, weave=70, bump=0.35)
+    coat2 = C.fabric(n("coat2"), pal["coat2"], dirt=0.4, weave=70, bump=0.35)
+    trou = C.fabric(n("trousers"), pal["trousers"], dirt=0.35, weave=110, bump=0.3)
+    trim = C.fabric(n("trim"), tuple(c * 0.75 for c in pal["coat"]), dirt=0.4, weave=70, bump=0.35)
     boots = M(n("boots"), pal["boots"], rough=0.5, dirt=0.4, bump=0.2)
     hair = M(n("hair"), pal["hair"], rough=0.8, dirt=0.15, scale=20, bump=0.4)
     glove = M(n("glove"), pal["glove"], rough=0.6, dirt=0.3)
@@ -215,7 +217,7 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
     hr = (0.16 if not is_kid else 0.19) * h  # head radius
     hc = Vector(S((0, 0, 1.6)))
     # ---- head
-    P.add("head", C.sphere(n("head"), hr, loc=hc, scale=(1, 0.96, 1.02), m=skin, coll=coll))
+    P.add("head", HP.head_mesh(n("head"), hr, hc, style, skin, coll))
     nose_r = (0.055 if style in ("hedda", "oldman", "man") else 0.04) * h
     P.add("head", C.sphere(n("nose"), nose_r, loc=hc + Vector((0, -hr - nose_r * 0.3, -0.03 * h)),
                            scale=(1, 1, 0.92), m=M(n("nose_m"), tuple(min(1, c * 1.06) for c in pal["skin"]),
@@ -223,12 +225,10 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
     for s, sx in (("L", 1), ("R", -1)):
         ec = Vector(S((0.055 * sx, -0.128, 1.625)))
         er = (0.037 if not is_kid else 0.045) * h
-        P.add("eye_" + s, C.sphere(n("eye" + s), er, loc=ec, scale=(0.85, 0.6, 1.2), m=white, coll=coll))
-        P.add("eye_" + s, C.sphere(n("pupil" + s), er * 0.62, loc=ec + Vector((0, -er * 0.55, -er * 0.1)),
-                                   scale=(1, 0.6, 1.25), m=black, coll=coll))
-        P.add("brow_" + s, C.box(n("brow" + s), S((0.055, 0.016, 0.014)),
-                                 loc=S((0.06 * sx, -0.15, 1.685)), rot=(0, -8 * sx, 0), m=hair, bevel=0.006,
-                                 coll=coll))
+        for o in HP.eye(n, s, ec, er, pal.get("iris", (0.28, 0.16, 0.08)), skin, coll,
+                        lid=0.05 if is_kid else (0.3 if style in ("oldman", "hedda") else 0.2)):
+            P.add("eye_" + s, o)
+        P.add("brow_" + s, HP.brow(n, s, sx, Vector(S((0.06 * sx, -0.152, 1.685))), h, hair, coll))
         P.add("head", C.sphere(n("ear" + s), 0.032 * h, loc=hc + Vector((hr * 0.97 * sx, 0.01, 0)),
                                scale=(0.5, 1, 1.3), m=skin, coll=coll))
     # hair cap
@@ -262,12 +262,9 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
             P.add("head", C.cyl(n("glens" + s), 0.03 * h, 0.006 * h, loc=gp + Vector((0, -0.021 * h, 0.004 * h)),
                                 rot=(80, 0, 0), m=C.glass("amber_glass", (1.0, 0.6, 0.25), 0.1), coll=coll))
         # scarf over mouth
-        sc = M(n("scarf_m"), pal["scarf"], rough=0.95, dirt=0.4, scale=6, bump=0.12)
-        P.add("head", C.lathe(n("scarf"), [(0.11 * h, -0.02 * h), (0.15 * h, 0.03 * h), (0.172 * h, 0.08 * h),
-                                           (0.168 * h, 0.12 * h), (0.15 * h, 0.13 * h)],
-                              loc=hc - Vector((0, 0.01 * h, 0.2 * h)), m=sc, coll=coll))
-        P.add("chest", C.box(n("scarf_tail"), S((0.08, 0.02, 0.26)), loc=S((0.06, 0.15, 1.27)), rot=(-12, 0, 8),
-                             m=sc, bevel=0.01, coll=coll))
+        sc = C.fabric(n("scarf_m"), pal["scarf"], dirt=0.35, weave=55, bump=0.6, knit=True, sheen=0.6)
+        for bone, o in HP.scarf(n, h, hc, sc, coll):
+            P.add(bone, o)
     elif style in ("man", "oldman"):
         # moustache + cap
         P.add("head", C.sphere(n("moust"), 0.05 * h, loc=hc + Vector((0, -hr * 0.95, -0.07 * h)),
@@ -320,6 +317,11 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
                      m=trou, coll=coll)
         P.add("hips", sk)
     P.add("chest", C.torus(n("collar"), 0.1 * h, 0.035 * h, loc=S((0, 0.005, 1.39)), m=coat, coll=coll))
+    if style in ("hedda", "oldman", "man", "woman"):
+        long_coat = style == "hedda"
+        for bone, o in HP.coat_details(n, h, g, coat, trim, coll, long_coat=long_coat,
+                                       hem_z=0.385, hem_r=0.325):
+            P.add(bone, o)
     belt = M("belt_m", (0.14, 0.09, 0.05), rough=0.6, dirt=0.3)
     bt = C.torus(n("belt"), 0.19 * h * g, 0.022 * h, loc=S((0, 0, 0.99)), m=belt, coll=coll)
     bt.scale = (1, 0.82, 0.7)
@@ -357,9 +359,8 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
         P.add("forearm_" + s, C.torus(n("cuff" + s), 0.05 * h, 0.014 * h, loc=wr + Vector((0, 0, 0.01 * h)),
                                       m=coat, coll=coll))
         gm = glove if style == "hedda" else skin
-        P.add("hand_" + s, C.sphere(n("hand" + s), 0.05 * h, loc=hd, scale=(0.75, 1.0, 1.2), m=gm, coll=coll))
-        P.add("hand_" + s, C.sphere(n("thumb" + s), 0.022 * h, loc=hd + Vector((-0.012 * sx * h, -0.04 * h, 0.02 * h)),
-                                    scale=(1, 1, 1.4), m=gm, coll=coll))
+        for o in HP.glove(n, s, sx, hd, h, gm, coll, bare=style != "hedda"):
+            P.add("hand_" + s, o)
     # ---- legs
     for s, sx in (("L", 1), ("R", -1)):
         hp = Vector(S((0.09 * sx, 0, 0.88)))
@@ -368,10 +369,8 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
         P.add("thigh_" + s, C.limb(n("thigh" + s), hp, kn, 0.075 * h * g, 0.062 * h, m=trou, coll=coll))
         P.add("shin_" + s, C.sphere(n("knee" + s), 0.062 * h, loc=kn, m=trou, coll=coll))
         P.add("shin_" + s, C.limb(n("shin" + s), kn, an, 0.062 * h, 0.055 * h, m=trou, coll=coll))
-        P.add("foot_" + s, C.sphere(n("boot" + s), 0.075 * h, loc=Vector(S((0.09 * sx, -0.04, 0.065))),
-                                    scale=(0.9, 1.65, 0.85), m=boots, coll=coll))
-        P.add("foot_" + s, C.box(n("sole" + s), S((0.13, 0.27, 0.025)), loc=S((0.09 * sx, -0.04, 0.012)),
-                                 m=M("sole_m", (0.05, 0.04, 0.03)), bevel=0.01, coll=coll))
+        for o in HP.boot(n, s, sx, h, boots, coll):
+            P.add("foot_" + s, o)
     P.attach_all(rig)
     act = Human(rig, h)
     act.pose(0, "stand")
@@ -707,7 +706,10 @@ def build_erfasser(coll, name="Erfasser"):
     rig = RG.build_armature(name, bones, coll)
     P = RG.Parts(name, coll)
     n = lambda s: f"{name}_{s}"
-    navy = M(n("navy"), (0.03, 0.05, 0.12), metal=0.5, rough=0.18, dirt=0.05, bump=0.0, coat=0.8)
+    navy = M(n("navy"), (0.035, 0.055, 0.12), metal=0.55, rough=0.32, dirt=0.3, rust=0.06, scale=6, bump=0.04,
+             coat=0.45, rust_color=(0.25, 0.18, 0.1))
+    felt = C.fabric(n("felt"), (0.025, 0.035, 0.08), rough=0.8, dirt=0.2, weave=160, bump=0.15, sheen=0.6)
+    seam = M("seam_dark", (0.03, 0.025, 0.02), rough=0.9, dirt=0.0, bump=0.0)
     chrome = M("chrome", (0.85, 0.86, 0.9), metal=1.0, rough=0.12, dirt=0.05, bump=0)
     gold = M("gold", (0.9, 0.65, 0.2), metal=1.0, rough=0.25, dirt=0.05, bump=0)
     white = M("collar_white", (0.85, 0.86, 0.88), rough=0.4, dirt=0.05, bump=0)
@@ -729,7 +731,25 @@ def build_erfasser(coll, name="Erfasser"):
     bd = C.lathe(n("body"), [(0.06, 0.58), (0.12, 0.62), (0.14, 0.8), (0.15, 1.1), (0.19, 1.35), (0.2, 1.42),
                              (0.12, 1.49), (0.04, 1.51)], m=navy, coll=coll, cap_bottom=True)
     bd.scale = (1, 0.7, 1)
+    C.subsurf(bd, 1)
     P.add("body", bd)
+    # riveted panel seams (it is a machine in a uniform, not a man)
+    for z, r in ((0.8, 0.14), (1.12, 0.152)):
+        ring = C.torus(n(f"seam{z}"), r, 0.004, loc=(0, 0, z), m=seam, coll=coll, seg=48)
+        ring.scale = (1, 0.7, 1)
+        P.add("body", ring)
+        for k in range(14):
+            a = 2 * math.pi * k / 14
+            P.add("body", C.sphere(n(f"rivet{z}_{k}"), 0.006, loc=(math.cos(a) * r, math.sin(a) * r * 0.7, z + 0.012),
+                                   m=chrome, seg=6, rings=4, coll=coll))
+    # frock-coat tails at the back
+    for tx in (-1, 1):
+        tail = C.box(n(f"coattail{tx}"), (0.11, 0.025, 0.42), loc=(0.06 * tx, 0.105, 0.86), rot=(12, 0, 6 * tx),
+                     m=navy, bevel=0.012, coll=coll)
+        C.subsurf(tail, 1)
+        P.add("body", tail)
+        P.add("body", C.box(n(f"tailtrim{tx}"), (0.112, 0.027, 0.02), loc=(0.06 * tx, 0.13, 0.655), rot=(12, 0, 6 * tx),
+                            m=gold, bevel=0.004, coll=coll))
     # coat tails + gold trim + buttons + collar + tie + badge
     P.add("body", C.torus(n("trim"), 0.12, 0.012, loc=(0, 0, 0.62), m=gold, coll=coll))
     for i in range(5):
@@ -751,10 +771,12 @@ def build_erfasser(coll, name="Erfasser"):
     P.add("neck", C.cyl(n("neck1"), 0.03, 0.18, loc=(0, 0, 1.6), m=chrome, coll=coll))
     P.add("neck", C.cyl(n("neck2"), 0.024, 0.18, loc=(0, 0, 1.72), m=chrome, coll=coll))
     # head: top hat with scanner slit + monocle
-    P.add("head", C.cyl(n("brim"), 0.2, 0.018, loc=(0, 0, 1.8), m=navy, coll=coll, verts=40))
-    P.add("head", C.cyl(n("hat"), 0.13, 0.32, loc=(0, 0, 1.97), r2=0.14, m=navy, coll=coll, verts=40))
+    brim = C.lathe(n("brim"), [(0.125, 1.79), (0.185, 1.79), (0.205, 1.805), (0.212, 1.825), (0.2, 1.815),
+                                (0.125, 1.81)], m=felt, coll=coll, seg=48, cap_top=False)
+    P.add("head", brim)
+    P.add("head", C.cyl(n("hat"), 0.13, 0.32, loc=(0, 0, 1.97), r2=0.14, m=felt, coll=coll, verts=40))
     P.add("head", C.cyl(n("hatband"), 0.1315, 0.05, loc=(0, 0, 1.84), m=redtie, coll=coll, verts=40))
-    P.add("head", C.cyl(n("hattop"), 0.141, 0.01, loc=(0, 0, 2.13), m=navy, coll=coll, verts=40))
+    P.add("head", C.cyl(n("hattop"), 0.141, 0.01, loc=(0, 0, 2.13), m=felt, coll=coll, verts=40))
     # slit: curved strip in front
     import bmesh
     bm = bmesh.new()
@@ -781,11 +803,18 @@ def build_erfasser(coll, name="Erfasser"):
     for s, sx in (("L", 1), ("R", -1)):
         sh = Vector((0.2 * sx, 0, 1.44)); el = Vector((0.22 * sx, 0, 1.06)); wr = Vector((0.23 * sx, 0, 0.7))
         P.add("arm_" + s, C.sphere(n("sh" + s), 0.045, loc=sh, m=chrome, coll=coll))
-        P.add("arm_" + s, C.limb(n("ua" + s), sh, el, 0.022, 0.02, m=navy, coll=coll))
+        P.add("arm_" + s, C.limb(n("ua" + s), sh, el, 0.034, 0.028, m=navy, coll=coll))
+        P.add("arm_" + s, C.torus(n("uacuff" + s), 0.03, 0.006, loc=el + Vector((0, 0, 0.05)), m=gold, coll=coll))
+        # hydraulic piston along the forearm
+        P.add("fore_" + s, C.limb(n("piston" + s), el + Vector((0, 0.03, -0.04)), wr + Vector((0, 0.025, 0.08)), 0.007,
+                                  m=M("dark_metal"), coll=coll))
         P.add("fore_" + s, C.sphere(n("el" + s), 0.032, loc=el, m=chrome, coll=coll))
         P.add("fore_" + s, C.limb(n("fa" + s), el, wr, 0.02, 0.018, m=chrome, coll=coll))
         P.add("hand_" + s, C.sphere(n("wr" + s), 0.028, loc=wr, m=chrome, coll=coll))
         P.add("hand_" + s, C.cyl(n("cuffw" + s), 0.03, 0.04, loc=wr + Vector((0, 0, 0.03)), m=white, coll=coll))
+        import humanparts as HP
+        for o in HP.glove(n, "g" + s, sx, wr - Vector((0, 0, 0.055)), 0.85, white, coll, bare=True):
+            P.add("hand_" + s, o)
     # stamp on left hand
     P.add("hand_L", C.cyl(n("stamp_handle"), 0.018, 0.12, loc=(0.23, 0, 0.62), m=M("wood", (0.4, 0.22, 0.1),
                                                                                    rough=0.6), coll=coll))

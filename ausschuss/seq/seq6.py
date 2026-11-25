@@ -273,6 +273,9 @@ def build(ctx, F):
                                             (tk + 60, seat_pos + sd * 2.2 + V((0, 0, 1.1)), seat_pos + V((0, 0, 0.78)))], lens=24)
     # ------------------------------------------------------------------ the freed machines arrive
     tm = tk + 50
+    S.key_sat(sc, F, 0.55)
+    S.key_sat(sc, tk, 0.85)
+    S.key_sat(sc, tm + 40, 1.15)
     road = [V((-25.5, 8.4, 0)), V((-21, 7.5, 0)), V((-20.6, 0.5, 0))]
     stops = [V((-20.45, -3.3, 0)), HL(2.6, -4.9), HL(0.4, -6.0), HL(3.4, -4.0)]  # juke stays out of the wink shot
     machines = [machine_juke("free_juke", ctx.c_props), machine_quad("free_quad1", ctx.c_props),

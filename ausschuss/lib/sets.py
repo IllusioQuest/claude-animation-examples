@@ -79,6 +79,7 @@ def compositor(sc, glare=True, vignette=0.35, grain=0.04):
         L.new(last, cb.inputs["Image"])
         last = cb.outputs["Image"]
         hs = N.new("CompositorNodeHueSat"); hs.location = (400, 150)
+        hs.name = "GradeSat"
         hs.inputs["Saturation"].default_value = g["sat"]
         L.new(last, hs.inputs["Image"])
         last = hs.outputs["Image"]
@@ -87,9 +88,28 @@ def compositor(sc, glare=True, vignette=0.35, grain=0.04):
             bc.inputs["Contrast"].default_value = g["contrast"]
             L.new(last, bc.inputs["Image"])
             last = bc.outputs["Image"]
-    comp = N.new("CompositorNodeComposite"); comp.location = (500, 0)
+    if g:
+        # the Erfasser's scanner view: red monochrome, mixed in per POV shot (factor keyed by pov.py)
+        bw = N.new("CompositorNodeRGBToBW"); bw.location = (550, 300)
+        L.new(last, bw.inputs[0])
+        tint = N.new("CompositorNodeMixRGB"); tint.blend_type = "MULTIPLY"; tint.location = (700, 300)
+        tint.inputs[0].default_value = 1.0
+        tint.inputs[2].default_value = (1.6, 0.28, 0.2, 1)
+        L.new(bw.outputs[0], tint.inputs[1])
+        pm = N.new("CompositorNodeMixRGB"); pm.name = "POVMix"; pm.location = (850, 150)
+        pm.inputs[0].default_value = 0.0
+        L.new(last, pm.inputs[1]); L.new(tint.outputs[0], pm.inputs[2])
+        last = pm.outputs[0]
+    comp = N.new("CompositorNodeComposite"); comp.location = (1000, 0)
     L.new(last, comp.inputs["Image"])
     sc["comp_last"] = 1
+
+
+def key_sat(sc, f, v, interp=None):
+    """Colour as dramaturgy: key the saturation of a sequence's grade."""
+    n = sc.node_tree.nodes.get("GradeSat")
+    if n:
+        A.key_socket(n.inputs["Saturation"], f, v, interp)
 
 
 # per-sequence grade: every place gets its own palette (shadows / mids / highlights)

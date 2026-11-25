@@ -65,8 +65,8 @@ def build(ctx, F):
     wld = S.world("W_S3_day", horizon=(0.95, 0.82, 0.62), zenith=(0.35, 0.5, 0.72), ground=(0.2, 0.17, 0.13),
                   strength=0.75, sun_dir=(0.6, -0.4, 0.5), sun_color=(1, 0.9, 0.7), sun_glow=1.5)
     sc, L, cams = B.new_seq_scene(ctx, 3, "S3_Village_Day", F, END, wld, [ctx.chars, ctx.c_vil, ctx.c_props])
-    S.sun("S3_sun", (48, 0, 140), 4.0, (1.0, 0.88, 0.7), L, angle=2)
-    S.sun("S3_sky", (30, 0, -40), 0.6, (0.6, 0.7, 0.95), L, angle=40)
+    S.sun("S3_sun", (63, 0, 140), 4.6, (1.0, 0.86, 0.66), L, angle=2)  # low sun: long shadows, contrast
+    S.sun("S3_sky", (30, 0, -40), 0.35, (0.6, 0.7, 0.95), L, angle=40)
     S.fog_box("S3_fog", L, O, (300, 300, 50), 0.011, (0.95, 0.8, 0.6))
     keep = [h, f, e] + list(vg.values())
     B.offstage_all(ctx, F, keep=keep)
@@ -241,6 +241,16 @@ def build(ctx, F):
     tk = f.tap_twice(tout + 26)
     t_music = tk + 4
     A.event(t_music, "music_radio_start", beat=BEAT)
+    # ---- colour as dramaturgy: the village is grey until the music comes back
+    S.key_sat(sc, F, 0.62)
+    S.key_sat(sc, t_music - 1, 0.62)
+    S.key_sat(sc, t_music + 3, 0.9)
+    S.key_sat(sc, t_music + 14, 1.22)
+    bulbs = [bpy.data.materials.get(f"bulb_{i}") for i in range(4)]
+    for i, bm in enumerate(bulbs):
+        if bm:
+            A.key_socket(C.emit_socket(bm), F, 0.0, "CONSTANT")
+            A.key_socket(C.emit_socket(bm), t_music + 2 + i * 3, 9.0, "CONSTANT")  # on, string by string
     A.key_socket(dial_m.node_tree.nodes["Emission"].inputs[1] if False else C.emit_socket(dial_m), t_music - 1, 0.0,
                  "CONSTANT")
     A.key_socket(C.emit_socket(dial_m), t_music, 6.0, "CONSTANT")
@@ -338,6 +348,14 @@ def build(ctx, F):
     er = e.roll(T(32.6), [Wv(0.3, -16), Wv(0.3, -11.5)], speed=2.0)
     A.event(t_stop, "record_scratch")
     A.event(t_stop, "music_radio_stop")
+    # ... and the needle scratch drains it in an instant
+    S.key_sat(sc, t_stop - 1, 1.22)
+    S.key_sat(sc, t_stop + 1, 0.5, "CONSTANT")
+    S.key_sat(sc, t_stop + 2, 0.5)
+    for bm in bulbs:
+        if bm:
+            A.key_socket(C.emit_socket(bm), t_stop + 1, 0.6, "CONSTANT")
+            A.key_socket(C.emit_socket(bm), t_stop + 5, 0.0, "CONSTANT")
     A.key_socket(C.emit_socket(dial_m), t_stop, 0.0, "CONSTANT")
     for a in [vend, m2, m3, w1, w2, w3, k1, k2, om, h]:
         a.hold(t_stop)
@@ -422,4 +440,21 @@ def build(ctx, F):
                                                   (END, hstop + to_e * 2.0 + pc * 0.45 + V((0, 0, 1.38)),
                                                    hstop + V((0, 0, 1.32)))], lens=26)
     ctx.s3 = {"hstop": hstop, "radio_pos": radio_pos, "table": table_spot, "erf_end": Wv(0.3, -11.5)}
+
+    def sweep(base_fn, f0_, lock_, amp=1.6, z=0.0):
+        """look around (decaying side-to-side search) until the lock, then sit on the target"""
+        def fn(fr):
+            b_ = base_fn(fr)
+            k = max(0.0, 1.0 - (fr - f0_) / max(1, lock_ - f0_))
+            return b_ + V((math.cos(fr * 0.11) * amp * k, math.sin(fr * 0.07) * amp * 0.4 * k, z * k))
+        return fn
+    # ---- the Erfasser's eyes: the crowd, the table, the little unregistered thing
+    import pov
+    pf0, pf1 = er + 8, er + C.sec(2.5) + 6
+    plock = er + 30
+    pov.pov_shot(ctx, 3, "S3_pov_scan", pf0, pf1, pov.erf_eye(e),
+                 sweep(pov.bone_pos(f, "body", 0.15), pf0, plock, amp=4.0, z=0.6), lens=60, lock=plock,
+                 lines=[(er + 14, "HUMANS    11      COMPLIANT", None), (er + 32, "UNIT      UNREGISTERED", (1, 0.6, 0.2)),
+                        (er + 40, "ORIGIN    SCRAP", None), (er + 48, "MUSIC     UNLICENSED", (1, 0.6, 0.2))],
+                 verdict=(er + 56, "OBSOLETE"))
     return END

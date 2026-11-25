@@ -27,8 +27,8 @@ def build(ctx, F):
                   strength=0.8, sun_dir=(-0.6, 0.6, 0.35), sun_color=(1, 0.75, 0.45), sun_glow=2.0)
     sc, L, cams = B.new_seq_scene(ctx, 4, "S4_Chase", F, END, wld,
                                   [ctx.chars, ctx.c_vil, ctx.c_scrap, ctx.c_city, ctx.c_props])
-    S.sun("S4_sun", (58, 0, -130), 4.2, (1.0, 0.78, 0.55), L, angle=2)
-    S.sun("S4_sky", (30, 0, 40), 0.5, (0.6, 0.7, 0.95), L, angle=40)
+    S.sun("S4_sun", (67, 0, -130), 4.8, (1.0, 0.74, 0.5), L, angle=2)
+    S.sun("S4_sky", (30, 0, 40), 0.3, (0.6, 0.7, 0.95), L, angle=40)
     S.fog_box("S4_fogv", L, O, (300, 300, 50), 0.01, (0.95, 0.8, 0.6))
     S.fog_box("S4_fogs", L, (0, 120, 0), (520, 640, 70), 0.006, (0.9, 0.72, 0.55))
     # villagers stay frozen where seq3 left them; only the three principals move
@@ -253,6 +253,11 @@ def build(ctx, F):
     e.hold_all(tst - 1)
     e.pose(tst, {"arm_R": (80, 0, 30), "fore_R": (40, 0, 0), "hand_R": (-20, 0, 0)})
     hit = e.stamp(tst + 4)
+    # the chase stays drained; the stamp takes the last of the colour
+    S.key_sat(sc, F, 0.6)
+    S.key_sat(sc, hit - 1, 0.62)
+    S.key_sat(sc, hit + 1, 0.35, "CONSTANT")
+    S.key_sat(sc, hit + 2, 0.35)
     for d in ctx.decal_funke:
         A.hide(d, hit, False)
     f.bone_scale(hit, "body", (1.15, 1.15, 0.8))
@@ -309,4 +314,21 @@ def build(ctx, F):
                                          (END, kq + back * 2.9 + side * 0.8 + V((0, 0, 1.15)), V((6.0, -14.0, 1.1)))],
            lens=32)
     ctx.s4 = {"hedda_end": kp}
+
+    def sweep(base_fn, f0_, lock_, amp=1.6, z=0.0):
+        """look around (decaying side-to-side search) until the lock, then sit on the target"""
+        def fn(fr):
+            b_ = base_fn(fr)
+            k = max(0.0, 1.0 - (fr - f0_) / max(1, lock_ - f0_))
+            return b_ + V((math.cos(fr * 0.11) * amp * k, math.sin(fr * 0.07) * amp * 0.4 * k, z * k))
+        return fn
+    # ---- the Erfasser's eyes at the barrel: nothing ... nothing ... a blip
+    import pov
+    pf0, pf1 = te4 + 4, tbet + 14
+    pov.pov_shot(ctx, 4, "S4_pov_barrel", pf0, pf1, pov.erf_eye(e),
+                 sweep(lambda fr: (barrel_spot + V((0, 0, 1.25))) if fr < tbet else pov.bone_pos(f, "antenna")(fr),
+                       pf0, tbet, amp=2.2), lens=40, lock=tbet + 2,
+                 lines=[(te4 + 10, "SCANNING ALLEY ...", None), (te4 + 22, "NO MATCH", None),
+                        (te4 + 34, "NO MATCH", None), (tbet + 1, "SIGNAL  ANTENNA  412 Hz", (1, 0.6, 0.2))],
+                 verdict=(tbet + 6, "MATCH"))
     return END

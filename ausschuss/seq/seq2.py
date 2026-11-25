@@ -197,6 +197,9 @@ def build(ctx, F):
                                            (t_away, W(1.8, 0.8, 1.2), W(0.15, 1.5, 1.18))], lens=32)
     # ------------------------------------------------------------------ 2.4 awakening
     tw = T(21.0)
+    S.key_sat(sc, F, 0.7)
+    S.key_sat(sc, tw + 8, 0.7)
+    S.key_sat(sc, tw + 30, 1.1)  # Funke's eye opens: the world gets its colour back
     f.glow(tw, 0.0, "iris")
     for i, (dt, v) in enumerate(((2, 1.5), (4, 0.0), (7, 2.5), (9, 0.3), (12, 4.0))):
         f.glow(tw + dt, v, "iris", "CONSTANT")
