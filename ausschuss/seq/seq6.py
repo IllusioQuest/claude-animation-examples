@@ -270,7 +270,7 @@ def build(ctx, F):
                                             (tk + 60, HL(0.6, -0.6, 1.25), HL(-0.4, -2.75, 0.7))], lens=28)
     # ------------------------------------------------------------------ the freed machines arrive
     tm = tk + 50
-    road = [V((-27, 8.5, 0)), V((-21, 7.5, 0)), V((-20.6, 0.5, 0))]
+    road = [V((-25.5, 8.4, 0)), V((-21, 7.5, 0)), V((-20.6, 0.5, 0))]
     stops = [HL(1.5, -5.6), HL(2.6, -4.9), HL(0.4, -6.0), HL(3.4, -4.0)]
     machines = [machine_juke("free_juke", ctx.c_props), machine_quad("free_quad1", ctx.c_props),
                 machine_vacuum("free_vac2", ctx.c_props), machine_quad("free_quad2", ctx.c_props)]
@@ -291,8 +291,8 @@ def build(ctx, F):
         h.pose(tm + 90 + k * 6, {"chest": (-6, 0, 0), "head": (-12, 0, 0)})
         h.pose(tm + 93 + k * 6, {"chest": (4, 0, 0), "head": (-4, 0, 0)})
     A.event(tm + 90, "laugh")
-    B.shot(ctx, 6, "S6_c3_machines", tm + 20, [(tm + 20, V((-14.5, -1.0, 3.6)), V((-21.0, 3.0, 0.5))),
-                                               (tm + 100, V((-14.8, -1.6, 3.4)), V((-19.0, -3.0, 0.6)))], lens=28)
+    B.shot(ctx, 6, "S6_c3_machines", tm + 20, [(tm + 20, V((-18.4, 4.6, 1.2)), V((-24.0, 8.3, 0.5))),
+                                               (tm + 100, V((-18.3, 4.4, 1.25)), V((-21.6, 7.4, 0.5)))], lens=30)
     # ------------------------------------------------------------------ 6.3 building again, the wink, iris out
     tb = tm + 110
     h.pose(tb, "stand")
