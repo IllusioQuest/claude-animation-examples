@@ -281,7 +281,7 @@ def build(ctx, F):
     S.key_sat(sc, tk, 0.85)
     S.key_sat(sc, tm + 40, 1.15)
     road = [V((-25.5, 8.4, 0)), V((-21, 7.5, 0)), V((-20.6, 0.5, 0))]
-    stops = [V((-20.45, -3.3, 0)), HL(2.6, -4.9), HL(0.4, -6.0), HL(3.4, -4.0)]  # juke stays out of the wink shot
+    stops = [V((-20.45, -3.3, 0)), V((-21.6, -5.4, 0)), V((-22.0, -2.2, 0)), V((-22.4, -4.0, 0))]  # machines west, people east  # kids stand where quad1 was  # juke stays out of the wink shot
     machines = [machine_juke("free_juke", ctx.c_props), machine_quad("free_quad1", ctx.c_props),
                 machine_vacuum("free_vac2", ctx.c_props), machine_quad("free_quad2", ctx.c_props)]
     for i, mc in enumerate(machines):
@@ -320,7 +320,7 @@ def build(ctx, F):
             kp.interpolation = "LINEAR"
     # ---- the village comes to help: they walk in while she starts building
     centre = HL(0.0, -2.6)
-    helpers = [("Vendor", HL(-2.4, -4.6)), ("Woman1", HL(-3.0, -3.5)), ("OldMan", HL(-1.4, -5.6)),
+    helpers = [("Vendor", HL(-2.4, -4.6)), ("Woman1", HL(-3.0, -3.5)), ("OldMan", V((-18.9, -1.75, 0))),
                ("Man2", HL(-3.4, -2.4)), ("Kid1", HL(0.9, -4.6)), ("Kid2", HL(1.4, -4.85))]
     for i, (nm, spot) in enumerate(helpers):
         a = ctx.vill.get(nm)
