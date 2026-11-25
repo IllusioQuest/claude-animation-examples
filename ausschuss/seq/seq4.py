@@ -225,7 +225,7 @@ def build(ctx, F):
     h.pose(hr, {"spine": (40, 0, 0), "upper_arm_L": (120, 0, 20), "upper_arm_R": (120, 0, 20)})
     h.place(hr + 8, p2 + (p2 - p1).normalized() * 1.2 + V((0, 0, 0.12)), h.yaw_at(hr))
     h.rig.keyframe_insert("rotation_euler", frame=hr, index=0)
-    h.rig.rotation_euler.x = math.radians(-80)
+    h.rig.rotation_euler.x = math.radians(80)
     h.rig.keyframe_insert("rotation_euler", frame=hr + 8, index=0)
     A.event(hr + 8, "thud")
     h.face(hr + 8, "closed")
@@ -282,8 +282,8 @@ def build(ctx, F):
     END = tl + C.sec(6.5)
     B.set_end(ctx, 4, END)
     A.event(END - 24, "wind")
-    B.shot(ctx, 4, "S4_c6_stamp", tst - 4, [(tst - 4, V((-2.5, 3.6, 1.2)), V((-0.2, 6.3, 1.0))),
-                                            (tgo, V((-2.3, 3.4, 1.2)), V((-0.2, 6.3, 1.1)))], lens=32)
+    B.shot(ctx, 4, "S4_c6_stamp", tst - 4, [(tst - 4, V((-3.6, 8.8, 1.5)), V((-0.5, 6.0, 1.3))),
+                                            (tgo, V((-3.4, 8.6, 1.5)), V((-0.5, 6.0, 1.4)))], lens=30)
     B.shot(ctx, 4, "S4_c6b_leave", tgo, [(tgo, kp + V((-1.8, 1.6, 1.0)), V((6, 2, 1.5))),
                                          (END, kp + V((-2.1, 2.0, 1.1)), V((6, -40, 2.0)))], lens=26)
     ctx.s4 = {"hedda_end": kp}
