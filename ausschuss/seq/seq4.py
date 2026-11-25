@@ -50,7 +50,7 @@ def build(ctx, F):
     mw = A.world_matrix_at(h.rig, tgrab, "chest")
     hold_spot = mw @ V((0, 0.05, -0.32))
     f.place(tgrab, f.pos_at(tgrab), f.yaw_at(tgrab))
-    f.place(tgrab + 6, hold_spot - V((0, 0, 0.25)), h.yaw_at(tgrab))
+    f.place(tgrab + 6, A.carry_spot(h, tgrab + 6), h.yaw_at(tgrab))
     f.pose(tgrab + 6, "scared")
     con1 = A.attach_to(f.rig, h.rig, tgrab + 6, bone="chest", name="carried1")
     h.pose(tgrab + 6, "carry")
@@ -69,7 +69,8 @@ def build(ctx, F):
                  speed=3.6, lean=14)
     A.event(tgrab + 22, "chase_start")
     B.shot(ctx, 4, "S4_c1_grab", F, [(F, hstop + V((-2.0, -2.3, 1.3)), hstop + V((0.6, 0.6, 1.0))),
-                                     (tgrab + 30, hstop + V((0.4, -3.0, 1.4)), Wv(9, 1, 1.0))], lens=28)
+                                     (tgrab + 14, hstop + V((-1.4, -2.6, 1.35)), hstop + V((1.2, -0.8, 1.0))),
+                                     (tgrab + 30, hstop + V((-0.9, -3.2, 1.45)), hstop + V((3.2, -2.6, 1.0)))], lens=28)
     # ------------------------------------------------------------------ 4.2 laundry
     # Hedda runs through the alley under the laundry; the Erfasser gets a sheet on his hat
     run2 = [Wv(18, 0.0), Wv(26, 0.4), Wv(34, -0.2)]
@@ -140,8 +141,8 @@ def build(ctx, F):
     e.place(ts + 40, pos + V((0.7, 0.2, 0)), yaw0 + 720)
     e.pose(ts + 40, {"head": (0, 0, 0), "body": (-8, 0, 0)})
     ts_end = ts + 44
-    B.shot(ctx, 4, "S4_c3_bolts", t_sheet + 20, [(t_sheet + 20, bp + V((2.4, -0.45, 0.9)), bp + V((-1.5, 0.8, 0.8))),
-                                                 (ts_end, bp + V((2.5, -0.4, 1.0)), pos + V((0, 0, 1.0)))], lens=24)
+    B.shot(ctx, 4, "S4_c3_bolts", t_sheet + 20, [(t_sheet + 20, bp + V((2.4, 0.2, 0.9)), bp + V((-1.5, 1.0, 0.8))),
+                                                 (ts_end, bp + V((2.5, 0.25, 1.0)), pos + V((0, 0, 1.0)))], lens=24)
     # ------------------------------------------------------------------ 4.4 the barrel
     barrel_spot = Wv(37.0, 1.4)
     barrel = P.scrap_item("barrel_rust", barrel_spot + V((0, 0, 0.704)), (0, 0, 0), 1.6, ctx.c_props)
@@ -156,7 +157,7 @@ def build(ctx, F):
     hw = h.walk(th, [Wv(34, -0.2), b_in], speed=3.0, stride=0.8, style="run", end_pose=None)
     # hop in: she ducks into the barrel (lowered out of sight, only the goggles/Funke's antenna above the rim)
     h.place(hw + 2, b_in, 0)
-    A.arc(h.rig, hw + 4, hw + 14, b_in, barrel_spot + V((0, 0, -0.2)), height=1.9)
+    A.arc(h.rig, hw + 4, hw + 18, b_in, barrel_spot + V((0, 0, -0.2)), height=1.9)
     h.pose(hw + 6, {"thigh_L": (80, 0, 6), "thigh_R": (80, 0, 6), "shin_L": (-110, 0, 0), "shin_R": (-110, 0, 0)})
     h.pose(hw + 12, {"hips": (5, 0, 0), "spine": (18, 0, 0), "chest": (10, 0, 0), "head": (-10, 0, 0),
                      "thigh_L": (30, 0, 2), "thigh_R": (30, 0, 2), "shin_L": (-60, 0, 0), "shin_R": (-60, 0, 0),
@@ -166,7 +167,7 @@ def build(ctx, F):
     h.face(hw + 16, "worried")
     # Erfasser rolls up and scans the alley
     tes = max(ts_end, hw + 20)
-    e_scan = Wv(33.8, 0.4)
+    e_scan = Wv(35.3, 0.3)
     te4 = e.roll(tes, [e.pos_at(tes), e_scan], speed=1.6, lean=6)
     e.place(te4 + 2, None, math.degrees(A.yaw_towards(barrel_spot - e_scan)))
     A.key(ctx.erf_beam.data, "energy", te4, 0.0)
@@ -186,8 +187,8 @@ def build(ctx, F):
     e.glow(tbet + 4, 20.0, "iris")
     f.pose(tbet + 6, {"lid": (-20, 0, 0)})
     h.face(tbet + 6, "surprised")
-    B.shot(ctx, 4, "S4_c4_barrel", max(hw - 6, ts + 40), [(max(hw - 6, ts + 40), barrel_spot + V((2.8, -3.4, 1.3)), barrel_spot + V((-0.8, 0.3, 1.0))),
-                                            (tbet + 16, barrel_spot + V((2.6, -3.2, 1.3)), barrel_spot + V((-1.2, 0.4, 1.2)))],
+    B.shot(ctx, 4, "S4_c4_barrel", max(hw - 6, ts + 40), [(max(hw - 6, ts + 40), barrel_spot + V((2.2, -3.6, 1.4)), barrel_spot + V((-0.6, 0.2, 1.1))),
+                                            (tbet + 16, barrel_spot + V((1.0, -3.4, 1.3)), barrel_spot + V((-0.9, -0.3, 1.25)))],
            lens=24)
     # ------------------------------------------------------------------ 4.5 scrapyard: net misses Hedda, catches Funke
     t5 = tbet + 24
@@ -204,11 +205,11 @@ def build(ctx, F):
         h.pose(fr, {"upper_arm_L": (35, 0, 6), "upper_arm_R": (35, 0, 6), "forearm_L": (80, 0, -25),
                     "forearm_R": (80, 0, -25)})
         fr += 6
-    e.cut(t5 + 20, V((-19.5, 8.2, 0)), -90)
-    e.pose(t5 + 20, "stand")
-    e.glow(t5 + 20, 3.0, "iris")
-    e.bone_loc(t5 + 20, "neck", (0, 0, 0))
-    ter = e.roll(t5 + 20, [V((-19.5, 8.2, 0)), V((-6.5, 8.4, 0)), V((-0.5, 6.4, 0))], speed=4.6, lean=14)
+    e.cut(t5, V((-27.0, 8.3, 0)), -90)
+    e.pose(t5, "stand")
+    e.glow(t5, 3.0, "iris")
+    e.bone_loc(t5, "neck", (0, 0, 0))
+    ter = e.roll(t5 + 6, [V((-27.0, 8.3, 0)), V((-6.5, 8.4, 0)), V((-0.5, 6.4, 0))], speed=6.0, lean=16)
     # remove sheet from hat at the cut
     for c in sheet.constraints:
         c.influence = 1.0
@@ -294,7 +295,7 @@ def build(ctx, F):
     A.event(END - 24, "wind")
     B.shot(ctx, 4, "S4_c6_stamp", tst - 4, [(tst - 4, V((-3.6, 8.8, 1.5)), V((-0.5, 6.0, 1.3))),
                                             (tgo, V((-3.4, 8.6, 1.5)), V((-0.5, 6.0, 1.4)))], lens=30)
-    B.shot(ctx, 4, "S4_c6b_leave", tgo, [(tgo, kp + V((-1.8, 1.6, 1.0)), V((6, 2, 1.5))),
-                                         (END, kp + V((-2.1, 2.0, 1.1)), V((6, -40, 2.0)))], lens=26)
+    B.shot(ctx, 4, "S4_c6b_leave", tgo, [(tgo, kp + V((-2.6, 2.9, 1.2)), V((6, 2, 1.5))),
+                                         (END, kp + V((-2.8, 3.1, 1.25)), V((6, -40, 2.0)))], lens=24)
     ctx.s4 = {"hedda_end": kp}
     return END

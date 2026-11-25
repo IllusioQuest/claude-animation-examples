@@ -100,13 +100,34 @@ class Human(A.Actor):
         self.pose(f, pose)
         self.bone_loc(f, "root", (0, 0, (0.03 * (1 + c2) / 2 - 0.03) / self.h))
 
+    STYLE = {"walk": (24, 40, 0.7, 4, 0.02, 0), "run": (45, 85, 1.0, 14, 0.05, 1),
+             "sneak": (30, 70, 0.3, 18, 0.0, 2), "shuffle": (14, 25, 0.4, 8, 0.01, 0),
+             "dance": (20, 50, 1.2, -4, 0.04, 3)}
+
+    def leg_len(self):
+        b = self.rig.data.bones
+        return (b["thigh_L"].length + b["shin_L"].length) * self.rig.scale.z
+
+    def fit_stride(self, stride, style):
+        """Step length (half a cycle) = foot travel during stance = 2*L*sin(A). Keep steps at
+        least ~80 % of the style's natural length and set the swing amplitude to match."""
+        self.extra["amp"] = None
+        if style not in self.STYLE or style == "dance":
+            return stride
+        A_ = self.STYLE[style][0]
+        L = self.leg_len() * (0.85 if style == "sneak" else 1.0)
+        nat = 2 * L * math.sin(math.radians(A_))
+        s = max(stride, 0.8 * nat)
+        self.extra["amp"] = math.degrees(math.asin(min(0.95, s / (2 * L))))
+        return s
+
     def walk_cycle(self, f, phase, style):
         if style == "dance":
             return self.dance_cycle(f, phase)
-        st = {"walk": (24, 40, 0.7, 4, 0.02, 0), "run": (45, 85, 1.0, 14, 0.05, 1),
-              "sneak": (30, 70, 0.3, 18, 0.0, 2), "shuffle": (14, 25, 0.4, 8, 0.01, 0),
-              "dance": (20, 50, 1.2, -4, 0.04, 3)}[style]
-        A_, B, armk, lean, bob, kind = st
+        A_, B, armk, lean, bob, kind = self.STYLE[style]
+        if self.extra.get("amp"):
+            k = self.extra["amp"] / A_
+            A_, B = self.extra["amp"], B * min(1.3, max(0.7, k))
         tw = 2 * math.pi * phase
         pose = {}
         for side, ph in (("L", 0.0), ("R", math.pi)):

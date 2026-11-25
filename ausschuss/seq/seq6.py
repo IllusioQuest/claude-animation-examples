@@ -75,12 +75,9 @@ def trot(ob, f0, pts, speed=1.0, hop=0.08, period=8):
 def iris(ctx, cam, f0, f1, target, coll, d=0.1):
     """Opaque black ring with a shrinking round hole, centred on target (world point)."""
     import bmesh
-    sc = bpy.data.scenes[ctx.seq[6]["scene"].name]
-    sc.frame_set(f0)
-    u = world_to_camera_view(sc, cam, V(target))
     fw = cam.data.sensor_width / cam.data.lens * d
     fh = fw * 9 / 16
-    cx, cy = (u.x - 0.5) * fw, (u.y - 0.5) * fh
+    cx, cy = 0.0, 0.0  # the wink camera aims at the eye, so the hole is centred
     m = C.emission("iris_black", (0, 0, 0), 0.0)
     bm = bmesh.new()
     seg = 96
@@ -99,7 +96,7 @@ def iris(ctx, cam, f0, f1, target, coll, d=0.1):
     ring.parent = cam
     ring.location = (cx, cy, -d)
     rmax = math.hypot(fw, fh) * 0.6 + math.hypot(cx, cy)
-    for fr, r in ((f0, rmax), (f1 - 10, fw * 0.03), (f1 - 4, fw * 0.03), (f1, 0.00001)):
+    for fr, r in ((f0, rmax), (f1 - 12, fw * 0.035), (f1 - 5, fw * 0.035), (f1, fw * 0.004)):
         ring.scale = (r, r, r)
         ring.keyframe_insert("scale", frame=fr)
     cap = C.box("iris_cap", (1.0, 1.0, 0.0001), loc=(0, 0, -d * 1.01), m=m, bevel=0, coll=coll)
@@ -166,7 +163,7 @@ def build(ctx, F):
     f.glow(F, 3.0, "bulb")
     A.key(ctx.funke_light.data, "energy", F, 1.0)
     hm = A.world_matrix_at(h.rig, F, "chest")
-    f.place(F, hm @ V((0, 0.05, -0.32)) - V((0, 0, 0.25)), 0)
+    f.place(F, A.carry_spot(h, F), h.yaw_at(F))
     con = A.attach_to(f.rig, h.rig, F, bone="chest", name="carried6")
     hw = h.walk(F + 2, [a0, a1], speed=0.9, stride=0.45, end_pose=None)
     fr = F + 2
@@ -200,16 +197,21 @@ def build(ctx, F):
     h.place(tw_ + 6, front, sit_yaw)
     h.place(tsit, seat_pos, sit_yaw)
     h.pose(tsit + 10, "sit")
-    h.pose(tsit + 10, {"head": (30, 0, 0), "spine": (20, 0, 0), "upper_arm_L": (30, 0, 10), "upper_arm_R": (30, 0, 10),
-                       "forearm_L": (80, 0, -20), "forearm_R": (80, 0, -20)})
+    h.pose(tsit + 10, {"head": (30, 0, 0), "spine": (20, 0, 0), "upper_arm_L": (44, 0, 12), "upper_arm_R": (44, 0, 12),
+                       "forearm_L": (70, 0, -20), "forearm_R": (70, 0, -20)})
     h.bone_loc(tsit, "root", (0, 0, 0))
     h.bone_loc(tsit + 10, "root", (0, 0.05, -0.32))
     h.face(tsit + 10, "sad")
     h.blink(tsit + 40, "sad")
     A.event(tsit + 10, "sigh")
     A.event(F, "dawn_wind", dur=C.sec(8))
-    B.shot(ctx, 6, "S6_c1_arrive", F, [(F, HL(-3.5, -12, 1.7), HL(0.5, -1, 1.0)), (tsit, HL(-2.5, -9.5, 1.6), HL(0, -1.5, 0.9))],
+    B.shot(ctx, 6, "S6_c1_arrive", F, [(F, HL(-3.5, -12, 1.7), HL(0.5, -1, 1.0)), (hw - 8, HL(-3.0, -10.5, 1.65), HL(0.6, -2.5, 1.0))],
            lens=30)
+    # her face as she takes it in
+    B.shot(ctx, 6, "S6_c1b_face", hw - 8, [(hw - 8, a1 + HL(0.5, 1.9, 1.45) - HL(0, 0, 0), a1 + V((0, 0, 1.45))),
+                                           (hw + 34, a1 + HL(0.45, 1.75, 1.45) - HL(0, 0, 0), a1 + V((0, 0, 1.4)))], lens=40)
+    B.shot(ctx, 6, "S6_c1c_sit", hw + 34, [(hw + 34, HL(-1.6, -7.8, 1.5), HL(0.2, -2.6, 0.8)),
+                                           (tsit + 20, HL(-1.4, -7.2, 1.45), HL(0.0, -2.6, 0.75))], lens=30)
     # ------------------------------------------------------------------ 6.2 Funke brings a sheet, the double knock
     tf = tsit + 20
     f.hold_all(tf - 1)
@@ -264,10 +266,10 @@ def build(ctx, F):
     f.pose(tk + 44, "happy")
     f.glow(tk + 44, 10.0, "bulb")
     A.event(tk + 40, "warm_chord")
-    B.shot(ctx, 6, "S6_c2_sheet", tf, [(tf, HL(3.2, -5.5, 1.1), HL(0.2, -2.0, 0.5)), (f2, HL(2.8, -5.8, 1.0), HL(0, -2.6, 0.6))],
-           lens=30)
-    B.shot(ctx, 6, "S6_c2b_knock", f2 - 6, [(f2 - 6, HL(0.7, -0.5, 1.3), HL(-0.35, -2.7, 0.65)),
-                                            (tk + 60, HL(0.6, -0.6, 1.25), HL(-0.4, -2.75, 0.7))], lens=28)
+    B.shot(ctx, 6, "S6_c2_sheet", tf, [(tf, HL(-2.7, -6.0, 1.35), HL(0.2, -2.4, 0.5)), (f2, HL(-2.5, -5.8, 1.3), HL(-0.2, -2.8, 0.55))],
+           lens=28)
+    B.shot(ctx, 6, "S6_c2b_knock", f2 - 6, [(f2 - 6, HL(0.8, -4.9, 1.2), HL(-0.6, -2.8, 0.75)),
+                                            (tk + 60, HL(0.7, -4.8, 1.2), HL(-0.65, -2.8, 0.85))], lens=26)
     # ------------------------------------------------------------------ the freed machines arrive
     tm = tk + 50
     road = [V((-25.5, 8.4, 0)), V((-21, 7.5, 0)), V((-20.6, 0.5, 0))]
@@ -321,11 +323,9 @@ def build(ctx, F):
     tw = tb + C.sec(3.0)
     END = tw + C.sec(7.0)
     B.set_end(ctx, 6, END)
-    B.shot(ctx, 6, "S6_c4_wide", tb, [(tb, HL(5, -12, 2.4), HL(0, -1, 1.2)), (tw, HL(6, -14, 3.0), HL(0, -1, 1.3))], lens=26)
+    B.shot(ctx, 6, "S6_c4_wide", tb, [(tb, HL(3.4, -7.6, 1.7), HL(0.2, -2.4, 1.0)), (tw, HL(4.4, -9.6, 2.2), HL(0.2, -2.0, 1.1))], lens=28)
     # close-up of Funke: wink + glint, iris-out on his eye
     cdir = V((0.62, 0.55, 0)).normalized()
-    cam = B.shot(ctx, 6, "S6_c5_wink", tw, [(tw, dpos + cdir * 1.05 + V((0, 0, 0.5)), dpos + V((0, 0, 0.36))),
-                                            (END, dpos + cdir * 0.9 + V((0, 0, 0.5)), dpos + V((0, 0, 0.4)))], lens=45)
     f.cut(tw, dpos, math.degrees(A.yaw_towards(cdir)))
     f.pose(tw, "stand")
     f.pose(tw, {"lid": (-95, 0, 0), "head": (-6, 0, 0)})
@@ -340,6 +340,9 @@ def build(ctx, F):
     f.glow(tk2 + 26, 4.0, "iris")
     A.event(tk2 + 21, "glint")
     eye = A.world_matrix_at(f.rig, tk2 + 30, "head") @ V((0, -0.09, 0.1))
+    cam = B.shot(ctx, 6, "S6_c5_wink", tw, [(tw, eye + cdir * 1.15 + V((0, 0, 0.1)), eye - V((0, 0, 0.12))),
+                                            (tk2 + 30, eye + cdir * 0.95 + V((0, 0, 0.1)), eye),
+                                            (END, eye + cdir * 0.9 + V((0, 0, 0.1)), eye)], lens=45)
     card = iris(ctx, cam, tk2 + 30, END - C.sec(2.5), eye, cams)
     A.event(tk2 + 30, "iris_out")
     fs = S.fog_density_socket(fog6)

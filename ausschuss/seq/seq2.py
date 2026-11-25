@@ -146,10 +146,10 @@ def build(ctx, F):
                                         (T(6), W(0.65, 1.2, 1.22), bench + V((0, 0, 0.12)))], lens=45)
     B.shot(ctx, 2, "S2_m2_body", T(6), [(T(6), W(-1.9, 0.5, 1.5), W(0.1, 1.6, 1.1)),
                                         (T(8), W(-1.8, 0.7, 1.5), W(0.1, 1.6, 1.15))], lens=30)
-    B.shot(ctx, 2, "S2_m3_arms", T(8), [(T(8), W(0.25, 1.25, 1.95), bench + V((0, 0, 0.2))),
-                                        (T(10), W(0.35, 1.3, 1.9), bench + V((0, 0, 0.2)))], lens=35)
+    B.shot(ctx, 2, "S2_m3_arms", T(8), [(T(8), W(0.95, 1.2, 1.45), bench + V((0, 0, 0.22))),
+                                        (T(10), W(0.9, 1.25, 1.42), bench + V((0, 0, 0.22)))], lens=35)
     B.shot(ctx, 2, "S2_m4_bird", T(10), [(T(10), W(-1.75, -0.95, 1.9), W(-2.3, -0.2, 2.07), 50),
-                                         (T(12), W(-1.4, -1.4, 1.5), W(-0.6, 1.2, 1.4))], lens=32)
+                                         (T(12), W(-1.65, -0.85, 1.95), W(-2.3, -0.2, 2.05), 55)], lens=50)
     B.shot(ctx, 2, "S2_m5_orrery", T(12), [(T(12), W(1.75, 1.15, 1.2), W(1.3, 1.8, 1.25)),
                                            (T(14), W(1.7, 1.05, 1.22), W(0.6, 1.8, 1.2))], lens=40)
     # ------------------------------------------------------------------ 2.3 the lens goes in
@@ -183,8 +183,8 @@ def build(ctx, F):
     h.hold_place(t_away)
     aw_end = h.walk(t_away, [W(0.2, 1.05), W(-0.4, 0.2), W(-1.0, -0.5)], speed=0.6, stride=0.4, style="shuffle",
                     end_pose="sigh")
-    B.shot(ctx, 2, "S2_c3_insert", T(14), [(T(14), W(-1.25, 0.95, 1.4), W(0.15, 1.75, 1.15)),
-                                           (t_away, W(-1.15, 1.0, 1.4), W(0.15, 1.75, 1.2))], lens=38)
+    B.shot(ctx, 2, "S2_c3_insert", T(14), [(T(14), W(-1.75, 1.15, 1.45), W(0.2, 1.45, 1.15)),
+                                           (t_away, W(-1.65, 1.1, 1.45), W(0.2, 1.4, 1.2))], lens=32)
     # ------------------------------------------------------------------ 2.4 awakening
     tw = T(21.0)
     f.glow(tw, 0.0, "iris")
@@ -268,10 +268,10 @@ def build(ctx, F):
     h.face(he + 38, "happy")
     h.pose(he + 38, {"head": (-8, 12, 0)})
     t_imit_end = he + 52
-    B.shot(ctx, 2, "S2_c5_steps", t5, [(t5, W(1.7, -1.6, 1.15), W(0.1, 0.8, 0.65)),
-                                       (he, W(1.6, -1.7, 1.05), W(-0.1, 0.3, 0.6))], lens=28)
-    B.shot(ctx, 2, "S2_c5b_imit", he + 10, [(he + 10, W(1.6, -1.4, 0.8), W(0.0, 0.17, 0.6)),
-                                            (t_imit_end, W(1.5, -1.3, 0.8), W(0.0, 0.17, 0.65))], lens=28)
+    B.shot(ctx, 2, "S2_c5_steps", t5, [(t5, W(1.9, -1.9, 1.3), W(0.1, 0.8, 0.65)),
+                                       (he, W(2.2, -2.0, 1.2), W(-0.1, 0.3, 0.65))], lens=24)
+    B.shot(ctx, 2, "S2_c5b_imit", he + 10, [(he + 10, W(2.4, -2.0, 1.15), W(0.05, 0.2, 0.62)),
+                                            (t_imit_end, W(2.3, -1.9, 1.1), W(0.05, 0.2, 0.65))], lens=26)
     # ------------------------------------------------------------------ 2.6a hammer smashes the desk lamp
     ta = t_imit_end + 4
     h.pose(ta, "stand")
@@ -417,7 +417,7 @@ def build(ctx, F):
     pot = ws["pot"]
     tp_land = tpull + 66
     head_m = A.world_matrix_at(h.rig, tp_land, "head")
-    headtop = head_m.translation + V((0, 0, 0.27))
+    headtop = head_m.translation + V((0, 0, 0.31))
     pot.keyframe_insert("location", frame=tpull + 27)
     pot.keyframe_insert("rotation_euler", frame=tpull + 27)
     A.arc(pot, tpull + 28, tp_land, V(pot.location) + V((-0.4, 0, 0)), headtop + V((0, 0, 0.02)), height=2.0,
@@ -444,7 +444,9 @@ def build(ctx, F):
     A.event(tp_land + 32, "pop_up")
     t6b_end = tp_land + 64
     B.shot(ctx, 2, "S2_c6b_shelf", tb, [(tb, W(-0.4, -1.9, 1.3), W(1.5, -0.6, 0.8)),
-                                        (t6b_end, W(-0.2, -1.95, 1.25), W(1.8, -0.6, 0.9))], lens=30)
+                                        (tpull + 12, W(-0.3, -1.95, 1.3), W(1.7, -0.6, 0.85))], lens=30)
+    B.shot(ctx, 2, "S2_c6b2_leap", tpull + 12, [(tpull + 12, W(-1.3, -1.5, 1.7), W(1.5, 0.1, 0.55)),
+                                                (t6b_end, W(-1.2, -1.4, 1.65), W(1.3, 0.4, 0.6))], lens=24)
     # ------------------------------------------------------------------ 2.6c generator dies; the double knock
     tc = t6b_end + 2
     A.event(tc, "gen_sputter")
@@ -534,8 +536,8 @@ def build(ctx, F):
     t6c_end = hw3 + 50
     B.shot(ctx, 2, "S2_c6c_dark", tc, [(tc, W(-1.1, -1.7, 1.5), W(1.4, 0.4, 0.9)),
                                        (tr_on + 40, W(-0.9, -1.6, 1.45), W(1.6, 0.5, 0.8))], lens=28)
-    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(2.45, -0.65, 2.0), W(1.75, 0.8, 0.55), 22),
-                                               (t6c_end, W(2.4, -0.6, 1.95), W(1.8, 0.85, 0.55), 22)], lens=22)
+    B.shot(ctx, 2, "S2_c6c_knock", tr_on + 40, [(tr_on + 40, W(0.55, 1.95, 1.5), W(1.75, 0.8, 0.7), 28),
+                                               (t6c_end, W(0.6, 1.9, 1.45), W(1.8, 0.85, 0.7), 28)], lens=28)
     # ------------------------------------------------------------------ 2.7 later: both asleep
     ts = t6c_end + 2
     END = ts + C.sec(5.5)

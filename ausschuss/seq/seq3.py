@@ -138,10 +138,9 @@ def build(ctx, F):
     w2.pose(F, "stand"); w2.pose(F, {"spine": (18, 0, 0), "head": (15, 0, 0), "upper_arm_R": (40, 0, 5),
                                      "forearm_R": (40, 0, 0)})
     w2.face(F, "neutral")
-    w1.cut(F, Wv(1.8, -12.8), 0)
+    w1.cut(F, Wv(-7.0, -9.5), 0)
     w1.pose(F, "stand"); w1.face(F, "neutral")
-    w1.walk(T(0), [Wv(1.8, -12.8), Wv(2.2, -7.0), Wv(-1, -5.5), Wv(-5, -4.5)], speed=0.9, stride=0.45,
-            end_pose="stand")
+    w1.walk(T(0), [Wv(-7.0, -9.5), Wv(-6.0, -6.5), Wv(-5, -4.5)], speed=0.7, stride=0.45, end_pose="stand")
     w3.cut(F, Wv(-6.5, 5.5), 160)
     w3.pose(F, "stand"); w3.face(F, "neutral")
     w3.pose(F, {"upper_arm_L": (150, 0, 10), "upper_arm_R": (150, 0, 10), "head": (-20, 0, 0)})  # hanging laundry
@@ -179,18 +178,19 @@ def build(ctx, F):
         A.key_socket(hs, fr, rnd.choice([2.0, 2.0, 0.2, 2.5, 0.0]), "CONSTANT")
         fr += rnd.randint(3, 20)
     # ------------------------------------------------------------------ Hedda arrives, Funke peeks from her coat
-    hstart = Wv(0.5, -14)
+    hstart = Wv(0.8, -11.5)
     hstop = local_to_world(radio_stall, (-0.9, -1.4, 0))
     h.cut(F, hstart, 0)
     h.pose(F, "stand")
     h.face(F, "neutral")
-    hw = h.walk(T(4.5), [hstart, Wv(1.6, -5.0), Wv(2.8, -0.2), hstop], speed=0.95, stride=0.48, end_pose=None)
+    hw = h.walk(T(1.5), [hstart, Wv(1.6, -5.0), Wv(2.8, -0.2), hstop], speed=1.25, stride=0.5, end_pose=None)
     h.place(hw + 2, hstop, math.degrees(A.yaw_towards(radio_pos - hstop)))
     h.pose(hw + 4, "stand")
     h.pose(hw + 4, {"upper_arm_L": (35, 0, 6), "forearm_L": (75, 0, -25)})  # arm cradling Funke
-    A.look(h, T(9.5), om_pos + V((0, 0, 1.0)))
-    A.look(h, T(11), radio_pos)
-    h.face(T(12), "sad")
+    A.look(h, T(5.5), om_pos + V((0, 0, 1.0)))
+    A.look(h, T(7.5), om_pos + V((0, 0, 1.0)))
+    A.look(h, hw + 8, radio_pos)
+    h.face(hw + 14, "sad")
     # Funke hidden in the coat, peeking out
     f.cut(F, (0, 0, 0), 0)
     f.pose(F, "stand")
@@ -203,14 +203,14 @@ def build(ctx, F):
     peek = mw @ V((0.02, 0.02, -0.17))
     f.place(F, h.pos_at(F) + V((0.02, -0.14, 0.92)), h.yaw_at(F))
     con_f = A.attach_to(f.rig, h.rig, F, bone="chest", name="in_coat")
-    for i, fr in enumerate(range(T(6), T(15), 30)):
+    tout = max(T(17.0), hw + 36)
+    for i, fr in enumerate(range(T(6), tout - 50, 30)):
         A.look(f, fr, Wv(rnd.uniform(-6, 6), rnd.uniform(-4, 6), 1.0), pitch=-10,
                extra={"lid": (-95, 0, 0), "body": (40, 0, 0)})
     f.blink(T(8))
-    f.blink(T(12.3))
-    A.look(f, T(13.2), radio_pos, extra={"lid": (-95, 0, 0), "body": (40, 0, 0)})
+    f.blink(tout - 60)
+    A.look(f, tout - 40, radio_pos, extra={"lid": (-95, 0, 0), "body": (40, 0, 0)})
     # ------------------------------------------------------------------ Funke goes for the radio
-    tout = T(15.2)
     A.detach(f.rig, con_f, tout)
     f.pose(tout, "stand")
     f.pose(tout, {"lid": (-95, 0, 0)})
@@ -343,9 +343,11 @@ def build(ctx, F):
     # ------------------------------------------------------------------ cameras
     B.shot(ctx, 3, "S3_c1_wide", F, [(F, Wv(0.5, -17.5, 4.5), Wv(0, 3, 1.4)), (T(4.5), Wv(0.0, -15.5, 3.8), Wv(0, 2, 1.4))],
            lens=26)
-    B.shot(ctx, 3, "S3_c2_walk", T(4.5), [(T(4.5), Wv(3.0, -3.0, 1.6), Wv(0.6, -13, 1.2)),
-                                          (T(8), Wv(3.2, -2.4, 1.6), Wv(1.6, -5, 1.1)),
-                                          (T(11), Wv(3.7, -2.6, 1.6), Wv(3.2, 4.0, 1.2))], lens=30)
+    wk = []
+    for t_ in (T(4.5), T(7.5), T(11)):
+        hp_ = h.pos_at(t_)
+        wk.append((t_, hp_ + V((1.9, 3.6, 1.5)), hp_ + V((0, 0, 1.05))))
+    B.shot(ctx, 3, "S3_c2_walk", T(4.5), wk, lens=30)
     B.shot(ctx, 3, "S3_c3_vendor", T(11), [(T(11), hstop + V((-1.6, -1.0, 1.0)), radio_pos + V((0, 0, 0.2))),
                                            (tout, hstop + V((-1.5, -0.9, 1.0)), radio_pos + V((0, 0, 0.1)))], lens=30)
     B.shot(ctx, 3, "S3_c4_radio", tout + 10, [(tout + 10, radio_pos + V((-0.9, -1.2, 0.35)), radio_pos + V((-0.2, 0, 0.1))),
@@ -355,9 +357,9 @@ def build(ctx, F):
            lens=24)
     B.shot(ctx, 3, "S3_c5b_kids", td + C.sec(4), [(td + C.sec(4), Wv(-1.6, -5.0, 1.0), Wv(0.2, -1.8, 0.7)),
                                                   (td + C.sec(6), Wv(-1.2, -5.2, 1.0), Wv(0.2, -2.0, 0.8))], lens=30)
-    B.shot(ctx, 3, "S3_c5c_oldman", td + C.sec(6), [(td + C.sec(6), om_pos + V((1.6, -2.4, 1.2)), om_pos + V((0, -0.4, 0.9))),
-                                                    (td + C.sec(8), om_pos + V((1.4, -2.2, 1.2)), om_pos + V((0, -0.5, 1.0)))],
-           lens=30)
+    B.shot(ctx, 3, "S3_c5c_oldman", td + C.sec(6), [(td + C.sec(6), om_pos + V((2.0, -3.0, 1.3)), om_pos + V((0, -0.5, 0.95))),
+                                                    (td + C.sec(8), om_pos + V((1.8, -2.8, 1.3)), om_pos + V((0, -0.6, 1.0)))],
+           lens=24)
     side = (radio_pos - hstop).normalized()
     perp = V((-side.y, side.x, 0))
     to_c = (Wv(0, 0) - hstop)
@@ -378,6 +380,6 @@ def build(ctx, F):
     B.shot(ctx, 3, "S3_c7b_freeze", t_stop + 12, [(t_stop + 12, hstop + to_e * 2.3 + pc * 0.5 + V((0, 0, 1.4)),
                                                    hstop + V((0, 0, 1.3))),
                                                   (END, hstop + to_e * 2.0 + pc * 0.45 + V((0, 0, 1.38)),
-                                                   hstop + V((0, 0, 1.32)))], lens=32)
+                                                   hstop + V((0, 0, 1.32)))], lens=26)
     ctx.s3 = {"hstop": hstop, "radio_pos": radio_pos, "table": table_spot, "erf_end": Wv(0.3, -11.5)}
     return END

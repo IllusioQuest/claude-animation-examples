@@ -82,6 +82,33 @@ def hold_obj(ob, frame, paths=("location", "rotation_euler", "scale")):
         ob.keyframe_insert(p, frame=frame)
 
 
+def auto_hold(id_data, path, idxs, f, gap, lead):
+    """When a key is appended at f and the previous key on the channel lies more than
+    `gap` frames back, key the current value at f-lead first. Turns slow, floaty drifts
+    between distant keys into a hold followed by a deliberate move (cartoon timing)."""
+    ad = id_data.animation_data
+    if not ad or not ad.action:
+        return
+    fcs = [ad.action.fcurves.find(path, index=i) for i in idxs]
+    fcs = [fc for fc in fcs if fc is not None and len(fc.keyframe_points)]
+    if not fcs:
+        return
+    prev = max((k.co.x for fc in fcs for k in fc.keyframe_points if k.co.x < f - 0.5), default=None)
+    later = any(k.co.x > f + 0.5 for fc in fcs for k in fc.keyframe_points)
+    if prev is None or later or f - prev <= gap:
+        return
+    for fc in fcs:
+        fc.keyframe_points.insert(f - lead, fc.evaluate(f - lead))
+
+
+def carry_spot(actor, f):
+    """Where a small robot sits when carried in front of the chest (feet clear of the coat)."""
+    mw = world_matrix_at(actor.rig, f, "chest")
+    yaw = math.radians(actor.yaw_at(f))
+    fwd = Vector((math.sin(yaw), -math.cos(yaw), 0))
+    return mw @ Vector((0, 0.05, -0.32)) - Vector((0, 0, 0.04)) + fwd * 0.13
+
+
 def ease(t, kind="inout"):
     t = max(0.0, min(1.0, t))
     if kind == "in":
@@ -118,6 +145,11 @@ class Actor:
     # ----------------------------------------------------------------- placement
     def place(self, f, loc=None, yaw=None, interp=None):
         ob = self.rig
+        if interp is None:
+            if loc is not None:
+                auto_hold(ob, "location", (0, 1, 2), f, 14, 8)
+            if yaw is not None:
+                auto_hold(ob, "rotation_euler", (2,), f, 14, 8)
         if loc is not None:
             key(ob, "location", f, Vector(loc), interp)
         if yaw is not None:
@@ -180,6 +212,7 @@ class Actor:
             x, y, z = rot
             if self.mirror and bone.endswith("_R"):
                 y, z = -y, -z
+            auto_hold(self.rig, pb.path_from_id("rotation_euler"), (0, 1, 2), f, 30, 10)
             pb.rotation_euler = (math.radians(x) * blend, math.radians(y) * blend, math.radians(z) * blend)
             pb.keyframe_insert("rotation_euler", frame=f)
             if interp:
@@ -242,6 +275,11 @@ class Actor:
         pts = [Vector(p) for p in pts]
         segs = [(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
         total = sum((b - a).length for a, b in segs)
+        # hold the previous placement until just before the walk starts (no slow drift)
+        auto_hold(self.rig, "location", (0, 1, 2), f0, turn_frames, turn_frames)
+        auto_hold(self.rig, "rotation_euler", (2,), f0, turn_frames, turn_frames)
+        # stride that matches the leg swing (no foot skating), see walk_amp()
+        stride = self.fit_stride(stride, style)
         dur = max(2, int(round(total / speed * C.FPS)))
         f1 = f0 + dur
         # location keys at each polyline point with linear interp; yaw keys at corners
@@ -274,6 +312,10 @@ class Actor:
     def walk_cycle(self, f, phase, style):
         """Override per character. phase 0..1 over a full two-step cycle (0 = contact L)."""
         pass
+
+    def fit_stride(self, stride, style):
+        """Per character: return the stride actually used (and set the swing to match)."""
+        return stride
 
 
 def camera(name, coll, lens=35.0, sensor=36.0, clip_end=2000.0):

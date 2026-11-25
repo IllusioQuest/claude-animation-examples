@@ -235,8 +235,8 @@ def build(ctx, F):
     h.pose(tn + 2, {"upper_arm_L": (130, 0, 30), "upper_arm_R": (130, 0, 30), "forearm_L": (60, 0, 0),
                     "forearm_R": (60, 0, 0)})
     # lift, stamp on the forehead
-    e.pose(tn + 12, {"arm_R": (110, 0, 20), "fore_R": (10, 0, 0), "hand_R": (-30, 0, 0)})
-    hit = e.stamp(tn + 20)
+    e.pose(tn + 20, {"arm_R": (110, 0, 20), "fore_R": (10, 0, 0), "hand_R": (-30, 0, 0)})
+    hit = e.stamp(tn + 28)
     for d in ctx.decal_hedda:
         A.hide(d, hit, False)
     h.face(hit, "closed")
@@ -256,7 +256,7 @@ def build(ctx, F):
     e.pose(tdrop + 20, "stand")
     B.shot(ctx, 5, "S5_c3_catwalk", tcw, [(tcw, Hd(-12, 0.8, 5.2), Hd(-6, 2.8, 4.3)),
                                           (tn, Hd(tgt_x - 6.0, 0.4, 5.3), Hd(tgt_x - 1, 2.8, 4.4))], lens=28)
-    B.shot(ctx, 5, "S5_c3b_stamp", tn + 10, [(tn + 10, Hd(tgt_x + 2.2, 1.2, 4.6), Hd(tgt_x - 0.8, 2.6, 4.6))], lens=32)
+    B.shot(ctx, 5, "S5_c3b_stamp", tn + 10, [(tn + 10, Hd(tgt_x + 2.6, 0.2, 4.4), Hd(tgt_x - 1.4, 2.7, 5.5))], lens=24)
     B.shot(ctx, 5, "S5_c3c_drop", tdrop - 4, [(tdrop - 4, Hd(tgt_x + 1.5, -4.5, 2.6), Hd(tgt_x + 1.5, 0.5, 2.0))], lens=26)
     # ------------------------------------------------------------------ 5.4 Funke squeezes out
     tsq = max(tdrop + 30, T(24.5))
@@ -398,7 +398,7 @@ def build(ctx, F):
     h.pose(tsc - 6, "bend_down")
     f.place(tsc, f_by_h, None)
     hm = A.world_matrix_at(h.rig, tsc + 8, "chest")
-    f.place(tsc + 8, hm @ V((0, 0.05, -0.32)) - V((0, 0, 0.25)), h.yaw_at(tsc + 8))
+    f.place(tsc + 8, A.carry_spot(h, tsc + 8), h.yaw_at(tsc + 8))
     con_c = A.attach_to(f.rig, h.rig, tsc + 8, bone="chest", name="carried5")
     h.pose(tsc + 8, "carry")
     h.face(tsc + 10, "happy")
