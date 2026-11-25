@@ -301,7 +301,31 @@ def build(ctx, F):
     h.pose(tl + 10, {"upper_arm_R": (80, 0, 10), "forearm_R": (5, 0, 0), "head": (-8, 0, 0)})
     h.face(tl + 30, "sad")
     h.blink(tl + 50, "sad")
-    END = tl + C.sec(6.5)
+    # she gets up. Looks after the truck. And pulls the goggles down: she is going after them.
+    tg = tl + 58
+    h.pose(tg, "stand")
+    h.bone_loc(tg, "root", (0, 0, 0))
+    h.pose(tg, {"head": (-6, 0, 0), "upper_arm_R": (10, 0, 6), "forearm_R": (15, 0, 0)})
+    h.face(tg + 6, "sad")
+    h.blink(tg + 26, "sad")
+    h.face(tg + 34, "angry")
+    h.pose(tg + 34, {"head": (-10, 0, 0), "spine": (-4, 0, 0), "chest": (-4, 0, 0)})
+    hands_up = {"upper_arm_L": (150, 0, 32), "forearm_L": (70, 0, -10), "upper_arm_R": (150, 0, 32),
+                "forearm_R": (70, 0, -10), "head": (-12, 0, 0)}
+    h.pose(tg + 46, hands_up)
+    gpv = h.extra.get("goggles")
+    if gpv:
+        gpv.rotation_euler.x = 0
+        gpv.keyframe_insert("rotation_euler", frame=tg + 50, index=0)
+        gpv.rotation_euler.x = math.radians(26)
+        gpv.keyframe_insert("rotation_euler", frame=tg + 55, index=0)
+        A.set_interp(gpv, "rotation_euler", tg + 55, "CONSTANT", index=0)
+    h.pose(tg + 55, {"upper_arm_L": (135, 0, 30), "forearm_L": (70, 0, -10), "upper_arm_R": (135, 0, 30),
+                     "forearm_R": (70, 0, -10)})
+    A.event(tg + 55, "click")
+    h.pose(tg + 66, {"upper_arm_L": (8, 0, 6), "forearm_L": (20, 0, 0), "upper_arm_R": (8, 0, 6),
+                     "forearm_R": (20, 0, 0), "head": (-8, 0, 0)})
+    END = tg + 66 + C.sec(1.6)
     B.set_end(ctx, 4, END)
     A.event(END - 24, "wind")
     B.shot(ctx, 4, "S4_c6_stamp", tst - 4, [(tst - 4, V((-3.6, 8.8, 1.5)), V((-0.5, 6.0, 1.3))),
@@ -310,6 +334,12 @@ def build(ctx, F):
     kq = V((kp.x, kp.y, 0))
     back = (kq - V((6.0, -14.0, 0))).normalized()
     side = V((-back.y, back.x, 0))
+    # close on her face for the decision
+    road_dir = (V((6.0, -14.0, 0)) - kq).normalized()
+    hz = 1.5
+    B.shot(ctx, 4, "S4_c7_resolve", tg + 24, [(tg + 24, kq + road_dir * 1.5 + V((0, 0, hz)), kq + V((0, 0, hz - 0.02))),
+                                             (END, kq + road_dir * 1.25 + V((0, 0, hz - 0.02)), kq + V((0, 0, hz)))],
+           lens=50)
     B.shot(ctx, 4, "S4_c6b_leave", tgo, [(tgo, kq + back * 3.4 + side * 1.0 + V((0, 0, 1.25)), V((6.0, -14.0, 0.9))),
                                          (END, kq + back * 2.9 + side * 0.8 + V((0, 0, 1.15)), V((6.0, -14.0, 1.1)))],
            lens=32)
@@ -330,5 +360,6 @@ def build(ctx, F):
                        pf0, tbet, amp=2.2), lens=40, lock=tbet + 2,
                  lines=[(te4 + 10, "SCANNING ALLEY ...", None), (te4 + 22, "NO MATCH", None),
                         (te4 + 34, "NO MATCH", None), (tbet + 1, "SIGNAL  ANTENNA  412 Hz", (1, 0.6, 0.2))],
-                 verdict=(tbet + 6, "MATCH"))
+                 verdict=(tbet + 6, "MATCH"),
+                 hide=[bpy.data.objects[x] for x in ("Erfasser_pole", "Erfasser_hoop", "Erfasser_net")])
     return END

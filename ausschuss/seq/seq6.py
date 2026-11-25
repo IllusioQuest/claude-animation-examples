@@ -140,8 +140,12 @@ def build(ctx, F):
     for ob in hut["remains"]:
         A.hide(ob, 0, True)
         A.hide(ob, F, False)
-    for d in ctx.decal_hedda + ctx.decal_funke:
-        A.hide(d, F, True)
+    # (the OBSOLETE stamps stay on Hedda and Funke – worn like badges now)
+    gpv = h.extra.get("goggles")
+    if gpv:  # home again: goggles back up on the forehead
+        gpv.rotation_euler.x = 0
+        gpv.keyframe_insert("rotation_euler", frame=F, index=0)
+        A.set_interp(gpv, "rotation_euler", F, "CONSTANT", index=0)
     hr = hut["root"]
     bpy.context.view_layer.update()
     site = V(hr.location)
@@ -150,7 +154,7 @@ def build(ctx, F):
         return hr.matrix_world @ V((x, y, z))
 
     # ------------------------------------------------------------------ 6.1 arrival
-    a0 = HL(2.0, -9.0)
+    a0 = HL(1.6, -7.4)  # she is in the frame almost at once
     a1 = HL(0.9, -3.4)
     h.cut(F, a0, 0)
     h.pose(F, "stand")
@@ -301,6 +305,54 @@ def build(ctx, F):
                                                (tm + 100, V((-18.3, 4.4, 1.25)), V((-21.6, 7.4, 0.5)))], lens=30)
     # ------------------------------------------------------------------ 6.3 building again, the wink, iris out
     tb = tm + 110
+    # ---- the sun disc climbs out of the haze behind the building site
+    look = (HL(0.2, -2.4) - HL(3.4, -7.6))
+    look.z = 0
+    look.normalize()
+    sun_c = HL(0.2, -2.4) + look * 340
+    disc = C.sphere("S6_sundisc", 11.0, loc=sun_c + V((0, 0, -14)), m=C.emission("S6_sun_m", (1.0, 0.72, 0.38), 30.0),
+                    coll=L, seg=32, rings=16)
+    disc.keyframe_insert("location", frame=F)
+    disc.location = sun_c + V((0, 0, 30))
+    disc.keyframe_insert("location", frame=END + 400)
+    for fc in disc.animation_data.action.fcurves:
+        for kp in fc.keyframe_points:
+            kp.interpolation = "LINEAR"
+    # ---- the village comes to help: they walk in while she starts building
+    centre = HL(0.0, -2.6)
+    helpers = [("Vendor", HL(-2.4, -4.6)), ("Woman1", HL(-3.0, -3.5)), ("OldMan", HL(-1.4, -5.6)),
+               ("Man2", HL(-3.4, -2.4)), ("Kid1", HL(0.9, -4.6)), ("Kid2", HL(1.4, -4.85))]
+    for i, (nm, spot) in enumerate(helpers):
+        a = ctx.vill.get(nm)
+        if a is None:
+            continue
+        out = (spot - centre)
+        out.z = 0
+        out.normalize()
+        start = spot + out * (4.0 + (i % 3) * 0.8)
+        if nm.startswith("Kid"):  # the kids come running along the slab, not past the camera
+            side_ = V((look.y, -look.x, 0))
+            start = spot + side_ * (4.5 + i * 0.4) + look * 1.0
+        start.z = 0
+        spot.z = 0
+        t0 = tm + 20 + i * 14
+        a.cut(t0, start, math.degrees(A.yaw_towards(spot - start)))
+        a.pose(t0, "stand")
+        a.face(t0, "neutral")
+        kid = nm.startswith("Kid")
+        tw_ = a.walk(t0 + 1, [start, spot], speed=1.6 if kid else 1.05, stride=0.35 if kid else 0.5,
+                     style="run" if kid else "walk", end_pose=None)
+        a.place(tw_ + 2, spot, math.degrees(A.yaw_towards((HL(1.7, -3.7) if kid else centre) - spot)))
+        a.pose(tw_ + 4, "stand")
+        a.face(tw_ + 6, "happy")
+        if nm == "Vendor":  # a wave to Hedda
+            for k in range(3):
+                a.pose(tw_ + 10 + k * 8, {"upper_arm_R": (160, 0, 25), "forearm_R": (20, 0, 0)})
+                a.pose(tw_ + 14 + k * 8, {"upper_arm_R": (150, 0, 45), "forearm_R": (35, 0, 0)})
+            a.pose(tw_ + 40, {"upper_arm_R": (0, 0, 6), "forearm_R": (10, 0, 0)})
+        if kid:
+            a.pose(tw_ + 8, {"upper_arm_L": (60, 0, 30), "upper_arm_R": (60, 0, 30)})
+    A.event(tm + 60, "laugh")
     ctx.ground_skip.append(("Hedda", tsit, tm + 82))
     # she picks up Funke's sheet, carries it to the slab, stands it up and nails it to a post:
     # the first wall of the new hut
@@ -413,11 +465,32 @@ def build(ctx, F):
     fs.keyframe_insert("default_value", frame=tk2 + 40)
     fs.default_value = 0.0
     fs.keyframe_insert("default_value", frame=tk2 + 60)
-    # end title
-    title = C.text("end_title", "OBSOLETE?", size=0.006, loc=(0, 0.001, -0.099), rot=(0, 0, 0),
-                   m=C.emission("title_m", (0.95, 0.9, 0.8), 3.0), parent=cam, coll=cams)
-    title.parent = cam
-    A.hide(title, 0, True)
-    A.hide(title, END - C.sec(2.1), False)
-    A.event(END - C.sec(2.1), "final_chord")
+    # end title: the city's stamp slams down – and someone scribbles a question mark after it
+    ts_ = END - C.sec(2.35)
+    stamp_m = C.emission("title_stamp", (0.85, 0.08, 0.05), 3.0)
+    tit = C.empty("end_title_root", loc=(-0.0006, 0.0004, -0.099), parent=cam, coll=cams)
+    title = C.text("end_title", "OBSOLETE", size=0.0058, loc=(0, 0, 0), rot=(0, 0, -4), m=stamp_m, parent=tit, coll=cams)
+    for k, (w_, h_, y_) in enumerate(((0.0215, 0.0006, 0.0028), (0.0215, 0.0006, -0.0028))):
+        C.box(f"end_title_rule{k}", (w_, h_, 0.00001), loc=(0, y_, 0), rot=(0, 0, -4), m=stamp_m, bevel=0,
+              parent=tit, coll=cams)
+    q = C.text("end_title_q", "?", size=0.0105, loc=(0.0175, 0.0006, -0.099), rot=(0, 0, 10),
+               m=C.emission("title_m", (0.95, 0.9, 0.8), 3.0), parent=cam, coll=cams)
+    for o in [title, q] + [c for c in tit.children if c != title]:
+        A.hide(o, 0, True)
+    for o in [title] + [c for c in tit.children if c != title]:
+        A.hide(o, ts_, False)
+    tit.scale = (1.6, 1.6, 1.6)
+    tit.keyframe_insert("scale", frame=ts_)
+    tit.scale = (0.94, 0.94, 0.94)
+    tit.keyframe_insert("scale", frame=ts_ + 3)
+    tit.scale = (1.0, 1.0, 1.0)
+    tit.keyframe_insert("scale", frame=ts_ + 6)
+    A.event(ts_, "stamp")
+    A.hide(q, ts_ + 26, False)
+    q.scale = (0.2, 0.2, 0.2)
+    q.keyframe_insert("scale", frame=ts_ + 26)
+    q.scale = (1.0, 1.0, 1.0)
+    q.keyframe_insert("scale", frame=ts_ + 34)
+    A.event(ts_ + 26, "scribble")
+    A.event(ts_ + 30, "final_chord")
     return END

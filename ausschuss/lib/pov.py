@@ -20,7 +20,7 @@ def _mat(name, col, s):
 
 
 def pov_shot(ctx, idx, name, f0, f1, eye_fn, target_fn, lens=40, lines=(), verdict=None, verdict_col=(1, 0.08, 0.04),
-             lock=None, step=3, jitter=0.004):
+             lock=None, step=3, jitter=0.004, hide=()):
     """eye_fn(f) / target_fn(f): world points. lines: [(frame, text, (r,g,b))]. verdict: (frame, text).
     lock: frame at which the reticle snaps onto the target."""
     s = ctx.seq[idx]
@@ -145,6 +145,12 @@ def pov_shot(ctx, idx, name, f0, f1, eye_fn, target_fn, lens=40, lines=(), verdi
             A.hide(o, f1 + 1, True)
         A.event(vf, "verdict_buzz")
     A.event(f0, "pov_in", dur=f1 - f0)
+    for o in hide:  # its own equipment would only block the lens
+        o.hide_render = False
+        o.keyframe_insert("hide_render", frame=f0 - 1)
+        A.set_interp(o, "hide_render", f0 - 1, "CONSTANT")
+        A.hide(o, f0, True)
+        A.hide(o, f1 + 1, False)
     # HUD only exists inside this shot
     for o in parts:
         if not o.name.endswith(("_rec", "_verdict", "_vbox")) and "_ln" not in o.name:

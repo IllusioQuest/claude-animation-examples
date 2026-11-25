@@ -251,16 +251,27 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
                 (math.sin(a) * hr, -math.cos(a) * hr * 0.3 + 0.05 * h, 0.1 * h + rnd.uniform(0, 0.05) * h)),
                                    scale=(1, 0.5, 2), m=hair, coll=coll))
         # goggles on forehead
+        # goggles hang on a pivot at the head centre so she can pull them down over her eyes
+        gpiv = C.empty(n("goggle_pivot"), loc=hc, coll=coll)
+        P.add("head", gpiv)
+        gparts = []
         strap = C.torus(n("strap"), hr * 1.02, 0.012 * h, loc=hc + Vector((0, 0, 0.075 * h)), rot=(-14, 0, 0),
                         m=M(n("strap_m"), (0.12, 0.08, 0.05), rough=0.7), coll=coll)
-        P.add("head", strap)
+        gparts.append(strap)
         for s, sx in (("L", 1), ("R", -1)):
             gp = hc + Vector((0.055 * sx * h, -hr * 0.9, 0.105 * h))
-            P.add("head", C.cyl(n("gcup" + s), 0.036 * h, 0.04 * h, loc=gp, rot=(80, 0, 0), m=brass, coll=coll))
-            P.add("head", C.torus(n("grim" + s), 0.036 * h, 0.008 * h, loc=gp + Vector((0, -0.02 * h, 0.004 * h)),
+            gparts.append(C.cyl(n("gcup" + s), 0.036 * h, 0.04 * h, loc=gp, rot=(80, 0, 0), m=brass, coll=coll))
+            gparts.append(C.torus(n("grim" + s), 0.036 * h, 0.008 * h, loc=gp + Vector((0, -0.02 * h, 0.004 * h)),
                                   rot=(80, 0, 0), m=brass, coll=coll))
-            P.add("head", C.cyl(n("glens" + s), 0.03 * h, 0.006 * h, loc=gp + Vector((0, -0.021 * h, 0.004 * h)),
+            gparts.append(C.cyl(n("glens" + s), 0.03 * h, 0.006 * h, loc=gp + Vector((0, -0.021 * h, 0.004 * h)),
                                 rot=(80, 0, 0), m=C.glass("amber_glass", (1.0, 0.6, 0.25), 0.1), coll=coll))
+        bridge = C.limb(n("gbridge"), hc + Vector((0.02 * h, -hr * 0.93, 0.108 * h)),
+                        hc + Vector((-0.02 * h, -hr * 0.93, 0.108 * h)), 0.005 * h, m=brass, coll=coll)
+        gparts.append(bridge)
+        bpy.context.view_layer.update()
+        for o in gparts:
+            o.parent = gpiv
+            o.matrix_parent_inverse = gpiv.matrix_world.inverted()
         # scarf over mouth
         sc = C.fabric(n("scarf_m"), pal["scarf"], dirt=0.35, weave=55, bump=0.6, knit=True, sheen=0.6)
         for bone, o in HP.scarf(n, h, hc, sc, coll):
@@ -373,6 +384,11 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
             P.add("foot_" + s, o)
     P.attach_all(rig)
     act = Human(rig, h)
+    gpv = bpy.data.objects.get(n("goggle_pivot"))
+    if gpv:
+        act.extra["goggles"] = gpv
+        gpv.rotation_euler = (0, 0, 0)
+        gpv.keyframe_insert("rotation_euler", frame=0, index=0)
     act.pose(0, "stand")
     act.face(0, "neutral")
     return act

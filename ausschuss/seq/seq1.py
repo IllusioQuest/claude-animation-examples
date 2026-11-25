@@ -404,5 +404,53 @@ def build(ctx, F):
                  sweep(pov.bone_pos(b, "head", 0.05), pf0, plock), lens=45, lock=plock,
                  lines=[(ts + 16, "UNIT      CANINE ASSIST MK II", None), (ts + 24, "SERIAL    B-11", None),
                         (ts + 32, "MFG       2009", None), (ts + 40, "OWNER     UNREGISTERED", (1, 0.6, 0.2))],
-                 verdict=(ts + 48, "OBSOLETE"))
+                 verdict=(ts + 48, "OBSOLETE"),
+                 hide=[bpy.data.objects[x] for x in ("Erfasser_pole", "Erfasser_hoop", "Erfasser_net")])
+    # ---- opening title: black, the city's stamp slams down, then dawn fades in
+    cam0 = bpy.data.objects["S1_c1_wide"]
+    d0 = 0.1
+    card_m = bpy.data.materials.new("title_card_m")
+    card_m.use_nodes = True
+    nt = card_m.node_tree
+    for nd in list(nt.nodes):
+        nt.nodes.remove(nd)
+    o_ = nt.nodes.new("ShaderNodeOutputMaterial")
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+    em = nt.nodes.new("ShaderNodeEmission")
+    em.inputs["Color"].default_value = (0, 0, 0, 1)
+    nt.links.new(tr.outputs[0], mix.inputs[1])
+    nt.links.new(em.outputs[0], mix.inputs[2])
+    nt.links.new(mix.outputs[0], o_.inputs[0])
+    try:
+        card_m.surface_render_method = "BLENDED"
+    except Exception:
+        pass
+    fac = mix.inputs[0]
+    A.key_socket(fac, F, 1.0)
+    A.key_socket(fac, F + 46, 1.0)
+    A.key_socket(fac, F + 72, 0.0)
+    card = C.box("title_card", (1.0, 1.0, 0.00001), loc=(0, 0, -d0 * 1.02), m=card_m, bevel=0, coll=cams, parent=cam0)
+    stamp_m = C.emission("title_stamp", (0.85, 0.08, 0.05), 3.0)
+    tit = C.empty("open_title_root", loc=(0, 0.0005, -d0), parent=cam0, coll=cams)
+    lw = cam0.data.sensor_width / cam0.data.lens * d0
+    t1 = C.text("open_title", "OBSOLETE", size=lw * 0.075, loc=(0, 0, 0), rot=(0, 0, -4), m=stamp_m, parent=tit,
+                coll=cams)
+    for k, y_ in enumerate((lw * 0.037, -lw * 0.037)):
+        C.box(f"open_title_rule{k}", (lw * 0.28, lw * 0.008, 0.00001), loc=(0, y_, 0), rot=(0, 0, -4), m=stamp_m,
+              bevel=0, parent=tit, coll=cams)
+    parts_ = [t1] + [c for c in tit.children if c != t1]
+    for o in parts_:
+        A.hide(o, 0, True)
+        A.hide(o, F + 12, False)
+        A.hide(o, F + 46, True)
+    tit.scale = (1.6, 1.6, 1.6)
+    tit.keyframe_insert("scale", frame=F + 12)
+    tit.scale = (0.94, 0.94, 0.94)
+    tit.keyframe_insert("scale", frame=F + 15)
+    tit.scale = (1.0, 1.0, 1.0)
+    tit.keyframe_insert("scale", frame=F + 18)
+    A.event(F + 12, "stamp")
+    A.hide(card, 0, False)
+    A.hide(card, F + 74, True)
     return END

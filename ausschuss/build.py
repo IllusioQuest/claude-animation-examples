@@ -142,6 +142,27 @@ def shot(ctx, idx, name, f0, keys, lens=35, dof=None):
     return cam
 
 
+HANDHELD = {  # camera name -> (rotation noise in radians, frequency)
+    "S1_c2_sneak": (0.004, 1.2), "S3_c5_dance": (0.006, 2.0), "S3_c5b_kids": (0.006, 2.0),
+    "S4_c1_grab": (0.01, 2.5), "S4_c1b_mouth": (0.012, 2.5), "S4_c2_alley": (0.012, 2.5), "S4_c3_bolts": (0.01, 2.5),
+    "S4_c5_scrap": (0.012, 2.5), "S4_c7_resolve": (0.004, 1.0), "S5_c6_uprising": (0.008, 2.0),
+    "S5_c7_run": (0.012, 2.5), "S5_c8_out": (0.012, 2.5),
+}
+
+
+def handheld_pass(ctx):
+    """Action shots get a hand-held camera: rotation noise restricted to the shot's range."""
+    for i, s in ctx.seq.items():
+        sc = s["scene"]
+        mk = sorted(((m.frame, m.camera) for m in sc.timeline_markers if m.camera), key=lambda x: x[0])
+        for j, (f0, cam) in enumerate(mk):
+            spec = HANDHELD.get(cam.name)
+            if not spec:
+                continue
+            f1 = mk[j + 1][0] - 1 if j + 1 < len(mk) else s["f1"]
+            A.shake(cam, f0, f1, amp=spec[0], freq=spec[1], path="rotation_euler")
+
+
 def main():
     args = argv()
     out = os.path.join(HERE, "ausschuss.blend")
@@ -202,6 +223,7 @@ def main():
         F = F_end + 1
     total_end = F - 1
     dressing.animate(ctx)
+    handheld_pass(ctx)
     import life
     life.apply(ctx, total_end)
     print("life pass", round(time.time() - t0, 1))

@@ -487,7 +487,7 @@ def build(ctx, F):
         A.key(siren.data, "energy", fr, 20000.0, "CONSTANT")
         A.key(siren.data, "energy", fr + 8, 0.0, "CONSTANT")
         fr += 16
-    END = min(ho + C.sec(1.5), to + C.sec(6))
+    END = min(ho + C.sec(1.5), to + C.sec(4.4))
     B.set_end(ctx, 5, END)
     B.shot(ctx, 5, "S5_c8_out", to, [(to, Dd(-2, -6, 1.4), hole + V((0, 0, 1.2))), (END, Dd(-4, -9, 1.5), Dd(-12, -14, 1.0))],
            lens=24)
