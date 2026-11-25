@@ -71,9 +71,36 @@ def compositor(sc, glare=True, vignette=0.35, grain=0.04):
         mu = N.new("CompositorNodeMixRGB"); mu.blend_type = "MULTIPLY"; mu.location = (200, 0)
         L.new(last, mu.inputs[1]); L.new(mr.outputs[0], mu.inputs[2])
         last = mu.outputs[0]
+    g = GRADES.get(sc.name[:2])
+    if g:
+        cb = N.new("CompositorNodeColorBalance"); cb.location = (300, 150)
+        cb.correction_method = "LIFT_GAMMA_GAIN"
+        cb.lift = g["lift"]; cb.gamma = g["gamma"]; cb.gain = g["gain"]
+        L.new(last, cb.inputs["Image"])
+        last = cb.outputs["Image"]
+        hs = N.new("CompositorNodeHueSat"); hs.location = (400, 150)
+        hs.inputs["Saturation"].default_value = g["sat"]
+        L.new(last, hs.inputs["Image"])
+        last = hs.outputs["Image"]
+        if g.get("contrast"):
+            bc = N.new("CompositorNodeBrightContrast"); bc.location = (450, 150)
+            bc.inputs["Contrast"].default_value = g["contrast"]
+            L.new(last, bc.inputs["Image"])
+            last = bc.outputs["Image"]
     comp = N.new("CompositorNodeComposite"); comp.location = (500, 0)
     L.new(last, comp.inputs["Image"])
     sc["comp_last"] = 1
+
+
+# per-sequence grade: every place gets its own palette (shadows / mids / highlights)
+GRADES = {
+    "S1": dict(lift=(0.98, 0.985, 1.04), gamma=(1.0, 0.99, 1.0), gain=(1.05, 0.99, 0.95), sat=1.08),
+    "S2": dict(lift=(0.97, 1.0, 1.035), gamma=(1.01, 1.0, 0.985), gain=(1.06, 1.0, 0.92), sat=1.06),
+    "S3": dict(lift=(1.015, 1.005, 0.985), gamma=(1.015, 1.01, 0.99), gain=(1.02, 1.01, 0.975), sat=0.92),
+    "S4": dict(lift=(0.985, 0.985, 1.01), gamma=(1.01, 1.0, 0.98), gain=(1.05, 1.01, 0.95), sat=1.12),
+    "S5": dict(lift=(0.96, 0.995, 1.05), gamma=(1.0, 0.995, 1.0), gain=(1.05, 0.99, 0.93), sat=1.06),
+    "S6": dict(lift=(0.995, 0.985, 1.02), gamma=(1.015, 1.0, 0.98), gain=(1.06, 1.015, 0.94), sat=1.12),
+}
 
 
 def world(name, horizon, zenith, ground=(0.05, 0.04, 0.03), strength=1.0, fog_density=0.0,
