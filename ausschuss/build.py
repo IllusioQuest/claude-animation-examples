@@ -298,9 +298,9 @@ def main():
     relief.apply(ctx)
     dressing.animate(ctx)
     handheld_pass(ctx)
-    clear_foreground(ctx)
     import life
     life.apply(ctx, total_end)
+    clear_foreground(ctx)  # last, on the final layout: earlier passes still move things
     import cloth
     bpy.ops.wm.save_as_mainfile(filepath=out, compress=True)  # the cloth cache lives next to the saved file
     cloth.apply(ctx, total_end)
