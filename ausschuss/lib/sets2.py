@@ -92,13 +92,13 @@ def build_workshop(coll):
     # desk lamp (articulated) with warm spot
     lamp_m = M("lamp_green", (0.15, 0.3, 0.2), metal=0.6, rough=0.4, rust=0.25)
     C.cyl("ws_lampbase", 0.09, 0.03, loc=w((-0.6, 2.25, 0.975)), m=lamp_m, coll=coll)
-    C.limb("ws_lamparm1", w((-0.6, 2.25, 0.98)), w((-0.5, 2.0, 1.5)), 0.012, m=m["steel"], coll=coll)
-    C.limb("ws_lamparm2", w((-0.5, 2.0, 1.5)), w((-0.25, 1.7, 1.5)), 0.012, m=m["steel"], coll=coll)
-    shade = C.cyl("ws_lampshade", 0.1, 0.14, loc=w((-0.22, 1.66, 1.45)), rot=(30, 0, 0), r2=0.04, m=lamp_m,
+    C.limb("ws_lamparm1", w((-0.6, 2.25, 0.98)), w((-0.5, 2.0, 1.66)), 0.012, m=m["steel"], coll=coll)
+    C.limb("ws_lamparm2", w((-0.5, 2.0, 1.66)), w((-0.25, 1.7, 1.66)), 0.012, m=m["steel"], coll=coll)
+    shade = C.cyl("ws_lampshade", 0.1, 0.14, loc=w((-0.22, 1.66, 1.61)), rot=(30, 0, 0), r2=0.04, m=lamp_m,
                   coll=coll)
     desk_bulb_m = C.emission("ws_deskbulb", (1.0, 0.8, 0.5), 20)
-    desk_bulb = C.sphere("ws_deskbulb", 0.035, loc=w((-0.21, 1.64, 1.4)), m=desk_bulb_m, coll=coll)
-    desk_light = P.point_light("ws_desklight", w((-0.21, 1.6, 1.38)), 60, (1.0, 0.75, 0.45), 0.05, coll=coll,
+    desk_bulb = C.sphere("ws_deskbulb", 0.035, loc=w((-0.21, 1.64, 1.56)), m=desk_bulb_m, coll=coll)
+    desk_light = P.point_light("ws_desklight", w((-0.21, 1.6, 1.54)), 60, (1.0, 0.75, 0.45), 0.05, coll=coll,
                                kind="SPOT", spot=95, rot=(30, 0, 0))
     out.update(desk_bulb=desk_bulb, desk_bulb_m=desk_bulb_m, desk_light=desk_light)
     # hanging bulb

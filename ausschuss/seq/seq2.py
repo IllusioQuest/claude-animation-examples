@@ -1,7 +1,7 @@
 """SEQ 2 – The workshop at night: building Funke, awakening, three attempts to help, sleep."""
 import math
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 import core as C
 import anim as A
 import characters as CH
@@ -300,18 +300,26 @@ def build(ctx, F):
     C.box("fh_head", (0.12, 0.04, 0.045), loc=(0, 0, 0.13), m=C.mat("dark_metal"), parent=hammer, bevel=0.005)
     C.cyl("fh_handle", 0.01, 0.2, loc=(0, 0, 0.03), m=C.mat("p_wood"), parent=hammer)
     f.hold_place(ta)
-    fw = f.walk(ta + 2, [floor, W(-0.3, 1.25)], speed=0.9, stride=0.12, end_pose="stand")
-    onb = W(-0.45, 1.75, 0.96)
-    A.arc(f.rig, fw + 2, fw + 14, W(-0.3, 1.25), onb, height=0.5)
+    fw = f.walk(ta + 2, [floor, W(-0.45, 1.2)], speed=0.9, stride=0.12, end_pose="stand")
+    onb = W(-0.55, 1.78, 0.96)  # left of the lamp: the jump must not pass through its shade
+    A.arc(f.rig, fw + 2, fw + 14, W(-0.45, 1.2), onb, height=0.5)
     A.event(fw + 14, "land_spring")
     f.place(fw + 16, onb, 170)
     tg = fw + 18
-    hammer.location = A.world_matrix_at(f.rig, tg, "fore_R").translation
+    # in his claw at the end of the forearm, handle across the forearm in the swing plane
+    # (it used to sit at the elbow, the handle right through his body)
+    bm = A.world_matrix_at(f.rig, tg, "fore_R")
+    blen = f.rig.data.bones["fore_R"].length
+    grip = bm.to_quaternion().to_matrix() @ Matrix(((0, -1, 0), (1, 0, 0), (0, 0, 1)))
+    hammer.location = bm @ V((0, blen * 1.05, 0))
+    hammer.rotation_euler = grip.to_euler()
     hammer.keyframe_insert("location", frame=tg)
-    A.set_interp(hammer, "location", tg - 1, "CONSTANT")
+    hammer.keyframe_insert("rotation_euler", frame=tg)
     hammer.location = (0, 0, -300)
     hammer.keyframe_insert("location", frame=tg - 1)
+    hammer.keyframe_insert("rotation_euler", frame=tg - 1)
     A.set_interp(hammer, "location", tg - 1, "CONSTANT")
+    A.set_interp(hammer, "rotation_euler", tg - 1, "CONSTANT")
     con_h = A.attach_to(hammer, f.rig, tg, bone="fore_R")
     f.pose(tg, "happy")
     h.face(tg + 4, "surprised")
@@ -568,7 +576,7 @@ def build(ctx, F):
     h.bone_loc(ts, "root", (0, 0.05, -0.33))
     h.face(ts, "closed")
     crate = ws["crate"]
-    f.cut(ts, V(crate.location) + V((0, 0, 0.12)), 20)
+    f.cut(ts, V(crate.location) + V((0.012, 0.07, 0.12)), 20)  # centred in the crate: the lid poked through its wall
     f.pose(ts, "stand")
     f.pose(ts, "curl")
     f.glow(ts, 0.6, "iris")

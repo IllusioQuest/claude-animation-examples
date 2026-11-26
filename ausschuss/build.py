@@ -222,6 +222,11 @@ def trim_overrun(f_end):
             kp = fc.keyframe_points
             late = [k for k in kp if k.co[0] > f_end + 0.5]
             if not late:
+                # pin the value at the last frame: otherwise the next sequence's first key interpolates
+                # backwards into this one (Hedda's legs straightening in the chair before the cut)
+                if len(kp) and max(k.co[0] for k in kp) < f_end - 0.5 and not fc.modifiers:
+                    kp.insert(f_end, fc.evaluate(f_end), options={"FAST"})
+                    fc.update()
                 continue
             if all(k.co[0] > f_end + 0.5 for k in kp):
                 continue  # nothing of this curve plays inside the film so far
