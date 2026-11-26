@@ -306,12 +306,12 @@ def build(ctx, F):
     A.event(fw + 14, "land_spring")
     f.place(fw + 16, onb, 170)
     tg = fw + 18
-    # in his claw at the end of the forearm, handle across the forearm in the swing plane
+    # in his claw at the end of the forearm, the handle continuing the forearm, head in the swing plane
     # (it used to sit at the elbow, the handle right through his body)
     bm = A.world_matrix_at(f.rig, tg, "fore_R")
     blen = f.rig.data.bones["fore_R"].length
-    grip = bm.to_quaternion().to_matrix() @ Matrix(((0, -1, 0), (1, 0, 0), (0, 0, 1)))
-    hammer.location = bm @ V((0, blen * 1.05, 0))
+    grip = bm.to_quaternion().to_matrix() @ Matrix(((0, 1, 0), (0, 0, 1), (1, 0, 0)))
+    hammer.location = bm @ V((0, blen * 1.1, 0))
     hammer.rotation_euler = grip.to_euler()
     hammer.keyframe_insert("location", frame=tg)
     hammer.keyframe_insert("rotation_euler", frame=tg)

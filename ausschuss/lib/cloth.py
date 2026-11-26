@@ -4,15 +4,16 @@ A copy of the skinned skirt gets a cloth simulation: the waist is pinned to the 
 swings, drapes and collides with her legs. The coat details (hem, pockets, flaps, patches, seam) are
 copied and glued to the simulated skirt with Surface Deform. One bake covers the whole film timeline.
 
-Simulations cannot survive teleports (shot cuts, sequence starts) or sitting, so around those the
-skinned skirt is shown instead: cloth_ok(f) decides per frame, visibility keys switch the two sets.
+Simulations cannot survive teleports (sequence starts, jumps) or sitting, so around those the skinned
+skirt is shown instead. Switching inside a shot would pop, so each cloth copy blends towards the skinned
+shape (stored before the cloth modifier) at its segment ends: the swap then happens on identical shapes.
 """
 import time
 import bpy
 from mathutils import Vector
 
 DETAILS = ("_hem", "_pocket1", "_pocket-1", "_flap1", "_flap-1", "_front_seam", "_patch0", "_patch1")
-SETTLE = 4  # frames after a segment start before the cloth is shown (initial sag)
+RAMP = 10  # frames to blend between cloth and skinned shape at a segment end inside a shot
 
 
 def _dup(o, name):
@@ -27,7 +28,8 @@ def _dup(o, name):
 
 
 def _teleports(rig, f0, f1):
-    """Frames where the rig jumps (cut) – translation > 0.3 m or yaw > 25 deg in one frame."""
+    """Frames where the rig jumps (cut) – translation > 0.3 m or yaw > 70 deg in one frame (a quick turn is
+    something the cloth can follow: it swings)."""
     act = rig.animation_data.action
     fx = [act.fcurves.find("location", index=i) for i in range(3)]
     fr = act.fcurves.find("rotation_euler", index=2)
@@ -37,7 +39,7 @@ def _teleports(rig, f0, f1):
         p = Vector([c.evaluate(f) if c else 0.0 for c in fx])
         r = fr.evaluate(f) if fr else 0.0
         if prev is not None:
-            if (p - prev[0]).length > 0.3 or abs(r - prev[1]) > 0.44:
+            if (p - prev[0]).length > 0.3 or abs(r - prev[1]) > 1.2:
                 out.append(f)
         prev = (p, r)
     return out
@@ -50,6 +52,15 @@ def _segments(ctx, rig, f_end):
     for (who, a, b) in ctx.ground_skip:
         if who == "Hedda":
             blocked |= set(range(a - 2, b + 6))
+    # carried by something (netted, in a cage): her own keys say nothing about how she moves then,
+    # and the throws are far too fast for the cloth
+    act = rig.animation_data.action
+    for c in rig.constraints:
+        fc = act.fcurves.find(f'constraints["{c.name}"].influence')
+        if fc:
+            on = [f for f in range(1, f_end + 1) if fc.evaluate(f) > 0.01]
+            for f in on:
+                blocked |= set(range(f - 2, f + 6))
     segs = []
     cur = None
     for f in range(1, f_end + 1):
@@ -67,6 +78,42 @@ def _segments(ctx, rig, f_end):
     return [(a, b) for a, b in segs if fz is None or fz.evaluate((a + b) / 2) > -50]
 
 
+def _node_groups():
+    st = bpy.data.node_groups.get("coat_store_skin")
+    if st is None:
+        st = bpy.data.node_groups.new("coat_store_skin", "GeometryNodeTree")
+        st.interface.new_socket("Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+        st.interface.new_socket("Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+        gi, go = st.nodes.new("NodeGroupInput"), st.nodes.new("NodeGroupOutput")
+        sn = st.nodes.new("GeometryNodeStoreNamedAttribute")
+        sn.data_type = "FLOAT_VECTOR"
+        sn.inputs["Name"].default_value = "skin_pos"
+        st.links.new(gi.outputs[0], sn.inputs["Geometry"])
+        st.links.new(st.nodes.new("GeometryNodeInputPosition").outputs[0], sn.inputs["Value"])
+        st.links.new(sn.outputs[0], go.inputs[0])
+    mx = bpy.data.node_groups.get("coat_mix_skin")
+    if mx is None:
+        mx = bpy.data.node_groups.new("coat_mix_skin", "GeometryNodeTree")
+        mx.interface.new_socket("Geometry", in_out="INPUT", socket_type="NodeSocketGeometry")
+        k = mx.interface.new_socket("Skin", in_out="INPUT", socket_type="NodeSocketFloat")
+        k.min_value, k.max_value = 0.0, 1.0
+        mx.interface.new_socket("Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
+        gi, go = mx.nodes.new("NodeGroupInput"), mx.nodes.new("NodeGroupOutput")
+        na = mx.nodes.new("GeometryNodeInputNamedAttribute")
+        na.data_type = "FLOAT_VECTOR"
+        na.inputs["Name"].default_value = "skin_pos"
+        mix = mx.nodes.new("ShaderNodeMix")
+        mix.data_type = "VECTOR"
+        sp = mx.nodes.new("GeometryNodeSetPosition")
+        mx.links.new(gi.outputs[1], mix.inputs["Factor"])
+        mx.links.new(mx.nodes.new("GeometryNodeInputPosition").outputs[0], mix.inputs[4])
+        mx.links.new(na.outputs["Attribute"], mix.inputs[5])
+        mx.links.new(gi.outputs[0], sp.inputs["Geometry"])
+        mx.links.new(mix.outputs[1], sp.inputs["Position"])
+        mx.links.new(sp.outputs[0], go.inputs[0])
+    return st, mx
+
+
 def _make_cloth(sk, name, f0, f1):
     cs = _dup(sk, name)
     for m in list(cs.modifiers):
@@ -79,6 +126,8 @@ def _make_cloth(sk, name, f0, f1):
         t = (v.co.z - zbot) / (ztop - zbot)
         # waist pinned; the rest has a weak goal towards the skinned shape (no slow creep)
         vg.add([v.index], max(0.06, min(1.0, (t - 0.72) / 0.2)), "REPLACE")
+    ng_store, ng_mix = _node_groups()
+    cs.modifiers.new("store", "NODES").node_group = ng_store
     cl = cs.modifiers.new("cloth", "CLOTH")
     s = cl.settings
     s.quality = 6
@@ -91,12 +140,22 @@ def _make_cloth(sk, name, f0, f1):
     s.vertex_group_mass = "pin"
     s.pin_stiffness = 1.0
     cl.collision_settings.distance_min = 0.008
+    cs.modifiers.new("mix", "NODES").node_group = ng_mix
     cs.modifiers.new("solid", "SOLIDIFY").thickness = 0.008
     cl.point_cache.use_disk_cache = True
     cl.point_cache.name = name
     cl.point_cache.frame_start = f0
     cl.point_cache.frame_end = f1
     return cs, cl
+
+
+def _key_skin(cs, keys):
+    """keys: (frame, skin factor) – 1 = skinned shape, 0 = pure cloth"""
+    m = cs.modifiers["mix"]
+    sock = next(k for k in m.keys() if k.startswith("Socket_") and not k.endswith(("_use_attribute", "_attribute_name")))
+    for f, v in keys:
+        m[sock] = v
+        cs.keyframe_insert(f'modifiers["mix"]["{sock}"]', frame=f)
 
 
 def apply(ctx, f_end):
@@ -112,6 +171,22 @@ def apply(ctx, f_end):
             o.modifiers.new("coll", "COLLISION")
             o.collision.thickness_outer = 0.01
             o.collision.cloth_friction = 0.0
+    # a floor for the cloth: an invisible plane at her feet that goes everywhere with her (sitting or
+    # kneeling on the ground the coat used to sink through the floor)
+    if bpy.data.objects.get("Hedda_coatfloor") is None:
+        me = bpy.data.meshes.new("Hedda_coatfloor")
+        r_ = 1.4
+        me.from_pydata([(-r_, -r_, 0), (r_, -r_, 0), (r_, r_, 0), (-r_, r_, 0)], [], [(0, 1, 2, 3)])
+        fl = bpy.data.objects.new("Hedda_coatfloor", me)
+        for col in sk.users_collection:
+            col.objects.link(fl)
+        fl.parent = rig
+        fl.location = (0, 0, 0.004)
+        fl.hide_render = True
+        fl.display_type = "WIRE"
+        fl.modifiers.new("coll", "COLLISION")
+        fl.collision.thickness_outer = 0.006
+        fl.collision.cloth_friction = 8.0
     segs = _segments(ctx, rig, f_end)
     sc = next(iter(ctx.seq.values()))["scene"]
     sets = []  # (f0, f1, [cloth parts])
@@ -175,11 +250,18 @@ def apply(ctx, f_end):
                 if fc.data_path.startswith("hide"):
                     for kp in fc.keyframe_points:
                         kp.interpolation = "CONSTANT"
+    # camera cuts: a segment that ends or starts on one may swap shapes hard, the cut hides it
+    cam_cuts = {m.frame for s_ in ctx.seq.values() for m in s_["scene"].timeline_markers if m.camera}
+    cam_cuts |= {s_["f0"] for s_ in ctx.seq.values()}
     cloth_frames = set()
     for a, b, parts, cs, cl in sets:
-        iv = (a + SETTLE, b)
-        keyvis(parts, [iv] if iv[0] <= b else [])
-        cloth_frames |= set(range(iv[0], b + 1))
+        # start: the cloth begins in the skinned shape and sags: blend it in over the ramp in any case
+        keys = [(a, 1.0), (min(b, a + RAMP), 0.0)]
+        if (b + 1) not in cam_cuts and b < f_end:
+            keys += [(max(a + RAMP, b - RAMP), 0.0), (b, 1.0)]
+        _key_skin(cs, keys)
+        keyvis(parts, [(a, b)])
+        cloth_frames |= set(range(a, b + 1))
     skin_iv = []
     cur = None
     for f in range(0, f_end + 2):
