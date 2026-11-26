@@ -29,7 +29,7 @@ def build(ctx, F):
                                   [ctx.chars, ctx.c_vil, ctx.c_scrap, ctx.c_city, ctx.c_props])
     S.sun("S4_sun", (67, 0, -130), 4.8, (1.0, 0.74, 0.5), L, angle=2)
     S.sun("S4_sky", (30, 0, 40), 0.3, (0.6, 0.7, 0.95), L, angle=40)
-    S.fog_box("S4_fogv", L, O, (300, 300, 50), 0.01, (0.95, 0.8, 0.6))
+    S.fog_box("S4_fogv", L, O, (300, 300, 50), 0.005, (0.95, 0.8, 0.6))
     S.fog_box("S4_fogs", L, (0, 120, 0), (520, 640, 70), 0.006, (0.9, 0.72, 0.55))
     # villagers stay frozen where seq3 left them; only the three principals move
     s3 = ctx.s3

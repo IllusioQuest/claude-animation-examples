@@ -192,17 +192,22 @@ def clear_foreground(ctx):
                         o = m.translation
                         d = (m @ p_ - o).normalized()
                         hit, loc, n, k, ob, mat = sc.ray_cast(dg, o, d, distance=near)
-                        if hit and ob.name.startswith(("scrap_", "junk")) and not ob.animation_data:
+                        if hit and ob.name.startswith(("scrap_", "junk")):
                             found.add(ob.name)
             for name in sorted(found):
                 ob = bpy.data.objects[name]
-                for fr_, hid in ((0, False), (f0, True), (f1 + 1, False)):
+                ad = ob.animation_data
+                fh = ad.action.fcurves.find("hide_render") if ad and ad.action else None
+                after = bool(fh.evaluate(f1 + 1) > 0.5) if fh else False
+                keys = ((f0, True), (f1 + 1, after)) if fh else ((0, False), (f0, True), (f1 + 1, False))
+                for fr_, hid in keys:
                     ob.hide_render = ob.hide_viewport = hid
                     ob.keyframe_insert("hide_render", frame=fr_)
                     ob.keyframe_insert("hide_viewport", frame=fr_)
                 for fc in ob.animation_data.action.fcurves:
-                    for kp in fc.keyframe_points:
-                        kp.interpolation = "CONSTANT"
+                    if fc.data_path.startswith("hide"):
+                        for kp in fc.keyframe_points:
+                            kp.interpolation = "CONSTANT"
             print("clear", cam.name, sorted(found))
 
 
