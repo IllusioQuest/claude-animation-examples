@@ -7,6 +7,7 @@ import rig as RG
 import anim as A
 
 M = C.mat
+GOGGLE_LIFT = 22.0  # degrees the goggles rest above their original spot (pull-down angles add this)
 
 
 def _mirror_x(p):
@@ -55,7 +56,7 @@ HUMAN_POSES = {
 
 FACE = {
     "neutral": {"eye": (1, 1, 1), "brow": (0, 0, 0), "brow_z": 0.0},
-    "happy": {"eye": (1, 1, 0.35), "brow": (0, 12, 0), "brow_z": 0.01},
+    "happy": {"eye": (1, 1, 0.55), "brow": (0, -8, 0), "brow_z": 0.018},
     "sad": {"eye": (1, 1, 0.75), "brow": (0, -18, 0), "brow_z": 0.0},
     "angry": {"eye": (1, 1, 0.7), "brow": (0, 22, 0), "brow_z": -0.012},
     "surprised": {"eye": (1.15, 1, 1.25), "brow": (0, -6, 0), "brow_z": 0.02},
@@ -252,6 +253,7 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
     trim = C.fabric(n("trim"), tuple(c * 0.75 for c in pal["coat"]), dirt=0.4, weave=70, bump=0.35)
     boots = M(n("boots"), pal["boots"], rough=0.5, dirt=0.4, bump=0.2)
     hair = M(n("hair"), pal["hair"], rough=0.8, dirt=0.15, scale=20, bump=0.4)
+    browm = M(n("brow_m"), tuple(c * 0.62 for c in pal["hair"]), rough=0.85, dirt=0.1, scale=30, bump=0.5)
     glove = M(n("glove"), pal["glove"], rough=0.6, dirt=0.3)
     white = M("eye_white", (0.92, 0.9, 0.85), rough=0.3, dirt=0.0, bump=0)
     black = M("eye_black", (0.01, 0.01, 0.01), rough=0.2, dirt=0.0, bump=0)
@@ -271,7 +273,7 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
         for o in HP.eye(n, s, ec, er, pal.get("iris", (0.28, 0.16, 0.08)), skin, coll,
                         lid=0.05 if is_kid else (0.3 if style in ("oldman", "hedda") else 0.2)):
             P.add("eye_" + s, o)
-        P.add("brow_" + s, HP.brow(n, s, sx, Vector(S((0.06 * sx, -0.152, 1.685))), h, hair, coll))
+        P.add("brow_" + s, HP.brow(n, s, sx, Vector(S((0.06 * sx, -0.152, 1.685))), h, browm, coll))
         P.add("head", C.sphere(n("ear" + s), 0.032 * h, loc=hc + Vector((hr * 0.97 * sx, 0.01, 0)),
                                scale=(0.5, 1, 1.3), m=skin, coll=coll))
     # hair cap
@@ -311,10 +313,16 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
         bridge = C.limb(n("gbridge"), hc + Vector((0.02 * h, -hr * 0.93, 0.108 * h)),
                         hc + Vector((-0.02 * h, -hr * 0.93, 0.108 * h)), 0.005 * h, m=brass, coll=coll)
         gparts.append(bridge)
+        # resting high on the forehead, clear of the brows (which do the acting); the pivot pulls them down
+        grest = C.empty(n("goggle_rest"), loc=hc, coll=coll)
+        bpy.context.view_layer.update()
+        grest.parent = gpiv
+        grest.matrix_parent_inverse = gpiv.matrix_world.inverted()
         bpy.context.view_layer.update()
         for o in gparts:
-            o.parent = gpiv
-            o.matrix_parent_inverse = gpiv.matrix_world.inverted()
+            o.parent = grest
+            o.matrix_parent_inverse = grest.matrix_world.inverted()
+        grest.rotation_euler.x = math.radians(-GOGGLE_LIFT)
         # scarf over mouth
         sc = C.fabric(n("scarf_m"), pal["scarf"], dirt=0.35, weave=55, bump=0.6, knit=True, sheen=0.6)
         for bone, o in HP.scarf(n, h, hc, sc, coll):

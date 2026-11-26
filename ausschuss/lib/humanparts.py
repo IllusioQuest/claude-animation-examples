@@ -89,7 +89,7 @@ def eye(n, s, ec, er, iris_col, skin_m, coll, lid=0.32, kid=False):
 def brow(n, s, sx, p, h, m, coll):
     pts = [p + V((-0.03 * sx * h, 0.004 * h, -0.006 * h)), p + V((0, 0, 0.004 * h)),
            p + V((0.03 * sx * h, 0.006 * h, -0.008 * h))]
-    return C.curve_tube(n("brow" + s), pts, radius=0.0085 * h, m=m, coll=coll, res=6)
+    return C.curve_tube(n("brow" + s), pts, radius=0.0115 * h, m=m, coll=coll, res=6)
 
 
 def glove(n, s, sx, hd, h, m, coll, bare=False):

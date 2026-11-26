@@ -317,7 +317,7 @@ def build(ctx, F):
     if gpv:
         gpv.rotation_euler.x = 0
         gpv.keyframe_insert("rotation_euler", frame=tg + 50, index=0)
-        gpv.rotation_euler.x = math.radians(26)
+        gpv.rotation_euler.x = math.radians(26 + CH.GOGGLE_LIFT)
         gpv.keyframe_insert("rotation_euler", frame=tg + 55, index=0)
         A.set_interp(gpv, "rotation_euler", tg + 55, "CONSTANT", index=0)
     h.pose(tg + 55, {"upper_arm_L": (135, 0, 30), "forearm_L": (70, 0, -10), "upper_arm_R": (135, 0, 30),
