@@ -162,6 +162,49 @@ def _key_skin(cs, keys):
         kp.interpolation = "LINEAR"
 
 
+def bind_details(sc, rig):
+    """Bind the coat details (Surface Deform) to their cloth skirt in its calm rest shape: simulation off,
+    rest pose. Bound against a mid-simulation state the bind fails (concave polygons) and the details
+    stay behind, floating off the coat. Returns (bound, total)."""
+    cloths = [o for o in bpy.data.objects if o.name.startswith("Hedda_skirt_cloth")]
+    for cs in cloths:
+        cs.modifiers["cloth"].show_viewport = cs.modifiers["cloth"].show_render = False
+    # hidden objects are not evaluated, and a hidden target cannot be bound to: unhide for the bind
+    muted = []
+    for o in bpy.data.objects:
+        if o.name.startswith("Hedda_") and "_cloth" in o.name:
+            ad = o.animation_data
+            for fc in (ad.action.fcurves if ad and ad.action else []):
+                if fc.data_path.startswith("hide") and not fc.mute:
+                    fc.mute = True
+                    muted.append(fc)
+            o.hide_viewport = o.hide_render = False
+    rig.data.pose_position = "REST"
+    sc.frame_set(1)
+    vl = sc.view_layers[0]
+    vl.update()
+    bound = total = 0
+    for o in bpy.data.objects:
+        sd = o.modifiers.get("sd") if o.type == "MESH" else None
+        if sd is None or sd.type != "SURFACE_DEFORM" or not o.name.startswith("Hedda_"):
+            continue
+        total += 1
+        with bpy.context.temp_override(scene=sc, view_layer=vl, object=o, active_object=o):
+            if sd.is_bound:
+                bpy.ops.object.surfacedeform_bind(modifier="sd")  # unbind
+            bpy.ops.object.surfacedeform_bind(modifier="sd")
+        bound += sd.is_bound
+    rig.data.pose_position = "POSE"
+    for cs in cloths:
+        cs.modifiers["cloth"].show_viewport = cs.modifiers["cloth"].show_render = True
+    for fc in muted:
+        fc.mute = False
+    sc.frame_set(1)
+    vl.update()
+    print("coat details bound", bound, "of", total)
+    return bound, total
+
+
 def apply(ctx, f_end):
     t0 = time.time()
     h = ctx.hedda
@@ -210,14 +253,7 @@ def apply(ctx, f_end):
                 c.modifiers.move(len(c.modifiers) - 1, 0)
             parts.append(c)
         sets.append((a, b, parts, cs, cl))
-    rig.data.pose_position = "REST"
-    sc.frame_set(1)
-    bpy.context.view_layer.update()
-    for a, b, parts, cs, cl in sets:
-        for c in parts[1:]:
-            with bpy.context.temp_override(scene=sc, object=c, active_object=c):
-                bpy.ops.object.surfacedeform_bind(modifier="sd")
-    rig.data.pose_position = "POSE"
+    bind_details(sc, rig)
     for a, b, parts, cs, cl in sets:
         sc.frame_set(a)
         with bpy.context.temp_override(scene=sc, object=cs, active_object=cs, point_cache=cl.point_cache):

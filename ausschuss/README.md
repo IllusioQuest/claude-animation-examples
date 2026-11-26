@@ -56,6 +56,16 @@ Schatten). Für den finalen Render pro Szene `Render > Resolution %` auf 100 set
 EEVEE-Samples erhöhen (64–128), Shadow Resolution Scale auf 1.0 und Raytracing einschalten.
 Oder einfach `blender -b -P build.py -- --final`.
 
+**Mantel-Simulation:** Heddas Stoffmantel liegt als Cache in `blendcache_ausschuss/` (gut 100 MB,
+nicht im Repository). Nach dem Klonen bzw. Pullen einmal backen (ca. 6 Minuten), sonst rendert der
+Mantel unsimuliert:
+
+```
+blender -b ausschuss.blend --python tools/bake_cloth.py
+```
+
+`build.py` macht das am Ende eines Builds selbst.
+
 Danach entweder die Szene `FILM` rendern (Sequencer, mit Ton) oder jede `S*`-Szene einzeln
 als Bildsequenz nach `render/S*/` und anschließend zusammenschneiden. Der Look hängt am
 Volumen-Nebel (Fog-Boxen pro Szene), an der Glare im Compositor und an AgX (Medium High

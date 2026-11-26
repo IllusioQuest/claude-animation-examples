@@ -344,6 +344,12 @@ def main():
     bpy.data.scenes.remove(base)
     bpy.ops.wm.save_as_mainfile(filepath=out, compress=True)
     print("saved", out, "frames", total_end, round(time.time() - t0, 1))
+    # the coat caches: bind the details and bake in a fresh session on the saved file (baked in here
+    # they did not end up on disk)
+    import subprocess
+    subprocess.run([bpy.app.binary_path, "-b", out, "--python", os.path.join(HERE, "tools", "bake_cloth.py")],
+                   check=True)
+    print("cloth baked to disk", round(time.time() - t0, 1))
 
 
 if __name__ == "__main__":
