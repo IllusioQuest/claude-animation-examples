@@ -292,7 +292,7 @@ def build(ctx, F):
     fk = []
     for t_ in list(range(tcw, t_wide, 8)) + [t_wide]:
         hp_ = h.pos_at(min(t_, hc))
-        fk.append((t_, hp_ + V((2.7, -0.85, 1.3)), hp_ + V((-0.6, 0.0, 1.0))))
+        fk.append((t_, hp_ + V((2.9, 0.45, 2.3)), hp_ + V((-1.2, -0.1, 0.95))))
     B.shot(ctx, 5, "S5_c3a_ahead", tcw, fk, lens=34)
     B.shot(ctx, 5, "S5_c3_catwalk", t_wide, [(tcw, Hd(-12, 0.8, 5.2), Hd(-6, 2.8, 4.3)),
                                           (tn, Hd(tgt_x - 6.0, 0.4, 5.3), Hd(tgt_x - 1, 2.8, 4.4))], lens=28)
