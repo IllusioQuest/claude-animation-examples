@@ -1,7 +1,7 @@
 """SEQ 3 – Village square by day: silence, the radio, everyone dances, the drone, the Erfasser."""
 import math
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 import core as C
 import anim as A
 import characters as CH
@@ -210,7 +210,7 @@ def build(ctx, F):
     A.key(ctx.funke_light.data, "energy", F, 1.0)
     mw = A.world_matrix_at(h.rig, F, "chest")
     peek = mw @ V((0.02, 0.02, -0.17))
-    f.place(F, h.pos_at(F) + V((0.02, -0.14, 0.92)), h.yaw_at(F))
+    f.place(F, h.pos_at(F) + V((0.07, -0.15, 0.8)), h.yaw_at(F))
     con_f = A.attach_to(f.rig, h.rig, F, bone="chest", name="in_coat")
     tout = max(T(17.5), hw + 86)
     for i, fr in enumerate(range(T(6), tout - 50, 30)):
@@ -391,9 +391,10 @@ def build(ctx, F):
            lens=26)
     wk = []
     t_v = max(T(11) + 12, hw - 12)  # follow her until she reaches the stall
-    for t_ in (T(4.5), T(7.5), T(11), t_v):
+    for t_, ang in ((T(4.5), 0), (T(7.5), 10), (T(11), 45), (t_v, 75)):  # swing west, clear of the stall posts
         hp_ = h.pos_at(t_)
-        wk.append((t_, hp_ + V((1.9, 3.6, 1.5)), hp_ + V((0, 0, 1.05))))
+        off = Matrix.Rotation(math.radians(ang), 3, "Z") @ V((1.9, 3.6, 0))
+        wk.append((t_, hp_ + off + V((0, 0, 1.5)), hp_ + V((0, 0, 1.15))))
     B.shot(ctx, 3, "S3_c2_walk", T(4.5), wk, lens=30)
     # over her shoulder: the vendor with his dead radio
     back = hstop - radio_pos
@@ -453,7 +454,7 @@ def build(ctx, F):
     pf0, pf1 = er + 8, er + C.sec(2.5) + 6
     plock = er + 30
     pov.pov_shot(ctx, 3, "S3_pov_scan", pf0, pf1, pov.erf_eye(e),
-                 sweep(pov.bone_pos(f, "body", 0.15), pf0, plock, amp=4.0, z=0.6), lens=60, lock=plock,
+                 sweep(pov.bone_pos(f, "body", 0.15), pf0, plock, amp=2.2, z=0.4), lens=130, lock=plock,
                  lines=[(er + 14, "HUMANS    11      COMPLIANT", None), (er + 32, "UNIT      UNREGISTERED", (1, 0.6, 0.2)),
                         (er + 40, "ORIGIN    SCRAP", None), (er + 48, "MUSIC     UNLICENSED", (1, 0.6, 0.2))],
                  verdict=(er + 56, "OBSOLETE"))

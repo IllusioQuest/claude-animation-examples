@@ -301,12 +301,42 @@ def city_skyline(name, center, coll=None, n=70, seed=3, spread=(260, 60)):
         dist = abs(x - c.x) / (spread[0] / 2)
         hgt = rnd.uniform(40, 140) * (1.4 - min(1, dist)) + 20
         w = rnd.uniform(8, 18)
-        ob = C.box(f"{name}_t{i}", (w, w * rnd.uniform(0.7, 1.2), hgt), loc=(x, y, 0), origin="bottom",
-                   m=[body, rnd.choice([win, win, win2])], bevel=0, coll=coll)
-        # assign window material to side faces
-        for p in ob.data.polygons:
-            p.material_index = 1 if abs(p.normal.z) < 0.5 else 0
-        obs.append(ob)
+        d_ = w * rnd.uniform(0.7, 1.2)
+        wm_ = rnd.choice([win, win, win2])
+        # stepped silhouette: up to three setback tiers, a podium, a crown or a cluster of masts
+        tiers = 1 if hgt < 50 else rnd.choice((1, 2, 2, 3))
+        z0 = 0.0
+        ww_, dd_ = w * (1.35 if tiers > 1 else 1.0), d_ * (1.35 if tiers > 1 else 1.0)
+        for k in range(tiers):
+            th = hgt * ((0.4, 0.35, 0.25)[k] if tiers == 3 else (0.55, 0.45)[k] if tiers == 2 else 1.0)
+            ob = C.box(f"{name}_t{i}_{k}", (ww_, dd_, th), loc=(x, y, z0), origin="bottom",
+                       m=[body, wm_], bevel=0, coll=coll)
+            for p in ob.data.polygons:
+                p.material_index = 1 if abs(p.normal.z) < 0.5 else 0
+            obs.append(ob)
+            if k == 0:
+                th_first = th
+            z0 += th
+            ww_ *= rnd.uniform(0.62, 0.8)
+            dd_ *= rnd.uniform(0.62, 0.8)
+        # dark ledges on the lowest tier break its glow into bands
+        lw_ = w * (1.35 if tiers > 1 else 1.0)
+        ld_ = d_ * (1.35 if tiers > 1 else 1.0)
+        zl = 18.0
+        while zl < th_first - 4:
+            C.box(f"{name}_ld{i}_{int(zl)}", (lw_ + 0.6, ld_ + 0.6, 0.8), loc=(x, y, zl), origin="bottom", m=body,
+                  bevel=0, coll=coll)
+            zl += 30.0
+        hgt = z0
+        r_ = rnd.random()
+        if r_ < 0.25:  # crown
+            C.cyl(f"{name}_cr{i}", ww_ * 0.55, 6, loc=(x, y, hgt + 3), r2=0.5, m=body, coll=coll, verts=4)
+            hgt += 6
+        elif r_ < 0.5:  # mast cluster
+            for k in range(rnd.randint(2, 4)):
+                mh = rnd.uniform(5, 14)
+                C.cyl(f"{name}_ms{i}_{k}", 0.25, mh, loc=(x + rnd.uniform(-ww_, ww_) * 0.35, y + rnd.uniform(-dd_, dd_) * 0.35,
+                                                       hgt + mh / 2), m=body, coll=coll, verts=4)
         if hgt > 120:
             C.cyl(f"{name}_sp{i}", 0.6, 25, loc=(x, y, hgt + 12), m=body, coll=coll, verts=6)
             C.sphere(f"{name}_bc{i}", 1.5, loc=(x, y, hgt + 25), m=beacon, coll=coll, seg=8, rings=4)
@@ -484,24 +514,25 @@ def drive(truck, f0, f1, p0, p1, yaw_deg):
 def smoke(name, origin, f0, f1, coll=None, every=10, rise=3.0, life=60, size=0.25, color=(0.5, 0.5, 0.5),
           drift=(0.5, 0.2, 0), seed=0, alpha=0.5):
     rnd = C.R.__class__(seed)
-    m = M(name + "_m", color, rough=1.0, dirt=0.0, bump=0, alpha=alpha)
-    try:
-        m.surface_render_method = "BLENDED"
-    except Exception:
-        pass
+    m = M(name + "_m", color, rough=1.0, dirt=0.0, bump=0)
+    C.soft_alpha(m, "puff", alpha=min(1.0, alpha * 3.0))  # soft rim, fades out over its life
     o = Vector(origin)
     f = f0
     i = 0
     while f < f1:
-        ob = C.sphere(f"{name}_{i}", size, loc=o, m=m, seg=10, rings=6, coll=coll)
-        ob.scale = (0.2, 0.2, 0.2)
+        ob = C.sphere(f"{name}_{i}", size, loc=o, m=m, seg=12, rings=8, coll=coll)
+        ob.scale = (0.35, 0.35, 0.35)
+        ob.rotation_euler = (rnd.uniform(0, 6.3), rnd.uniform(0, 6.3), rnd.uniform(0, 6.3))
         A.show_between(ob, f, f + life)
         ob.keyframe_insert("location", frame=f)
         ob.keyframe_insert("scale", frame=f)
         ob.location = o + Vector((drift[0] * rise + rnd.uniform(-0.3, 0.3), drift[1] * rise, rise))
-        s = rnd.uniform(1.6, 2.4)
-        ob.scale = (s, s, s)
+        s = rnd.uniform(2.2, 3.2)
+        ob.scale = (s, s * rnd.uniform(0.8, 1.1), s * 0.85)
         ob.keyframe_insert("location", frame=f + life)
         ob.keyframe_insert("scale", frame=f + life)
+        for fr_, a_ in ((f, 0.0), (f + max(2, life // 6), 1.0), (f + life, 0.0)):
+            ob.color = (1, 1, 1, a_)
+            ob.keyframe_insert("color", frame=fr_, index=3)
         f += every
         i += 1

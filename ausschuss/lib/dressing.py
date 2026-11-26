@@ -38,6 +38,112 @@ def plant(name, loc, coll, parent=None, s=1.0, rnd=None):
 
 
 # =========================================================================== VILLAGE
+
+def _face(root, name, side, w, d, fo, coll):
+    """Pivot empty on a wall face: side 0 front (-y), 1 back, 2 +x, 3 -x. Its local -y points outward."""
+    loc, rz = {0: ((0, -d / 2 - fo, 0), 0), 1: ((0, d / 2 + fo, 0), 180), 2: ((w / 2 + fo, 0, 0), 90),
+               3: ((-w / 2 - fo, 0, 0), -90)}[side]
+    return C.empty(f"{name}_face{side}", loc=loc, rot=(0, 0, rz), parent=root, coll=coll, size=0.05)
+
+
+def stain(parent, name, x, z, sw, sh, m, coll, y=-0.012):
+    """Soft decal on a wall (pivot space): a flattened disc with a ragged feathered edge."""
+    o = C.cyl(name, 0.5, 0.002, loc=(x, y, z), rot=(90, 0, 0), m=m, parent=parent, coll=coll, verts=16)
+    o.scale = (sw, sh, 1)
+    o.visible_shadow = False
+    return o
+
+
+def window(parent, name, x, z, rnd, coll, lit=False, ww=0.55, wh=0.6, shutters=None):
+    """A proper window in pivot space: frame, cross bars, glass, sill, maybe shutters and a curtain."""
+    m = P.mats()
+    fr = m["wood"]
+    t, dp = 0.05, 0.07
+    y = -dp / 2 + 0.01
+    glass = C.emission("v_winlit", (1.0, 0.7, 0.35), 2.0) if lit else M("v_glass_dark", (0.04, 0.05, 0.06), rough=0.08,
+                                                                       dirt=0.3, bump=0, spec=0.8)
+    C.box(name + "_gl", (ww, 0.02, wh), loc=(x, 0.0, z), m=glass, parent=parent, bevel=0, coll=coll)
+    for k, (sx, sz, px, pz) in enumerate(((ww + 2 * t, t, 0, wh / 2 + t / 2), (ww + 2 * t, t, 0, -wh / 2 - t / 2),
+                                          (t, wh, -ww / 2 - t / 2, 0), (t, wh, ww / 2 + t / 2, 0),
+                                          (0.025, wh, 0, 0), (ww, 0.025, 0, 0.04))):
+        C.box(f"{name}_fr{k}", (sx, dp, sz), loc=(x + px, y, z + pz), m=fr, parent=parent, bevel=0.004, coll=coll)
+    C.box(name + "_sill", (ww + 0.2, 0.13, 0.04), loc=(x, -0.06, z - wh / 2 - t - 0.02), rot=(-4, 0, 0), m=fr,
+          parent=parent, bevel=0.006, coll=coll)
+    if lit and rnd.random() < 0.7:  # curtain half drawn
+        cm = M(f"curtain{rnd.randint(0, 2)}", [(0.6, 0.2, 0.15), (0.75, 0.65, 0.4), (0.3, 0.4, 0.55)][rnd.randint(0, 2)],
+               rough=0.9, dirt=0.2)
+        C.box(name + "_cur", (ww * 0.45, 0.01, wh * 0.95), loc=(x - ww * 0.27 * rnd.choice((-1, 1)), 0.03, z),
+              m=cm, parent=parent, bevel=0, coll=coll)
+    if shutters is None:
+        shutters = rnd.random() < 0.55
+    if shutters:
+        sm = rnd.choice([m["paint_green"], m["paint_blue"], m["wood"], m["paint_red"]])
+        for sx in (-1, 1):
+            if rnd.random() < 0.15:
+                continue  # one shutter lost long ago
+            hinge = C.empty(f"{name}_hinge{sx}", loc=(x + sx * (ww / 2 + t), -0.04, z), parent=parent, coll=coll,
+                            size=0.03)
+            ang = sx * rnd.uniform(95, 165) if rnd.random() < 0.85 else sx * rnd.uniform(20, 40)
+            hinge.rotation_euler = (0, math.radians(rnd.uniform(-2, 2)), math.radians(-ang))
+            C.box(f"{name}_sh{sx}", (ww / 2 + 0.02, 0.025, wh + 0.08), loc=(sx * (ww / 4 + 0.01), 0, 0), m=sm,
+                  parent=hinge, bevel=0.005, coll=coll)
+            for b in range(3):  # slats
+                C.box(f"{name}_shs{sx}{b}", (ww / 2 - 0.02, 0.012, 0.03),
+                      loc=(sx * (ww / 4 + 0.01), -0.016, -wh / 3 + b * wh / 3), m=fr, parent=hinge, bevel=0, coll=coll)
+
+
+def weather(root, name, w, d, h, fo, coll, rnd, plaster, door_x, win_x, lit, back, alley=False):
+    """Side windows, rain streaks under sills and roof edge, a splash band at the base, bare brick where the
+    plaster fell off – the walls read as old and lived-in instead of flat boxes."""
+    if plaster:
+        streak = M("stain_plaster", (0.09, 0.075, 0.06), rough=0.95, dirt=0.0, bump=0)
+        C.soft_alpha(streak, alpha=0.55)
+    else:
+        streak = M("stain_rust", (0.3, 0.1, 0.03), rough=0.9, dirt=0.0, bump=0)
+        C.soft_alpha(streak, alpha=0.7)
+    splash = C.soft_alpha(M("stain_splash", (0.08, 0.065, 0.05), rough=1.0, dirt=0.0, bump=0), alpha=0.6)
+    for side in range(4):
+        L_ = w if side < 2 else d
+        if side == 1 and not back and rnd.random() < 0.6:
+            continue  # back walls mostly unseen
+        pv = _face(root, name, side, w, d, fo, coll)
+        # splash band along the base (rain hitting the mud)
+        nb = max(1, int(L_ / 1.2))
+        for k in range(nb):
+            stain(pv, f"{name}_spl{side}{k}", -L_ / 2 + (k + 0.5) * L_ / nb, 0.18,
+                  rnd.uniform(1.3, 1.8), rnd.uniform(0.35, 0.55), splash, coll)
+        # streaks running down from the roof edge
+        for k in range(rnd.randint(1, 3)):
+            sx_ = rnd.uniform(-L_ / 2 + 0.3, L_ / 2 - 0.3)
+            hh = rnd.uniform(0.6, 1.3)
+            stain(pv, f"{name}_str{side}{k}", sx_, h - hh / 2 - 0.05, rnd.uniform(0.15, 0.3), hh, streak, coll)
+        if side >= 2 and L_ > 1.6 and rnd.random() < 0.7:
+            wx = rnd.uniform(-L_ / 4, L_ / 4)
+            window(pv, f"{name}_sw{side}", wx, 1.45, rnd, coll, lit=lit and rnd.random() < 0.5, shutters=False if alley else None)
+            stain(pv, f"{name}_sws{side}", wx, 0.85, 0.35, 0.7, streak, coll)
+        if side == 0 and win_x is not None:
+            for suf in ("_win", "_winf"):  # replace the flat placeholder window
+                o = bpy.data.objects.get(name + suf)
+                if o:
+                    bpy.data.objects.remove(o, do_unlink=True)
+            window(pv, f"{name}_fw", win_x, 1.5, rnd, coll, lit=lit, ww=0.6, wh=0.5, shutters=False if alley else None)
+            stain(pv, f"{name}_fws", win_x, 0.85, 0.4, 0.7, streak, coll)
+        # bare brick under fallen plaster
+        if plaster and rnd.random() < 0.5:
+            bx = rnd.uniform(-L_ / 2 + 0.4, L_ / 2 - 0.4)
+            if side == 0 and abs(bx - door_x) < 0.8:
+                continue
+            bz = rnd.uniform(0.5, h - 0.6)
+            brick = M("brick_m", (0.42, 0.17, 0.1), rough=0.9, dirt=0.5, bump=0.4)
+            for r_ in range(rnd.randint(2, 4)):
+                for c_ in range(rnd.randint(2, 4)):
+                    if rnd.random() < 0.25:
+                        continue
+                    C.box(f"{name}_brk{side}{r_}{c_}", (0.2, 0.02, 0.075),
+                          loc=(bx + c_ * 0.215 + (0.1 if r_ % 2 else 0) - 0.3, -0.006, bz + r_ * 0.09),
+                          m=brick, parent=pv, bevel=0.006, coll=coll)
+
+
 def shack_details(root, name, w, d, h, tilt, coll, door_x, win_x, lit, alley=False, back=False):
     """root: shack empty (front faces local -y, origin on the ground in the middle)."""
     rnd = rng(name)
@@ -181,6 +287,7 @@ def shack_details(root, name, w, d, h, tilt, coll, door_x, win_x, lit, alley=Fal
                m=M(f"spray{rnd.randint(0, 3)}", [(0.85, 0.85, 0.85), (0.8, 0.25, 0.1), (0.15, 0.45, 0.7),
                                                  (0.9, 0.7, 0.1)][rnd.randint(0, 3)], rough=0.7, dirt=0.3),
                parent=root, coll=coll)
+    weather(root, name, w, d, h, fo, coll, rnd, fo == 0.0, door_x, win_x, lit, back, alley)
     # a pipe running down a side wall
     if rnd.random() < 0.35:
         C.cyl(name + "_spipe", 0.04, h, loc=(sx * (w / 2 + 0.05), rnd.uniform(-0.3, 0.6) * d / 2, h / 2),
@@ -192,7 +299,7 @@ def village(vil, coll, O):
     rnd = rng("village")
     m = P.mats()
     w = lambda p: O + V(p)
-    puddle = M("puddle_m", (0.2, 0.22, 0.25), metal=0.5, rough=0.05, dirt=0.0, bump=0)
+    puddle = C.soft_alpha(M("puddle_m", (0.2, 0.22, 0.25), metal=0.5, rough=0.05, dirt=0.0, bump=0))
     # puddles: away from the shacks, partly in the alley (the chase splashes through)
     spots = [(3.5, -6.5, 1.2), (-6.5, 1.5, 0.9), (2.0, 8.0, 1.0), (-3.5, -10.5, 0.8), (22, 0.6, 0.7), (31, -0.5, 0.9),
              (8.5, -1.5, 0.6)]
@@ -263,7 +370,7 @@ def scrapyard(scrap, coll):
         if (V((x, y)) - V((-17.5, -3.5))).length < 7.5 + r:
             return False
         return True
-    puddle = M("puddle_m", (0.2, 0.22, 0.25), metal=0.5, rough=0.05, dirt=0.0, bump=0)
+    puddle = C.soft_alpha(M("puddle_m", (0.2, 0.22, 0.25), metal=0.5, rough=0.05, dirt=0.0, bump=0))
     n = 0
     for i in range(60):
         x, y = rnd.uniform(-30, 30), rnd.uniform(-25, 30)
@@ -497,7 +604,7 @@ def depot(dep, coll, O, H):
             pts.append(w((x0 + t * (x1 - x0), math.sin(a) * 0.18, 3.15 + math.cos(a) * 0.18)))
         C.curve_tube(f"d_barbed{seg}", pts, radius=0.006, m=bw, coll=coll, res=2, bevel_res=1)
     # puddles in front of the fence reflecting the floodlights
-    puddle = M("puddle_night", (0.34, 0.35, 0.38), metal=0.0, rough=0.22, dirt=0.0, bump=0, spec=0.9)
+    puddle = C.soft_alpha(M("puddle_night", (0.13, 0.14, 0.16), metal=0.0, rough=0.1, dirt=0.0, bump=0, spec=0.7))
     for i, (x, y, r) in enumerate(((-9, -4, 1.4), (-1, -6.5, 1.0), (6, -3, 1.6), (-16, -7, 1.2))):
         C.cyl(f"d_puddle{i}", r, 0.004, loc=w((x, y, 0.02)), m=puddle, coll=coll, verts=20).scale = (1, 0.6, 1)
     # CCTV cameras on the wall pillars (they pan; see animate)

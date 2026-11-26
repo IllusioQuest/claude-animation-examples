@@ -525,3 +525,56 @@ def subsurf(ob, levels=1):
     md.levels = levels
     md.render_levels = levels
     return ob
+
+
+def soft_alpha(m, kind="puddle", alpha=1.0):
+    """Feathered transparency for flat decals (puddles, stains: ragged radial edge) and puffs (smoke: fresnel
+    falloff, fades with the object's colour alpha)."""
+    nt = m.node_tree
+    N, L = nt.nodes, nt.links
+    bsdf = next(n for n in N if n.type == "BSDF_PRINCIPLED")
+    if kind == "puddle":
+        tc = N.new("ShaderNodeTexCoord")
+        sub = N.new("ShaderNodeVectorMath"); sub.operation = "SUBTRACT"; sub.inputs[1].default_value = (0.5, 0.5, 0.5)
+        mul = N.new("ShaderNodeVectorMath"); mul.operation = "MULTIPLY"; mul.inputs[1].default_value = (2.0, 2.0, 0.0)
+        ln = N.new("ShaderNodeVectorMath"); ln.operation = "LENGTH"
+        L.new(tc.outputs["Generated"], sub.inputs[0]); L.new(sub.outputs[0], mul.inputs[0]); L.new(mul.outputs[0], ln.inputs[0])
+        nz = N.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 3.5; nz.inputs["Detail"].default_value = 3
+        nz.noise_dimensions = "4D"
+        L.new(tc.outputs["Generated"], nz.inputs["Vector"])
+        oi = N.new("ShaderNodeObjectInfo")
+        rw = N.new("ShaderNodeMath"); rw.operation = "MULTIPLY"; rw.inputs[1].default_value = 17.0
+        L.new(oi.outputs["Random"], rw.inputs[0]); L.new(rw.outputs[0], nz.inputs["W"])
+        ad = N.new("ShaderNodeMath"); ad.operation = "MULTIPLY_ADD"
+        ad.inputs[1].default_value = 0.45
+        L.new(nz.outputs["Fac"], ad.inputs[0]); L.new(ln.outputs["Value"], ad.inputs[2])
+        rp = N.new("ShaderNodeMapRange"); rp.inputs["From Min"].default_value = 0.95; rp.inputs["From Max"].default_value = 1.2
+        rp.inputs["To Min"].default_value = alpha; rp.inputs["To Max"].default_value = 0.0
+        L.new(ad.outputs[0], rp.inputs["Value"])
+        L.new(rp.outputs["Result"], bsdf.inputs["Alpha"])
+    else:
+        lw = N.new("ShaderNodeLayerWeight"); lw.inputs["Blend"].default_value = 0.5
+        inv = N.new("ShaderNodeMath"); inv.operation = "SUBTRACT"; inv.inputs[0].default_value = 1.0
+        L.new(lw.outputs["Facing"], inv.inputs[1])
+        pw = N.new("ShaderNodeMath"); pw.operation = "POWER"; pw.inputs[1].default_value = 2.5
+        L.new(inv.outputs[0], pw.inputs[0])
+        oi = N.new("ShaderNodeObjectInfo")
+        m1 = N.new("ShaderNodeMath"); m1.operation = "MULTIPLY"
+        L.new(pw.outputs[0], m1.inputs[0]); L.new(oi.outputs["Alpha"], m1.inputs[1])
+        # wispy: a noise breaks the sphere silhouette
+        tc = N.new("ShaderNodeTexCoord")
+        nz = N.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 2.2; nz.inputs["Detail"].default_value = 4
+        nz.inputs["Roughness"].default_value = 0.6
+        L.new(tc.outputs["Object"], nz.inputs["Vector"])
+        mr = N.new("ShaderNodeMapRange"); mr.inputs["From Min"].default_value = 0.38; mr.inputs["From Max"].default_value = 0.7
+        L.new(nz.outputs["Fac"], mr.inputs["Value"])
+        m3 = N.new("ShaderNodeMath"); m3.operation = "MULTIPLY"
+        L.new(m1.outputs[0], m3.inputs[0]); L.new(mr.outputs["Result"], m3.inputs[1])
+        m2 = N.new("ShaderNodeMath"); m2.operation = "MULTIPLY"; m2.inputs[1].default_value = alpha
+        L.new(m3.outputs[0], m2.inputs[0])
+        L.new(m2.outputs[0], bsdf.inputs["Alpha"])
+    try:
+        m.surface_render_method = "BLENDED" if kind != "puddle" else "DITHERED"
+    except Exception:
+        pass
+    return m
