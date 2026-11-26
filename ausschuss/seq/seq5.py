@@ -386,7 +386,7 @@ def build(ctx, F):
     h.face(tu + 20, "happy")
     h.place(tu + 22, hfloor, math.degrees(A.yaw_towards(V((plat.x, plat.y)) - V((hfloor.x, hfloor.y)))))
     # Erfasser jumps down from the catwalk and charges
-    tE = t_jam + 30
+    tE = t_jam + 44  # the burst gets its moment before he leaps
     e.hold_all(tE - 1)
     ep = e.pos_at(tE)
     efloor = Hd(ep.x - H.x - 0.5, -1.9)  # leaps over the belt to the near side
@@ -493,6 +493,11 @@ def build(ctx, F):
         sd_ = V((-fw.y, fw.x, 0))
         rk.append((t_, hp_ + fw * 2.4 + sd_ * 0.7 + V((0, 0, 1.25)), hp_ + V((0, 0, 1.15))))
     B.shot(ctx, 5, "S5_c7b_runclose", tm0, rk, lens=32)
+    rf = P.point_light("S5_runfill", h.pos_at(tm0) + V((-1.5, -0.6, 1.9)), 0, (1.0, 0.75, 0.5), 0.5, coll=L)
+    A.attach_to(rf, h.rig, tm0 - 1, name="fill")
+    A.key(rf.data, "energy", F, 0.0, "CONSTANT")
+    A.key(rf.data, "energy", tm0, 60.0, "CONSTANT")
+    A.key(rf.data, "energy", tm1 + 1, 0.0, "CONSTANT")
     mk = sc.timeline_markers.new("S5_c7_run_back", frame=tm1 + 1)
     mk.camera = run_cam
     # exterior: out through the hole, sirens
