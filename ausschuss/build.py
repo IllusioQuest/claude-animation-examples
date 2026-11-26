@@ -212,6 +212,28 @@ def clear_foreground(ctx):
             print("clear", cam.name, sorted(found))
 
 
+def trim_overrun(f_end):
+    """Keys a sequence set past its own end (walks that run on, sirens, loops) would play into the next
+    sequence: hold the value at the last frame and drop everything later. The next sequence is not built yet,
+    so every key beyond f_end belongs to an earlier one."""
+    n = 0
+    for act in bpy.data.actions:
+        for fc in act.fcurves:
+            kp = fc.keyframe_points
+            late = [k for k in kp if k.co[0] > f_end + 0.5]
+            if not late:
+                continue
+            if all(k.co[0] > f_end + 0.5 for k in kp):
+                continue  # nothing of this curve plays inside the film so far
+            v = fc.evaluate(f_end)
+            for k in sorted(late, key=lambda k: -k.co[0]):
+                kp.remove(k, fast=True)
+            k = kp.insert(f_end, v, options={"FAST"})
+            n += len(late)
+            fc.update()
+    return n
+
+
 def main():
     args = argv()
     out = os.path.join(HERE, "ausschuss.blend")
@@ -268,6 +290,7 @@ def main():
         for ev in A.EVENTS[n_ev:]:
             ev["seq"] = i
         ctx.bounds[i] = (F, F_end)
+        print(f"trim seq{i}", trim_overrun(F_end))
         print(f"seq{i}", F, F_end, round(time.time() - t0, 1))
         F = F_end + 1
     total_end = F - 1
