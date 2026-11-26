@@ -188,6 +188,27 @@ class Human(A.Actor):
         return f + 15
 
 
+def wrap_panel(name, rfn, z0, z1, afn, centre, m, coll, ysc=0.85, nu=12, nv=8, off=0.012, thick=0.006):
+    """A cloth panel wrapped around a body of revolution: rfn(z) radius, afn(z) half-angle (rad) around centre
+    (0 = front/-y, pi = back)."""
+    verts, faces = [], []
+    for j in range(nv + 1):
+        z = z0 + (z1 - z0) * j / nv
+        r = rfn(z) + off
+        ha = afn(z)
+        for i in range(nu + 1):
+            a = centre - ha + 2 * ha * i / nu
+            verts.append((r * math.sin(a), -r * math.cos(a) * ysc, z))
+    for j in range(nv):
+        for i in range(nu):
+            k = j * (nu + 1) + i
+            faces.append((k, k + 1, k + nu + 2, k + nu + 1))
+    o = C.new_obj(name, C.mesh_from_pydata(name, verts, faces), mat_=m, coll=coll)
+    C.smooth(o.data)
+    o.modifiers.new("solid", "SOLIDIFY").thickness = thick
+    return o
+
+
 def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=0):
     """Generic stylised human. style: 'hedda', 'man', 'woman', 'kid', 'oldman'."""
     C.set_coll(coll)
@@ -377,6 +398,62 @@ def build_human(name, coll, h=1.0, girth=1.0, palette=None, style="hedda", seed=
     bt = C.torus(n("belt"), 0.19 * h * g, 0.022 * h, loc=S((0, 0, 0.99)), m=belt, coll=coll)
     bt.scale = (1, 0.82, 0.7)
     P.add("hips", bt)
+    # ---- individual touches for the villagers (seeded): aprons, shawls, neckerchiefs, glasses, patches
+    if style != "hedda":
+        if style == "woman" and rnd.random() < 0.7:
+            apm = C.fabric(n("apron_m"), rnd.choice([(0.75, 0.72, 0.62), (0.55, 0.6, 0.65), (0.6, 0.5, 0.35)]),
+                           dirt=0.5, weave=70, bump=0.3)
+            skr = lambda z: (0.3 + (0.19 - 0.3) * (z / h - 0.42) / 0.6) * h  # the woman's skirt profile
+            ap = wrap_panel(n("apron"), skr, 0.5 * h, 1.0 * h, lambda z: 0.62 - 0.12 * (z / h - 0.5) / 0.5, 0.0, apm, coll)
+            skinned.append(ap)
+            P.add("hips", C.box(n("apron_tie"), S((0.36, 0.02, 0.03)), loc=S((0, -0.165, 0.985)), m=apm, bevel=0.005,
+                                coll=coll))
+        if style == "woman" and rnd.random() < 0.55:
+            shm = C.fabric(n("shawl_m"), rnd.choice([(0.45, 0.2, 0.15), (0.25, 0.3, 0.4), (0.5, 0.42, 0.25)]),
+                           dirt=0.3, weave=50, bump=0.5, knit=True)
+            tr = lambda z: (0.215 * g if z < 1.24 * h else 0.215 * g - (z / h - 1.24) * 0.9) * h  # torso
+            # triangular shawl: over the shoulders, the point hanging down the back, ends crossed in front
+            P.add("chest", wrap_panel(n("shawl"), tr, 1.0 * h, 1.36 * h,
+                                      lambda z: 0.08 + 1.75 * (z / h - 1.0) / 0.36, math.pi, shm, coll, ysc=0.8,
+                                      off=0.014 * h))
+            for sx_ in (-1, 1):
+                P.add("chest", wrap_panel(n(f"shawl_end{sx_}"), tr, 1.1 * h, 1.33 * h, lambda z: 0.16, sx_ * 0.32, shm,
+                                          coll, ysc=0.8, off=0.02 * h, nu=4))
+            P.add("chest", C.sphere(n("shawl_knot"), 0.03 * h, loc=S((0, -0.185 * g, 1.13)), scale=(1.3, 0.7, 1), m=shm,
+                                    coll=coll))
+        if style in ("man", "kid") and rnd.random() < 0.6:
+            nkm = M(n("neck_m"), rnd.choice([(0.6, 0.15, 0.1), (0.15, 0.25, 0.5), (0.7, 0.55, 0.2)]), rough=0.85)
+            P.add("chest", C.lathe(n("necker"), [(0.115 * h, 1.33 * h), (0.105 * h, 1.4 * h), (0.075 * h, 1.43 * h)],
+                                   m=nkm, coll=coll, seg=16))
+            P.add("chest", C.cyl(n("necker_tip"), 0.05 * h, 0.12 * h, r2=0.005 * h, loc=S((0, -0.13, 1.3)),
+                                 rot=(180 - 15, 0, 0), m=nkm, coll=coll, verts=3))
+        if style == "man" and rnd.random() < 0.6:
+            P.add("chest", C.box(n("cpocket"), S((0.07, 0.012, 0.06)), loc=S((0.09 * g, -0.168 * g, 1.24)),
+                                 rot=(0, 0, 25), m=trim, bevel=0.004, coll=coll))
+            P.add("chest", C.cyl(n("pencil"), 0.006 * h, 0.09 * h, loc=S((0.085 * g, -0.172 * g, 1.29)), rot=(0, 8, 0),
+                                 m=M("p_yel"), coll=coll, verts=6))
+        if style == "oldman":
+            gm_ = M("spec_wire", (0.25, 0.22, 0.2), metal=0.8, rough=0.3)
+            for s_, sx_ in (("L", 1), ("R", -1)):
+                P.add("head", C.torus(n("spec" + s_), 0.03 * h, 0.004 * h, loc=hc + Vector((0.055 * sx_ * h, -hr * 0.97, 0.005 * h)),
+                                      rot=(90, 0, 0), m=gm_, coll=coll, seg=16, segr=4))
+            P.add("head", C.limb(n("specb"), hc + Vector((0.025 * h, -hr * 0.98, 0.008 * h)),
+                                 hc + Vector((-0.025 * h, -hr * 0.98, 0.008 * h)), 0.003 * h, m=gm_, coll=coll))
+        if style == "kid" and rnd.random() < 0.7:
+            for s_, sx_ in (("L", 1), ("R", -1)):
+                if rnd.random() < 0.6:
+                    P.add("thigh_" + s_, C.box(n("kpatch" + s_), S((0.07, 0.01, 0.065)),
+                                               loc=S((0.09 * sx_, -0.066 * g, 0.53)),
+                                               m=M(n("kp_m"), (0.45, 0.35, 0.2), rough=0.95), bevel=0.004, coll=coll))
+        # a patch or two on the jacket front
+        for i in range(rnd.randint(0, 2)):
+            px, pz = rnd.uniform(-0.12, 0.12) * g, rnd.uniform(1.08, 1.28)
+            rr = 0.21 * g
+            ang = math.asin(max(-1, min(1, px / rr)))
+            pm = M(n(f"vpatch{i}"), rnd.choice([(0.3, 0.38, 0.5), (0.55, 0.25, 0.18), (0.35, 0.3, 0.2), (0.5, 0.45, 0.3)]),
+                   rough=0.95, dirt=0.4, bump=0.4, scale=10)
+            P.add("spine", C.box(n(f"vpatch{i}"), S((0.075, 0.01, 0.07)), loc=(px * h, -math.cos(ang) * rr * h * 0.8 - 0.004 * h, pz * h),
+                                 rot=(rnd.uniform(-10, 10), 0, math.degrees(ang)), m=pm, bevel=0.004, coll=coll))
     if style == "hedda":
         P.add("hips", C.box(n("pouch"), S((0.08, 0.06, 0.1)), loc=S((0.19, -0.05, 0.92)), rot=(0, 0, 20),
                             m=belt, bevel=0.012, coll=coll))

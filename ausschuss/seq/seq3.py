@@ -391,9 +391,16 @@ def build(ctx, F):
            lens=26)
     wk = []
     t_v = max(T(11) + 12, hw - 12)  # follow her until she reaches the stall
-    for t_, ang in ((T(4.5), 0), (T(7.5), 10), (T(11), 45), (t_v, 75)):  # swing west, clear of the stall posts
+    # angle schedule found by ray probes: east of the fountain first, then swing west, clear of the stall posts
+    def wk_ang(t_):
+        if t_ <= T(11):
+            return -20.0
+        if t_ <= T(12):
+            return -20.0 + 50.0 * (t_ - T(11)) / (T(12) - T(11))
+        return 30.0 + 30.0 * min(1.0, (t_ - T(12)) / max(1, t_v - T(12)))
+    for t_ in list(range(T(4.5), t_v, 8)) + [t_v]:
         hp_ = h.pos_at(t_)
-        off = Matrix.Rotation(math.radians(ang), 3, "Z") @ V((1.9, 3.6, 0))
+        off = Matrix.Rotation(math.radians(wk_ang(t_)), 3, "Z") @ V((1.9, 3.6, 0))
         wk.append((t_, hp_ + off + V((0, 0, 1.5)), hp_ + V((0, 0, 1.15))))
     B.shot(ctx, 3, "S3_c2_walk", T(4.5), wk, lens=30)
     # over her shoulder: the vendor with his dead radio
