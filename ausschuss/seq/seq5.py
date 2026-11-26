@@ -287,7 +287,14 @@ def build(ctx, F):
     h.place(tdrop + 15, cage_pos + V((0, 0, 0.05)), -90)
     con_hc = A.attach_to(h.rig, c_h, tdrop + 15, name="in_cage")
     e.pose(tdrop + 20, "stand")
-    B.shot(ctx, 5, "S5_c3_catwalk", tcw, [(tcw, Hd(-12, 0.8, 5.2), Hd(-6, 2.8, 4.3)),
+    # walking backwards ahead of her: we see her set face - and the Erfasser rolling up behind her before she does
+    t_wide = tn - 26
+    fk = []
+    for t_ in list(range(tcw, t_wide, 8)) + [t_wide]:
+        hp_ = h.pos_at(min(t_, hc))
+        fk.append((t_, hp_ + V((2.7, -0.85, 1.3)), hp_ + V((-0.6, 0.0, 1.0))))
+    B.shot(ctx, 5, "S5_c3a_ahead", tcw, fk, lens=34)
+    B.shot(ctx, 5, "S5_c3_catwalk", t_wide, [(tcw, Hd(-12, 0.8, 5.2), Hd(-6, 2.8, 4.3)),
                                           (tn, Hd(tgt_x - 6.0, 0.4, 5.3), Hd(tgt_x - 1, 2.8, 4.4))], lens=28)
     B.shot(ctx, 5, "S5_c3b_stamp", tn + 10, [(tn + 10, Hd(tgt_x + 2.6, 0.2, 4.4), Hd(tgt_x - 1.4, 2.7, 5.5))], lens=24)
     B.shot(ctx, 5, "S5_c3c_drop", tdrop - 4, [(tdrop - 4, Hd(tgt_x + 1.5, -4.5, 2.6), Hd(tgt_x + 1.5, 0.5, 2.0))], lens=26)

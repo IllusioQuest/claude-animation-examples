@@ -146,7 +146,7 @@ HANDHELD = {  # camera name -> (rotation noise in radians, frequency)
     "S1_c2_sneak": (0.004, 1.2), "S3_c5_dance": (0.006, 2.0), "S3_c5b_kids": (0.006, 2.0),
     "S4_c1_grab": (0.01, 2.5), "S4_c1b_mouth": (0.012, 2.5), "S4_c2_alley": (0.012, 2.5), "S4_c3_bolts": (0.01, 2.5),
     "S4_c5_scrap": (0.012, 2.5), "S4_c7_resolve": (0.004, 1.0), "S5_c6_uprising": (0.008, 2.0),
-    "S5_c7_run": (0.012, 2.5), "S5_c8_out": (0.012, 2.5),
+    "S5_c7_run": (0.012, 2.5), "S5_c8_out": (0.012, 2.5), "S5_c1b_sneak": (0.004, 1.2), "S5_c3a_ahead": (0.004, 1.2),
 }
 
 
