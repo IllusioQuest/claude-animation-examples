@@ -343,17 +343,6 @@ def build(ctx, F):
     B.shot(ctx, 4, "S4_c6b_leave", tgo, [(tgo, kq + back * 3.4 + side * 1.0 + V((0, 0, 1.25)), V((6.0, -14.0, 0.9))),
                                          (END, kq + back * 2.9 + side * 0.8 + V((0, 0, 1.15)), V((6.0, -14.0, 1.1)))],
            lens=32)
-    # down in the dust with her: her face in profile, the truck pulling away behind
-    leave_cam = bpy.data.objects["S4_c6b_leave"]
-    tg0, tg1 = tgo + 30, tl - 12
-    if tg1 - tg0 > 30:
-        gk = []
-        for t_ in (tg0, (tg0 + tg1) // 2, tg1):
-            hd_ = A.world_matrix_at(h.rig, t_, "head").translation
-            gk.append((t_, hd_ + side * 1.05 - road_dir * 0.25 + V((0, 0, 0.12)), hd_ + road_dir * 1.3 + V((0, 0, 0.05))))
-        B.shot(ctx, 4, "S4_c6c_dust", tg0, gk, lens=35)
-        mk = sc.timeline_markers.new("S4_c6b_leave_back", frame=tg1 + 1)
-        mk.camera = leave_cam
     ctx.s4 = {"hedda_end": kp}
 
     def sweep(base_fn, f0_, lock_, amp=1.6, z=0.0):
