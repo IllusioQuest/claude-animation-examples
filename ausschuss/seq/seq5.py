@@ -454,7 +454,14 @@ def build(ctx, F):
             o.location = lp + V((0, 1.7, -0.95))
             o.keyframe_insert("location", frame=tu + 26)
             A.event(tu + 26, "clunk_land")
-    B.shot(ctx, 5, "S5_c6_uprising", t_jam + 20, [(t_jam + 20, Hd(-3.5, -8.5, 2.2), Hd(4.0, -1.5, 1.2)),
+    # the uprising in three beats: cages burst and the vacuum zooms out under Hedda's feet,
+    # the Erfasser's leap from the catwalk (from below), then the wide on the chaos
+    B.shot(ctx, 5, "S5_c6a_burst", t_jam + 20, [(t_jam + 20, Hd(1.2, -6.6, 1.3), Hd(4.2, -1.6, 1.1)),
+                                                (tE, Hd(1.8, -6.2, 1.25), Hd(4.6, -1.8, 1.0))], lens=30)
+    B.shot(ctx, 5, "S5_c6a_leap", tE, [(tE, efloor + V((2.4, -3.4, 0.35)), ep + V((0, 0, 0.6))),
+                                       (tE + 16, efloor + V((2.2, -3.1, 0.35)), efloor + V((0, 0, 1.3))),
+                                       (tE + 22, efloor + V((2.1, -3.0, 0.4)), efloor + V((0, 0, 1.2)))], lens=24)
+    B.shot(ctx, 5, "S5_c6_uprising", tE + 22, [(t_jam + 20, Hd(-3.5, -8.5, 2.2), Hd(4.0, -1.5, 1.2)),
                                                  (tsc + 20, Hd(-3.0, -8.0, 2.4), Hd(4.0, -1.5, 1.4))], lens=26)
     B.shot(ctx, 5, "S5_c6b_selfstamp", ttr + 8, [(ttr + 8, Hd(1.6, -5.4, 2.0), epos + V((0, 0, 1.6)))], lens=35)
     B.shot(ctx, 5, "S5_c6c_cage", ttr + 30, [(ttr + 30, Hd(belt_x(9.2, t_jam) - 1.0, -3.6, 1.6), cpos + V((0, 0, 0.7)))],
@@ -473,6 +480,21 @@ def build(ctx, F):
     vroot.keyframe_insert("location", frame=hx + 20)
     B.shot(ctx, 5, "S5_c7_run", tx, [(tx, Hd(-4, -8.5, 1.6), hfloor + V((0, 0, 1.0))),
                                      (hx, Hd(-12, -9.5, 1.6), dep["exit"] + V((0, 0, 1.0)))], lens=26)
+    # mid-run: close on the two of them from the front, the vacuum bot tagging along behind
+    run_cam = bpy.data.objects["S5_c7_run"]
+    tm0 = tx + int((hx - tx) * 0.4)
+    tm1 = tm0 + 40
+    rk = []
+    for t_ in range(tm0, tm1 + 1, 4):
+        hp_ = h.pos_at(t_)
+        fw = h.pos_at(t_ + 4) - hp_
+        fw.z = 0
+        fw = fw.normalized() if fw.length > 1e-4 else V((-1, 0, 0))
+        sd_ = V((-fw.y, fw.x, 0))
+        rk.append((t_, hp_ + fw * 2.4 + sd_ * 0.7 + V((0, 0, 1.25)), hp_ + V((0, 0, 1.15))))
+    B.shot(ctx, 5, "S5_c7b_runclose", tm0, rk, lens=32)
+    mk = sc.timeline_markers.new("S5_c7_run_back", frame=tm1 + 1)
+    mk.camera = run_cam
     # exterior: out through the hole, sirens
     to = hx + 6
     h.cut(to, hole + V((0, 3.5, 0)), 180)
