@@ -572,7 +572,14 @@ def soft_alpha(m, kind="puddle", alpha=1.0):
         L.new(m1.outputs[0], m3.inputs[0]); L.new(mr.outputs["Result"], m3.inputs[1])
         m2 = N.new("ShaderNodeMath"); m2.operation = "MULTIPLY"; m2.inputs[1].default_value = alpha
         L.new(m3.outputs[0], m2.inputs[0])
-        L.new(m2.outputs[0], bsdf.inputs["Alpha"])
+        # a puff right at the lens would milk out the whole frame: fade it out close to the camera
+        cd = N.new("ShaderNodeCameraData")
+        cf = N.new("ShaderNodeMapRange"); cf.inputs["From Min"].default_value = 0.8; cf.inputs["From Max"].default_value = 3.0
+        L.new(cd.outputs["View Distance"], cf.inputs["Value"])
+        m4 = N.new("ShaderNodeMath"); m4.operation = "MULTIPLY"
+        L.new(m2.outputs[0], m4.inputs[0]); L.new(cf.outputs["Result"], m4.inputs[1])
+        L.new(m4.outputs[0], bsdf.inputs["Alpha"])
+        m.use_backface_culling = True
     try:
         m.surface_render_method = "BLENDED" if kind != "puddle" else "DITHERED"
     except Exception:

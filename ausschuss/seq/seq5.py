@@ -220,8 +220,20 @@ def build(ctx, F):
     for i, cp in enumerate(dep["chimneys"]):
         P.smoke(f"S5_smoke{i}", cp, F - 80, T(6), coll=ctx.c_props, every=10, rise=8.0, life=90, size=1.2,
                 color=(0.25, 0.25, 0.28), seed=20 + i)
-    B.shot(ctx, 5, "S5_c1_fence", F, [(F, Dd(5, -10, 1.6), Dd(-5, 1, 2.2)), (T(5), Dd(2, -8, 1.5), hole + V((0, 0, 1.0)))],
+    B.shot(ctx, 5, "S5_c1_fence", F, [(F, Dd(5, -10, 1.6), Dd(-5, 1, 2.2)), (F + 40, Dd(4.4, -9.6, 1.6), Dd(-4.5, 0.5, 1.9))],
            lens=28)
+    # then close on her: she sneaks along the fence towards the hole, the camera keeps pace on the outside
+    sn = []
+    for t_ in list(range(F + 40, T(5), 8)) + [T(5)]:
+        hp_ = h.pos_at(min(t_, hw - 30))
+        sn.append((t_, hp_ + V((1.4, -3.1, 1.25)), hp_ + V((0.3, 0, 0.95))))
+    B.shot(ctx, 5, "S5_c1b_sneak", F + 40, sn, lens=32)
+    # a cold fill keeps her readable against the black fence (the floodlights do the drama)
+    fill = P.point_light("S5_hfill", h.pos_at(F) + V((1.2, -2.0, 2.2)), 45, (0.6, 0.7, 1.0), 0.6, coll=L)
+    A.attach_to(fill, h.rig, F, name="fill")
+    A.key(fill.data, "energy", F, 45.0)
+    A.key(fill.data, "energy", T(5), 45.0, "CONSTANT")
+    A.key(fill.data, "energy", T(5) + 1, 0.0, "CONSTANT")
     # ------------------------------------------------------------------ 5.2 interior: belt, press, Funke caged
     B.shot(ctx, 5, "S5_c2_hall", T(5), [(T(5), Hd(-19, -10, 7.5), Hd(6, 0, 2.0)), (T(9.5), Hd(-16, -10.5, 6.5), Hd(7, 0, 2.5))],
            lens=22)
