@@ -163,6 +163,49 @@ def handheld_pass(ctx):
             A.shake(cam, f0, f1, amp=spec[0], freq=spec[1], path="rotation_euler")
 
 
+CLEAR = {  # camera name -> distance: static junk closer than this in the middle of the frame is hidden
+    "S1_c7_hold": 1.8,
+}
+
+
+def clear_foreground(ctx):
+    """Junk piles are random: hide pieces that end up right in front of the lens in close shots."""
+    from mathutils import Vector
+    for i, s in ctx.seq.items():
+        sc = s["scene"]
+        mk = sorted(((m.frame, m.camera) for m in sc.timeline_markers if m.camera), key=lambda x: x[0])
+        for j, (f0, cam) in enumerate(mk):
+            near = CLEAR.get(cam.name)
+            if not near:
+                continue
+            f1 = mk[j + 1][0] - 1 if j + 1 < len(mk) else s["f1"]
+            found = set()
+            for f in range(f0, f1 + 1, 4):
+                sc.frame_set(f)
+                sc.view_layers[0].update()
+                dg = sc.view_layers[0].depsgraph
+                m = cam.evaluated_get(dg).matrix_world
+                fr = cam.data.view_frame(scene=sc)
+                for u in range(2, 9):
+                    for v in range(1, 9):
+                        p_ = fr[2].lerp(fr[1], u / 10).lerp(fr[3].lerp(fr[0], u / 10), v / 10)
+                        o = m.translation
+                        d = (m @ p_ - o).normalized()
+                        hit, loc, n, k, ob, mat = sc.ray_cast(dg, o, d, distance=near)
+                        if hit and ob.name.startswith(("scrap_", "junk")) and not ob.animation_data:
+                            found.add(ob.name)
+            for name in sorted(found):
+                ob = bpy.data.objects[name]
+                for fr_, hid in ((0, False), (f0, True), (f1 + 1, False)):
+                    ob.hide_render = ob.hide_viewport = hid
+                    ob.keyframe_insert("hide_render", frame=fr_)
+                    ob.keyframe_insert("hide_viewport", frame=fr_)
+                for fc in ob.animation_data.action.fcurves:
+                    for kp in fc.keyframe_points:
+                        kp.interpolation = "CONSTANT"
+            print("clear", cam.name, sorted(found))
+
+
 def main():
     args = argv()
     out = os.path.join(HERE, "ausschuss.blend")
@@ -226,6 +269,7 @@ def main():
     relief.apply(ctx)
     dressing.animate(ctx)
     handheld_pass(ctx)
+    clear_foreground(ctx)
     import life
     life.apply(ctx, total_end)
     import cloth

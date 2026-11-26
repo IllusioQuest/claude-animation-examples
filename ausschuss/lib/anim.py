@@ -1,7 +1,7 @@
 """Animation helpers: keying, easing, holds, walk cycles, actors."""
 import bpy
 import math
-from mathutils import Vector
+from mathutils import Vector, Euler
 import core as C
 
 EVENTS = []  # (frame, kind, extra) – used by the sound pipeline
@@ -334,6 +334,12 @@ def cam_key(cam, f, loc, target, lens=None, interp=None, roll=0.0):
     e = C.look_at_rot(loc, target)
     if roll:
         e.rotate_axis("Z", math.radians(roll))
+    # stay continuous with the curve so far, otherwise a 360 degree wrap makes the camera spin between keys
+    ad = cam.animation_data
+    if ad and ad.action:
+        fcs = [ad.action.fcurves.find("rotation_euler", index=i) for i in range(3)]
+        if all(fcs) and len(fcs[0].keyframe_points):
+            e.make_compatible(Euler([fc.evaluate(f) for fc in fcs], e.order))
     cam.rotation_euler = e
     cam.keyframe_insert("location", frame=f)
     cam.keyframe_insert("rotation_euler", frame=f)
