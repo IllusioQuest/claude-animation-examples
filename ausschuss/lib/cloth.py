@@ -153,9 +153,13 @@ def _key_skin(cs, keys):
     """keys: (frame, skin factor) – 1 = skinned shape, 0 = pure cloth"""
     m = cs.modifiers["mix"]
     sock = next(k for k in m.keys() if k.startswith("Socket_") and not k.endswith(("_use_attribute", "_attribute_name")))
+    path = f'modifiers["mix"]["{sock}"]'
     for f, v in keys:
         m[sock] = v
-        cs.keyframe_insert(f'modifiers["mix"]["{sock}"]', frame=f)
+        cs.keyframe_insert(path, frame=f)
+    fc = cs.animation_data.action.fcurves.find(path)
+    for kp in fc.keyframe_points:
+        kp.interpolation = "LINEAR"
 
 
 def apply(ctx, f_end):
@@ -254,11 +258,33 @@ def apply(ctx, f_end):
     cam_cuts = {m.frame for s_ in ctx.seq.values() for m in s_["scene"].timeline_markers if m.camera}
     cam_cuts |= {s_["f0"] for s_ in ctx.seq.values()}
     cloth_frames = set()
+    # whip turns (> 17 deg per frame): no cloth follows those, it balloons into a sack – lean on the
+    # skinned shape for the turn and let the cloth take over again afterwards
+    fr_yaw = rig.animation_data.action.fcurves.find("rotation_euler", index=2)
+    spin = set()
+    if fr_yaw:
+        prev_y = fr_yaw.evaluate(1)
+        for f in range(2, f_end + 1):
+            y = fr_yaw.evaluate(f)
+            if abs(y - prev_y) > 0.3:
+                spin.add(f)
+            prev_y = y
+
+    def clamp(x):
+        return max(0.0, min(1.0, x))
+
     for a, b, parts, cs, cl in sets:
-        # start: the cloth begins in the skinned shape and sags: blend it in over the ramp in any case
-        keys = [(a, 1.0), (min(b, a + RAMP), 0.0)]
-        if (b + 1) not in cam_cuts and b < f_end:
-            keys += [(max(a + RAMP, b - RAMP), 0.0), (b, 1.0)]
+        end_in_shot = (b + 1) not in cam_cuts and b < f_end
+        sp = sorted(f for f in spin if a <= f <= b)
+        w = {}
+        for f in range(a, b + 1):
+            v = clamp(1 - (f - a) / RAMP)  # the cloth begins in the skinned shape and sags: blend it in
+            if end_in_shot:
+                v = max(v, clamp(1 - (b - f) / RAMP))
+            for g in sp:
+                v = max(v, clamp(1 - (g - f) / 3) if f <= g else clamp(1 - (f - g) / 12))
+            w[f] = round(v, 3)
+        keys = [(f, v) for f, v in w.items() if v != w.get(f - 1) or v != w.get(f + 1)]
         _key_skin(cs, keys)
         keyvis(parts, [(a, b)])
         cloth_frames |= set(range(a, b + 1))

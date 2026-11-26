@@ -327,7 +327,7 @@ def build(ctx, F):
     # swing!
     tsw = tg + 16
     f.place(tsw - 4, onb, 210)
-    f.pose(tsw, {"arm_R": (170, 0, 0), "fore_R": (20, 0, 0), "body": (-12, 0, 0), "head": (-10, 0, 0)})
+    f.pose(tsw, {"arm_R": (150, 0, 14), "fore_R": (30, 0, 0), "body": (-12, 0, 0), "head": (-10, 0, 0)})  # wind-up beside, not into, his head
     f.pose(tsw + 5, {"arm_R": (60, 0, 0), "fore_R": (10, 0, 0), "body": (15, 0, 0), "head": (6, 0, 0)},
            interp="LINEAR")
     A.event(tsw + 5, "glass_break")
@@ -459,6 +459,9 @@ def build(ctx, F):
     h.pose(tp_land + 34, "stand")
     h.pose(tp_land + 34, {"head": (6, 0, -8), "spine": (4, 0, 6)})
     h.face(tp_land + 34, "angry")
+    # on the floor the cloth coat would sink into the boards: the seated coat drapes over her thighs instead
+    ctx.ground_skip.append(("Hedda", tpull + 30, tp_land + 31))
+    h.coat_seated(tpull + 30, tp_land + 31)
     h.blink(tp_land + 46, "angry")
     f.pose(tp_land + 24, {"arm_L": (140, 0, 30), "arm_R": (140, 0, 30), "fore_L": (80, 0, 0), "fore_R": (80, 0, 0),
                          "lid": (-10, 0, 0), "head": (20, 0, 0)})
