@@ -354,6 +354,9 @@ def build(ctx, F):
     h.blink(tl + 50, "sad")
     # she gets up. Looks after the truck. And pulls the goggles down: she is going after them.
     tg = tl + 58
+    h.hold(tg - 12)  # she stays on her knees until here, then gets up in one go
+    ctx.ground_skip.append(("Hedda", tl - 12, tg + 4))
+    h.coat_seated(tl - 12, tg + 4)  # kneeling: the coat lies folded; the cloth starts fresh once she stands
     h.pose(tg, "stand")
     h.bone_loc(tg, "root", (0, 0, 0))
     h.pose(tg, {"head": (-6, 0, 0), "upper_arm_R": (10, 0, 6), "forearm_R": (15, 0, 0)})
