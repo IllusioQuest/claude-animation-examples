@@ -79,7 +79,7 @@ blender -b ausschuss.blend --python tools/pack_for_farm.py
 ```
 
 Das schreibt `ausschuss_farm.blend` (die Originaldatei bleibt unverändert). Auf der Farm die Szene
-`FILM` rendern, Bilder 1–6458, 24 fps.
+`FILM` rendern, Bilder 1–6632, 24 fps.
 
 Danach entweder die Szene `FILM` rendern (Sequencer, mit Ton) oder jede `S*`-Szene einzeln
 als Bildsequenz nach `render/S*/` und anschließend zusammenschneiden. Der Look hängt am

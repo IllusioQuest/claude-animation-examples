@@ -3,8 +3,8 @@ itself (no blendcache folder), every external file packed. The original file is 
 
     blender -b ausschuss.blend --python tools/pack_for_farm.py [-- out.blend]
 
-The farm renders the scene "FILM" (frames 1-6458, 24 fps); its sequencer strips pull in the six
-sequence scenes. The soundtrack is not inside (sound/soundtrack.ogg is muxed onto the frames afterwards).
+The farm renders the scene "FILM" (frames 1-6632, 24 fps); its sequencer strips pull in the six
+sequence scenes. The soundtrack is packed into the file as a sound strip in FILM (sound/soundtrack.wav or .ogg).
 """
 import os
 import sys
