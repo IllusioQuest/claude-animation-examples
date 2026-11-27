@@ -169,6 +169,23 @@ CLEAR = {  # camera name -> distance: static junk closer than this in the middle
 }
 
 
+def check_glides():
+    """Report objects that glide to or from 'offstage' (parked far below the ground) instead of switching
+    hard: a smooth curve there makes things rise out of / sink into the floor in front of the camera."""
+    n = 0
+    for o in bpy.data.objects:
+        ad = o.animation_data
+        fc = ad.action.fcurves.find("location", index=2) if ad and ad.action else None
+        if not fc:
+            continue
+        kp = list(fc.keyframe_points)
+        for a, b in zip(kp, kp[1:]):
+            if (a.co[1] <= -100) != (b.co[1] <= -100) and a.interpolation != "CONSTANT" and b.co[0] - a.co[0] > 1.5:
+                print("WARNING glide to/from offstage:", o.name, round(a.co[0]), "->", round(b.co[0]))
+                n += 1
+    print("glide check:", n, "problems")
+
+
 def clear_foreground(ctx):
     """Junk piles are random: hide pieces that end up right in front of the lens in close shots."""
     from mathutils import Vector
@@ -306,6 +323,7 @@ def main():
     import life
     life.apply(ctx, total_end)
     clear_foreground(ctx)  # last, on the final layout: earlier passes still move things
+    check_glides()
     import cloth
     bpy.ops.wm.save_as_mainfile(filepath=out, compress=True)  # the cloth cache lives next to the saved file
     cloth.apply(ctx, total_end)

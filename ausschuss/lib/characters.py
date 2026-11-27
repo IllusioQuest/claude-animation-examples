@@ -767,6 +767,7 @@ ERF_POSES = {
     "net_ready": {"arm_R": (120, 0, 5), "fore_R": (60, 0, 0), "hand_R": (165, 0, 0), "body": (-6, 0, 0)},
     "net_throw": {"arm_R": (45, 0, 5), "fore_R": (30, 0, 0), "hand_R": (135, 0, 0), "body": (14, 0, 0)},
     "net_up": {"arm_R": (60, 0, 5), "fore_R": (0, 0, 0), "hand_R": (-75, 0, 0), "body": (-4, 0, 0)},
+    "net_hold": {"arm_R": (60, 0, -30), "fore_R": (60, 0, 0), "hand_R": (75, 0, 0), "body": (6, 0, 0)},
     "net_shoulder": {"arm_R": (75, 0, 5), "fore_R": (60, 0, 0), "hand_R": (105, 0, 0), "body": (8, 0, 0)},
     "scan": {"head": (8, 0, 0), "body": (6, 0, 0), "neck": (0, 0, 0)},
     "lean_fwd": {"body": (18, 0, 0), "head": (6, 0, 0)},

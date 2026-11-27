@@ -45,7 +45,7 @@ def build(ctx, F):
     for d in ctx.decal_funke:
         A.hide(d, F, True)
     # ------------------------------------------------------------------ cages on the belt
-    t_jam = T(31.0)  # the STOP button (see 5.5) – Funke's beat is timed backwards from here
+    t_jam = T(36.0)  # the STOP button (see 5.5) – Funke's beat is timed backwards from here
     S.key_sat(sc, F, 0.72)
     S.key_sat(sc, t_jam, 0.72)
     S.key_sat(sc, t_jam + 24, 1.15)  # the machines rise
@@ -282,42 +282,65 @@ def build(ctx, F):
     con_hn = A.attach_loc(h.rig, hoop, tn, name="netted")
     pinned = {"upper_arm_L": (5, 0, 4), "upper_arm_R": (5, 0, 4), "forearm_L": (30, 0, 0), "forearm_R": (30, 0, 0)}
     h.pose(tn + 3, pinned)
-    # he hauls her up off the catwalk: she dangles in the ring, kicking
-    tup = tn + 8
-    e.pose(tup, "net_shoulder")
-    e.pose(tup + 12, "net_up")
-    h.pose(tup + 12, "stand")
-    h.pose(tup + 12, pinned)
-    for k in range(6):
-        a_, b_ = (35, -10) if k % 2 else (-10, 35)
-        h.pose(tup + 12 + k * 5, {"thigh_L": (a_, 0, 4), "thigh_R": (b_, 0, 4), "shin_L": (-40, 0, 0), "shin_R": (-40, 0, 0)})
-    h.face(tup + 10, "angry")
-    A.event(tup + 6, "struggle")
-    # stamp on the forehead: she swings in to the stamp
-    yaw_hf = math.degrees(A.yaw_towards(V((-1, 0, 0))))  # dangling, she turns to face him
-    h.place(tup + 4, None, 0)
-    h.place(tup + 16, None, yaw_hf)
+    # he forces her down onto her knees in front of him (the ring pins her arms) ...
+    r_s = e.net_offset("net_shoulder")
+    r_k = e.net_offset("net_hold")
+    tpull = tn + 6
+    e.pose(tpull, "net_shoulder")
+    e.pose(tpull + 12, "net_hold")
+    comp = V((0, 0, r_s.z - r_k.z))  # her feet stay on the catwalk while the ring drags her down and in
+    kneel = {"thigh_L": (90, 0, 4), "thigh_R": (90, 0, 4), "shin_L": (-150, 0, 0), "shin_R": (-150, 0, 0),
+             "spine": (10, 0, 0), "head": (-12, 0, 0)}
+    h.place(tpull, hp)
+    h.place(tpull + 12, hp + comp)
+    h.pose(tpull + 12, "crouch")
+    h.pose(tpull + 12, kneel)
+    h.pose(tpull + 12, pinned)
+    h.bone_loc(tpull, "root", (0, 0, 0))
+    h.bone_loc(tpull + 12, "root", (0, 0, -0.35))
+    h.face(tpull + 10, "angry")
+    A.event(tpull + 4, "struggle")
+    yaw_hf = math.degrees(A.yaw_towards(V((-1, 0, 0))))  # she twists round to face him
+    h.place(tpull + 4, None, 0)
+    h.place(tpull + 16, None, yaw_hf)
+    # ... and stamps her forehead
     hit = e.stamp(tn + 34, keep_right=True)
     pad = E_s + rz @ e.stamp_offset()
     brow = A.world_matrix_at(h.rig, hit, "head").translation + V((0, 0, 0.13)) + \
         Matrix.Rotation(math.radians(yaw_hf), 3, "Z") @ V((0, -0.11, 0))
     swing = pad - brow
     print("seq5 stamp swing", round(swing.length, 2))
-    h.place(hit - 9, hp)
-    h.place(hit - 1, hp + swing)
-    h.place(hit + 8, hp + swing * 0.6)
+    h.place(hit - 9, hp + comp)
+    h.place(hit - 1, hp + comp + swing)
+    h.place(hit + 8, hp + comp + swing * 0.5)
     for d in ctx.decal_hedda:
         A.hide(d, hit, False)
     h.face(hit, "closed")
     h.face(hit + 10, "angry")
-    # he turns to the belt, holds her out over the railing - and lets go: she drops into the big cage, whose
-    # lid stands open, and the lid slams shut
+    # then hauls her up: she dangles in the ring, kicking
+    tl = hit + 14
+    e.pose(tl, "net_hold")
+    e.pose(tl + 12, "net_up")
+    hang = V((0, 0, r_s.z - 1.25))  # chest in the ring
+    h.place(tl, hp + comp + swing * 0.5)
+    h.place(tl + 12, hp + hang)
+    h.bone_loc(tl, "root", (0, 0, -0.35))
+    h.bone_loc(tl + 10, "root", (0, 0, 0))
+    h.pose(tl, "crouch")
+    h.pose(tl, kneel)
+    h.pose(tl + 12, "stand")
+    h.pose(tl + 12, pinned)
+    for k in range(8):
+        a_, b_ = (35, -10) if k % 2 else (-10, 35)
+        h.pose(tl + 12 + k * 5, {"thigh_L": (a_, 0, 4), "thigh_R": (b_, 0, 4), "shin_L": (-40, 0, 0),
+                                 "shin_R": (-40, 0, 0)})
+    A.event(tl + 6, "struggle")
     c_h, lid_h = cages["hedda"][0], cages["hedda"][1]
     yaw_b = math.degrees(A.yaw_towards(V((0, -1, 0))))
     out_ = {"arm_R": (95, 0, 5), "fore_R": (0, 0, 0), "hand_R": (-75, 0, 0), "body": (-6, 0, 0)}
     off_out = Matrix.Rotation(math.radians(yaw_b), 3, "Z") @ e.net_offset(out_)
     # he rolls along the catwalk with her dangling until her cage (travelling on the belt) is below
-    tr0 = hit + 18
+    tr0 = tl + 14
     xd = E_s.x
     for _ in range(4):
         troll = tr0 + max(6, int(round(abs(xd - E_s.x) / 1.3 * C.FPS)))
@@ -326,7 +349,6 @@ def build(ctx, F):
     E_d = V((xd, E_s.y, cz))
     troll = e.roll(tr0, [E_s, E_d], speed=1.3, lean=5)
     tdrop = troll + 22
-    h.place(hit + 30, hp + swing * 0.2)
     # turns to the belt, holds her out over the railing - and lets go
     e.place(troll + 2, None, yaw_s)
     e.place(troll + 12, E_d, yaw_b)

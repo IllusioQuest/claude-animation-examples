@@ -190,8 +190,8 @@ def build(ctx, F):
     B.shot(ctx, 4, "S4_c2_alley", tr1, [(tr1, Wv(30, 1.3, 1.5), Wv(20, 0, 1.6)),
                                         (c3_start, Wv(31, 1.2, 1.6), Wv(23, 0, 1.6))], lens=28)
     if tb - 8 >= tr1 + 16 and tb + 18 <= c3_start:
-        B.shot(ctx, 4, "S4_c3a_bucket", tb - 8, [(tb - 8, bp + V((1.7, -1.5, 0.75)), bp + V((-0.4, 0.4, 0.55))),
-                                                 (tb + 18, bp + V((1.6, -1.4, 0.7)), bp + V((-0.2, 0.7, 0.3)))],
+        B.shot(ctx, 4, "S4_c3a_bucket", tb - 8, [(tb - 8, bp + V((1.15, -0.85, 0.75)), bp + V((-0.6, 0.6, 0.5))),
+                                                 (tb + 18, bp + V((1.1, -0.8, 0.7)), bp + V((-0.2, 0.9, 0.25)))],
                lens=26)
         if c3_start - (tb + 18) >= 12:
             mk = sc.timeline_markers.new("S4_c2_alley_back", frame=tb + 18)
@@ -272,6 +272,7 @@ def build(ctx, F):
         c.keyframe_insert("influence", frame=t5 - 1)
         c.influence = 0.0
         c.keyframe_insert("influence", frame=t5)
+    A.hold_obj(sheet, t5 - 1, ("location", "rotation_euler"))  # (without the hold it slid down into the ground)
     sheet.location = (0, 0, -300)
     sheet.keyframe_insert("location", frame=t5)
     A.set_interp(sheet, "location", t5 - 1, "CONSTANT")
