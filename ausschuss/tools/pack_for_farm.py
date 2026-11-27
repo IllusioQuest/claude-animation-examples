@@ -32,10 +32,23 @@ for o in sorted((o for o in bpy.data.objects if o.name.startswith("Hedda_skirt_c
     sc.frame_set(pc.frame_start)
     with bpy.context.temp_override(scene=sc, object=o, active_object=o, point_cache=pc):
         bpy.ops.ptcache.bake(bake=True)
-    n = int(pc.info.split()[0]) if pc.info and pc.info.split()[0].isdigit() else 0
+    tok = pc.info.split()[0].replace(",", "") if pc.info else ""  # "1,057 frames ..."
+    n = int(tok) if tok.isdigit() else 0
     total += n
     want += pc.frame_end - pc.frame_start + 1
     print(f"baked into file: {o.name} {pc.frame_start}-{pc.frame_end}: {pc.info}")
+# the soundtrack strip: refreshed from the current sound file (the strip keeps the length it had when the
+# blend was built)
+film = bpy.data.scenes.get("FILM")
+here = os.path.dirname(os.path.abspath(__file__))
+snd = next((p_ for p_ in (os.path.join(here, "..", "sound", "soundtrack.wav"), os.path.join(here, "..", "sound", "soundtrack.ogg"))
+            if os.path.exists(p_)), None)
+if film and film.sequence_editor and snd:
+    se = film.sequence_editor
+    for st in [s_ for s_ in se.sequences_all if s_.type == "SOUND"]:
+        se.sequences.remove(st)
+    st = se.sequences.new_sound("soundtrack", os.path.abspath(snd), channel=2, frame_start=1)
+    print("soundtrack strip", st.frame_final_start, "-", st.frame_final_end, "film ends", film.frame_end)
 # pack images, fonts, sounds, ...; then list anything that still points outside the file
 bpy.ops.file.pack_all()
 external = []

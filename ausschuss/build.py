@@ -340,6 +340,14 @@ def main():
         st = se.sequences.new_scene(f"S{i}", s["scene"], channel=1, frame_start=s["f0"])
         st.frame_final_start = s["f0"]
         st.frame_final_end = s["f1"] + 1
+    # events for the sound pipeline - and the soundtrack made from them right away, so the strip below has
+    # this build's length (made afterwards, the strip kept the previous length and cut the sound short)
+    with open(os.path.join(HERE, "sound", "events.json"), "w") as fh:
+        json.dump({"fps": C.FPS, "end": total_end, "bounds": ctx.bounds, "events": A.EVENTS}, fh, indent=0)
+    import subprocess
+    r = subprocess.run(["python3", os.path.join(HERE, "sound", "make_sound.py")], cwd=HERE)
+    if r.returncode:
+        print("WARNING: make_sound.py failed - run it by hand and rebuild for a matching soundtrack strip")
     snd = os.path.join(HERE, "sound", "soundtrack.wav")
     if not os.path.exists(snd):
         snd = os.path.join(HERE, "sound", "soundtrack.ogg")
@@ -353,9 +361,6 @@ def main():
     for i in sorted(ctx.seq):
         sc = ctx.seq[i]["scene"]
         sc.render.filepath = f"//render/S{i}/f_"
-    # events for the sound pipeline
-    with open(os.path.join(HERE, "sound", "events.json"), "w") as fh:
-        json.dump({"fps": C.FPS, "end": total_end, "bounds": ctx.bounds, "events": A.EVENTS}, fh, indent=0)
     if bpy.context.window:
         bpy.context.window.scene = film
     # remove build scene (constraints/inverses are baked into data)

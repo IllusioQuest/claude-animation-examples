@@ -29,7 +29,8 @@ for o in cloths:
     sc.frame_set(pc.frame_start)
     with bpy.context.temp_override(scene=sc, object=o, active_object=o, point_cache=pc):
         bpy.ops.ptcache.bake(bake=True)
-    n = int(pc.info.split()[0]) if pc.info and pc.info.split()[0].isdigit() else 0
+    tok = pc.info.split()[0].replace(",", "") if pc.info else ""  # "1,057 frames ..."
+    n = int(tok) if tok.isdigit() else 0
     want = pc.frame_end - pc.frame_start + 1
     total += n
     print(f"baked {o.name} {pc.frame_start}-{pc.frame_end}: {pc.info}", "" if n >= want else "  <-- INCOMPLETE")
