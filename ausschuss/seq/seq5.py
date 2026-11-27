@@ -1,7 +1,7 @@
 """SEQ 5 – Reclamation depot at night: break-in, the press, OBSOLETE, the double knock, the uprising, escape."""
 import math
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 import core as C
 import anim as A
 import characters as CH
@@ -45,7 +45,7 @@ def build(ctx, F):
     for d in ctx.decal_funke:
         A.hide(d, F, True)
     # ------------------------------------------------------------------ cages on the belt
-    t_jam = T(28.0)
+    t_jam = T(31.0)  # the STOP button (see 5.5) – Funke's beat is timed backwards from here
     S.key_sat(sc, F, 0.72)
     S.key_sat(sc, t_jam, 0.72)
     S.key_sat(sc, t_jam + 24, 1.15)  # the machines rise
@@ -62,7 +62,10 @@ def build(ctx, F):
             ("juke", 4.9, 1, (1.1, 1.1, 1.0)), ("quad", 2.9, 2, (1.1, 1.1, 1.0)), ("vac", 0.9, 0, (1.1, 1.1, 1.0))]
     for name, xj, kind, size in spec:
         if name in ("funke", "hedda"):
-            root, door = S2.cage(f"belt_cage_{name}", (0, 0, 0), ctx.c_props, size=size)
+            root, door = S2.cage(f"belt_cage_{name}", (0, 0, 0), ctx.c_props, size=size, lid=(name == "hedda"))
+            if name == "hedda":  # its lid stands open until she is dropped in
+                door.rotation_euler.x = math.radians(-110)
+                door.keyframe_insert("rotation_euler", frame=t0, index=0)
         else:
             root, door = S2.cage_with_machine(f"belt_cage_{name}", (0, 0, 0), ctx.c_props, kind=kind,
                                               seed=hash(name) % 7)
@@ -173,7 +176,10 @@ def build(ctx, F):
     for name, (root, door, xj) in cages.items():
         dt = rnd.randint(2, 14)
         door.keyframe_insert("rotation_euler", frame=t_jam + dt)
-        door.rotation_euler.z = math.radians(-115)
+        if name == "hedda":  # the lid
+            door.rotation_euler.x = math.radians(-110)
+        else:
+            door.rotation_euler.z = math.radians(-115)
         door.keyframe_insert("rotation_euler", frame=t_jam + dt + 5)
         A.event(t_jam + dt, "cage_pop")
     waiting_doors = [o for o in bpy.data.objects if o.name.startswith("h_wait") and o.name.endswith("_doorpiv")]
@@ -253,39 +259,99 @@ def build(ctx, F):
     h.pose(hc + 6, "crouch")
     h.pose(hc + 6, {"upper_arm_R": (80, 0, 10), "forearm_R": (10, 0, 0), "head": (20, 0, 0)})
     h.face(hc + 6, "worried")
-    # Erfasser rolls up behind her on the catwalk
-    te = e.roll(T(14.0), [Hd(-14, 2.8, cz), Hd(tgt_x - 2.4, 2.8, cz)], speed=1.9, lean=6)
-    e.place(te + 2, None, -90)
-    tn = max(te + 6, hc + 14)
-    e.pose(tn - 10, "net_ready")
-    e.pose(tn, "net_throw", interp="LINEAR")
+    # Erfasser rolls up behind her on the catwalk; the catch pole's ring (its net rolled up to a short frill)
+    # comes down over her head and pins her arms
+    hp = Hd(tgt_x, 2.6, cz)
+    yaw_s = math.degrees(A.yaw_towards(V((1, 0, 0))))
+    rz = Matrix.Rotation(math.radians(yaw_s), 3, "Z")
+    E_s = hp - rz @ e.net_offset("net_shoulder")
+    E_s.z = cz
+    te = e.roll(T(14.0), [Hd(-14, 2.8, cz), E_s], speed=1.9, lean=6)
+    e.place(te + 2, E_s, yaw_s)
+    tn = max(te + 8, hc + 14)
+    nm_ = e.extra["net"]
+    for fr_, z_ in ((tn - 14, -1.0), (tn - 8, 0.18)):
+        nm_.scale = (1, 1, z_)
+        nm_.keyframe_insert("scale", frame=fr_, index=2)
+    e.pose(tn - 12, "net_ready")
+    e.pose(tn, "net_shoulder", interp="LINEAR")
     A.event(tn - 4, "whoosh")
     A.event(tn, "net_catch")
-    net = e.extra["net"]
+    hoop = bpy.data.objects["Erfasser_hoop"]
     h.face(tn - 6, "surprised")
-    con_hn = A.attach_to(h.rig, net, tn, name="netted")
-    h.pose(tn + 2, "crouch")
-    h.pose(tn + 2, {"upper_arm_L": (130, 0, 30), "upper_arm_R": (130, 0, 30), "forearm_L": (60, 0, 0),
-                    "forearm_R": (60, 0, 0)})
-    # lift, stamp on the forehead
-    e.pose(tn + 20, {"arm_R": (110, 0, 20), "fore_R": (10, 0, 0), "hand_R": (-30, 0, 0)})
-    hit = e.stamp(tn + 28)
+    con_hn = A.attach_loc(h.rig, hoop, tn, name="netted")
+    pinned = {"upper_arm_L": (5, 0, 4), "upper_arm_R": (5, 0, 4), "forearm_L": (30, 0, 0), "forearm_R": (30, 0, 0)}
+    h.pose(tn + 3, pinned)
+    # he hauls her up off the catwalk: she dangles in the ring, kicking
+    tup = tn + 8
+    e.pose(tup, "net_shoulder")
+    e.pose(tup + 12, "net_up")
+    h.pose(tup + 12, "stand")
+    h.pose(tup + 12, pinned)
+    for k in range(6):
+        a_, b_ = (35, -10) if k % 2 else (-10, 35)
+        h.pose(tup + 12 + k * 5, {"thigh_L": (a_, 0, 4), "thigh_R": (b_, 0, 4), "shin_L": (-40, 0, 0), "shin_R": (-40, 0, 0)})
+    h.face(tup + 10, "angry")
+    A.event(tup + 6, "struggle")
+    # stamp on the forehead: she swings in to the stamp
+    yaw_hf = math.degrees(A.yaw_towards(V((-1, 0, 0))))  # dangling, she turns to face him
+    h.place(tup + 4, None, 0)
+    h.place(tup + 16, None, yaw_hf)
+    hit = e.stamp(tn + 34, keep_right=True)
+    pad = E_s + rz @ e.stamp_offset()
+    brow = A.world_matrix_at(h.rig, hit, "head").translation + V((0, 0, 0.13)) + \
+        Matrix.Rotation(math.radians(yaw_hf), 3, "Z") @ V((0, -0.11, 0))
+    swing = pad - brow
+    print("seq5 stamp swing", round(swing.length, 2))
+    h.place(hit - 9, hp)
+    h.place(hit - 1, hp + swing)
+    h.place(hit + 8, hp + swing * 0.6)
     for d in ctx.decal_hedda:
         A.hide(d, hit, False)
     h.face(hit, "closed")
     h.face(hit + 10, "angry")
-    # drop her into the big cage on the belt
-    c_h = cages["hedda"][0]
-    tdrop = hit + 30
-    e.pose(tdrop - 8, {"arm_R": (100, 0, -30), "fore_R": (20, 0, 0), "hand_R": (40, 0, 0), "body": (10, 0, 0)})
+    # he turns to the belt, holds her out over the railing - and lets go: she drops into the big cage, whose
+    # lid stands open, and the lid slams shut
+    c_h, lid_h = cages["hedda"][0], cages["hedda"][1]
+    yaw_b = math.degrees(A.yaw_towards(V((0, -1, 0))))
+    out_ = {"arm_R": (95, 0, 5), "fore_R": (0, 0, 0), "hand_R": (-75, 0, 0), "body": (-6, 0, 0)}
+    off_out = Matrix.Rotation(math.radians(yaw_b), 3, "Z") @ e.net_offset(out_)
+    # he rolls along the catwalk with her dangling until her cage (travelling on the belt) is below
+    tr0 = hit + 18
+    xd = E_s.x
+    for _ in range(4):
+        troll = tr0 + max(6, int(round(abs(xd - E_s.x) / 1.3 * C.FPS)))
+        tdrop = troll + 22
+        xd = A.world_matrix_at(c_h, tdrop + 14).translation.x - off_out.x
+    E_d = V((xd, E_s.y, cz))
+    troll = e.roll(tr0, [E_s, E_d], speed=1.3, lean=5)
+    tdrop = troll + 22
+    h.place(hit + 30, hp + swing * 0.2)
+    # turns to the belt, holds her out over the railing - and lets go
+    e.place(troll + 2, None, yaw_s)
+    e.place(troll + 12, E_d, yaw_b)
+    e.pose(troll + 4, "net_up")
+    e.pose(troll + 16, out_)
+    e.pose(tdrop, out_)
     A.detach(h.rig, con_hn, tdrop)
+    nm_.scale = (1, 1, 0.18)
+    nm_.keyframe_insert("scale", frame=tdrop + 6, index=2)
+    nm_.scale = (1, 1, -1.0)
+    nm_.keyframe_insert("scale", frame=tdrop + 14, index=2)
     cage_pos = A.world_matrix_at(c_h, tdrop + 14).translation
-    A.arc(h.rig, tdrop, tdrop + 14, h.pos_at(tdrop), cage_pos + V((0, 0, 0.05)), height=0.6)
-    h.rig.keyframe_insert("rotation_euler", frame=tdrop + 14)
-    A.event(tdrop + 14, "cage_slam")
+    A.arc(h.rig, tdrop + 1, tdrop + 14, A.world_matrix_at(h.rig, tdrop).translation, cage_pos + V((0, 0, 0.05)),
+          height=0.5)
+    h.pose(tdrop + 6, {"upper_arm_L": (150, 0, 30), "upper_arm_R": (150, 0, 30), "thigh_L": (30, 0, 4),
+                       "thigh_R": (30, 0, 4)})
+    A.event(tdrop + 14, "thud")
     h.pose(tdrop + 14, "crouch")
     h.place(tdrop + 15, cage_pos + V((0, 0, 0.05)), -90)
     con_hc = A.attach_to(h.rig, c_h, tdrop + 15, name="in_cage")
+    lid_h.rotation_euler.x = math.radians(-110)
+    lid_h.keyframe_insert("rotation_euler", frame=tdrop + 15, index=0)
+    lid_h.rotation_euler.x = 0.0
+    lid_h.keyframe_insert("rotation_euler", frame=tdrop + 19, index=0)
+    A.event(tdrop + 19, "cage_slam")
     e.pose(tdrop + 20, "stand")
     # walking backwards ahead of her: we see her set face - and the Erfasser rolling up behind her before she does
     t_wide = tn - 26
@@ -299,7 +365,17 @@ def build(ctx, F):
     B.shot(ctx, 5, "S5_c3b_stamp", tn + 10, [(tn + 10, Hd(tgt_x + 2.6, 0.2, 4.4), Hd(tgt_x - 1.4, 2.7, 5.5))], lens=24)
     B.shot(ctx, 5, "S5_c3c_drop", tdrop - 4, [(tdrop - 4, Hd(tgt_x + 1.5, -4.5, 2.6), Hd(tgt_x + 1.5, 0.5, 2.0))], lens=26)
     # ------------------------------------------------------------------ 5.4 Funke squeezes out
-    tsq = max(tdrop + 30, T(24.5))
+    # his whole beat is anchored to the jam: squeeze out, jump onto the platform, find the STOP button,
+    # press it twice (the double knock) – and only then does the press jam
+    plat = dep["control_box"]
+    btn = dep["stop_button"]
+    tk2 = t_jam - 6           # second press
+    tk1 = tk2 - 14            # first press
+    tlook = tk1 - 22          # he finds the button
+    tj = tlook - 22           # jump (lands at tj + 14)
+    tsq = tj - 28
+    if tsq < tdrop + 22:
+        print("WARNING seq5: Funke's beat starts", tdrop + 22 - tsq, "frames too early - move t_jam later")
     f.pose(tsq - 10, "stand")
     f.pose(tsq - 10, {"lid": (-95, 0, 0), "head": (-10, 0, 0)})
     f.glow(tsq - 10, 4.0, "iris")
@@ -307,8 +383,7 @@ def build(ctx, F):
     A.event(tsq - 10, "determined")
     A.detach(f.rig, con_fc, tsq)
     p_in = f.pos_at(tsq)
-    yaw_out = 180.0  # face -Y (toward the control platform side)
-    yaw_out = 0.0
+    yaw_out = 0.0  # face -Y (toward the control platform side)
     f.place(tsq + 1, p_in, yaw_out)
     p_bars = p_in + V((0, -0.55, 0))
     # stays with belt motion meanwhile (cheat: small x drift)
@@ -323,32 +398,51 @@ def build(ctx, F):
     p_out = p_bars + V((BELT_V * 22 / C.FPS, -0.25, 0))
     f.place(tsq + 22, p_out, yaw_out)
     h.face(tsq + 16, "surprised")
-    # ------------------------------------------------------------------ 5.5 jump to the control box, double knock
-    plat = dep["control_box"]
-    tj = tsq + 28
-    land = V((plat.x - 0.7, plat.y + 0.1, plat.z))  # beside the control box, facing its light panel
+    # ------------------------------------------------------------------ 5.5 onto the platform: the STOP button
+    yaw_btn = math.degrees(A.yaw_towards(V((1, 0, 0))))
+    land = V((btn.location.x - 0.34, btn.location.y, plat.z))  # in front of the box, the button at arm's height
     A.arc(f.rig, tj, tj + 14, p_out + V((BELT_V * 6 / C.FPS, 0, 0)), land, height=0.9)
     f.pose(tj + 4, "happy")
     A.event(tj + 14, "land_spring")
-    f.place(tj + 16, land, 90)
+    f.place(tj + 16, land, yaw_btn)
     f.pose(tj + 16, "stand")
-    f.place(tj + 22, land, 90)
-    f.pose(tj + 22, {"head": (-25, 0, 0)})
-    tk = tj + 26
-    f.pose(tk - 4, "reach_up")
-    for k in range(2):
-        f.pose(tk + k * 6, {"arm_R": (135, 0, 0), "fore_R": (25, 0, 0)})
-        f.pose(tk + k * 6 + 3, {"arm_R": (110, 0, 0), "fore_R": (5, 0, 0)}, interp="LINEAR")
-        A.event(tk + k * 6 + 3, "knock_metal")
-    f.pose(tk + 16, "happy")
-    # (t_jam was fixed at T(30.5); print a warning if the action drifted)
-    if abs((tk + 12) - t_jam) > 30:
-        print("WARNING seq5: knock at", tk + 12, "but jam at", t_jam)
+    # looks around - up at the press, then at the button: there it is
+    f.pose(tlook - 6, {"head": (-20, 0, 35)})
+    f.pose(tlook, {"head": (-5, 0, 0)})
+    f.glow(tlook + 2, 9.0, "iris")
+    f.pose(tlook + 6, {"lid": (-95, 0, 0), "head": (5, 0, 0)})
+    A.event(tlook + 2, "ping")
+    bs0 = V(btn.location)
+    btn.keyframe_insert("location", frame=F)
+    for tp_ in (tk1, tk2):
+        f.pose(tp_ - 6, {"arm_R": (70, 0, 0), "fore_R": (70, 0, 0), "body": (-6, 0, 0)})
+        f.pose(tp_, {"arm_R": (92, 0, 0), "fore_R": (0, 0, 0), "body": (8, 0, 0)}, interp="LINEAR")
+        f.pose(tp_ + 5, {"arm_R": (80, 0, 0), "fore_R": (25, 0, 0), "body": (0, 0, 0)})
+        btn.location = bs0
+        btn.keyframe_insert("location", frame=tp_ - 1)
+        btn.location = bs0 + V((0.028, 0, 0))
+        btn.keyframe_insert("location", frame=tp_)
+        btn.keyframe_insert("location", frame=tp_ + 2)
+        btn.location = bs0
+        btn.keyframe_insert("location", frame=tp_ + 6)
+        A.event(tp_, "knock_metal")
+        for lm in dep["cb_lights"]:
+            A.key_socket(C.emit_socket(lm), tp_ - 1, 4.0, "CONSTANT")
+            A.key_socket(C.emit_socket(lm), tp_, 14.0, "CONSTANT")
+            A.key_socket(C.emit_socket(lm), tp_ + 3, 4.0, "CONSTANT")
+    f.pose(tk2 + 12, "happy")
     B.shot(ctx, 5, "S5_c4_squeeze", tsq - 12, [(tsq - 12, Hd(belt_x(9.2, tsq) + 0.4, -2.6, 1.5), Hd(belt_x(9.2, tsq), -0.3, 1.2)),
                                               (tj, Hd(belt_x(9.2, tj) + 0.2, -2.7, 1.5), Hd(belt_x(9.2, tj), -0.5, 1.2))],
            lens=32)
     B.shot(ctx, 5, "S5_c5_knock", tj, [(tj, Hd(4.0, -6.2, 2.4), V((plat.x - 0.4, plat.y, plat.z + 0.5))),
-                                       (t_jam + 20, Hd(3.0, -6.5, 3.0), Hd(9, -1, 3.5))], lens=26)
+                                       (tlook, Hd(4.2, -6.0, 2.4), V((plat.x - 0.4, plat.y, plat.z + 0.5)))], lens=26)
+    # close on Funke and the button: we see him find it and press it, twice
+    bmid = V((btn.location.x - 0.17, btn.location.y, btn.location.z - 0.05))
+    B.shot(ctx, 5, "S5_c5b_button", tlook - 4, [(tlook - 4, bmid + V((-0.55, -1.15, 0.12)), bmid),
+                                                (tk2 + 8, bmid + V((-0.45, -0.95, 0.08)), bmid)], lens=35)
+    # ... and the press, three seconds from crushing his empty cage, jams
+    B.shot(ctx, 5, "S5_c5c_jam", tk2 + 8, [(tk2 + 8, Hd(px - 6.0, -7.5, 2.0), Hd(px, 0, 3.2)),
+                                           (t_jam + 20, Hd(px - 5.6, -7.2, 2.1), Hd(px, 0, 3.0))], lens=28)
     # ------------------------------------------------------------------ 5.6 uprising
     tu = t_jam + 24
     # vacuum bot zooms in circles out of its cage
@@ -381,7 +475,7 @@ def build(ctx, F):
     A.detach(h.rig, con_hc, tu + 4)
     hp = h.pos_at(tu + 4)
     hfloor = Hd(5.0, -2.0)  # clear of the cage doors and the control platform
-    A.arc(h.rig, tu + 6, tu + 20, hp, hfloor, height=0.9)
+    A.arc(h.rig, tu + 6, tu + 22, hp, hfloor, height=2.1)  # up and out over the cage wall (the lid is open)
     h.pose(tu + 20, "stand")
     h.face(tu + 20, "happy")
     h.place(tu + 22, hfloor, math.degrees(A.yaw_towards(V((plat.x, plat.y)) - V((hfloor.x, hfloor.y)))))

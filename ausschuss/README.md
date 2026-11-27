@@ -64,7 +64,22 @@ Mantel unsimuliert:
 blender -b ausschuss.blend --python tools/bake_cloth.py
 ```
 
-`build.py` macht das am Ende eines Builds selbst.
+`build.py` macht das am Ende eines Builds selbst. Ob die Simulation sauber ist (der Stoff bleibt am
+Körper), prüft:
+
+```
+blender -b ausschuss.blend --python tools/check_cloth.py
+```
+
+**Für eine Render-Farm:** eine in sich geschlossene Datei, die Mantel-Simulation steckt in der .blend
+selbst (kein `blendcache_*`-Ordner nötig), alle externen Dateien sind eingepackt:
+
+```
+blender -b ausschuss.blend --python tools/pack_for_farm.py
+```
+
+Das schreibt `ausschuss_farm.blend` (die Originaldatei bleibt unverändert). Auf der Farm die Szene
+`FILM` rendern, Bilder 1–6458, 24 fps.
 
 Danach entweder die Szene `FILM` rendern (Sequencer, mit Ton) oder jede `S*`-Szene einzeln
 als Bildsequenz nach `render/S*/` und anschließend zusammenschneiden. Der Look hängt am

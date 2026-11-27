@@ -284,13 +284,19 @@ def build(ctx, F):
     stops = [V((-20.45, -3.3, 0)), V((-21.6, -5.4, 0)), V((-22.0, -2.2, 0)), V((-22.4, -4.0, 0))]  # machines west, people east  # kids stand where quad1 was  # juke stays out of the wink shot
     machines = [machine_juke("free_juke", ctx.c_props), machine_quad("free_quad1", ctx.c_props),
                 machine_vacuum("free_vac2", ctx.c_props), machine_quad("free_quad2", ctx.c_props)]
+    # they come down the road from far off in the haze; all of them are already on their way when the shot
+    # opens (parked out of sight below the ground until then - with a hard switch, they used to rise up
+    # out of the road)
+    far = road[0] + (road[0] - road[1]).normalized() * 8.0
     for i, mc in enumerate(machines):
         A.hide(mc, 0, True)
         A.hide(mc, F, False)
         mc.location = (0, 0, -300)
         mc.keyframe_insert("location", frame=F)
+        A.set_interp(mc, "location", F, "CONSTANT")
         off = V(((i % 2) * 1.1 - 0.55, 0, 0))
-        trot(mc, tm + i * 28, [p + off for p in road] + [stops[i]], speed=1.4, hop=0.06 if i != 0 else 0.02)
+        trot(mc, tm - 90 + i * 26, [p + off for p in [far] + road] + [stops[i]], speed=1.8,
+             hop=0.06 if i != 0 else 0.02)
     A.event(tm, "jukebox_soft", beat=12)
     h.face(tm + 50, "surprised")
     A.look(h, tm + 50, road[1] + V((0, 0, 0.5)))

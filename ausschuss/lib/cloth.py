@@ -61,6 +61,16 @@ def _segments(ctx, rig, f_end):
             on = [f for f in range(1, f_end + 1) if fc.evaluate(f) > 0.01]
             for f in on:
                 blocked |= set(range(f - 2, f + 6))
+    # tilted (a fall, lying in the dirt): her whole frame - and the cloth's floor with it - rotates, the
+    # simulation goes wild and never recovers (S4: after the fall the coat hung 0.6-0.9 m off her for the
+    # rest of the shot). Skinned coat while tilted; a fresh simulation once she is upright again.
+    fx_ = act.fcurves.find("rotation_euler", index=0)
+    fy_ = act.fcurves.find("rotation_euler", index=1)
+    for f in range(1, f_end + 1):
+        tx = abs(fx_.evaluate(f)) if fx_ else 0.0
+        ty = abs(fy_.evaluate(f)) if fy_ else 0.0
+        if max(tx, ty) > 0.25:
+            blocked |= set(range(f - 3, f + 10))
     segs = []
     cur = None
     for f in range(1, f_end + 1):

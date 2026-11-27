@@ -403,6 +403,30 @@ def attach_to(ob, target, f, bone=None, name=None):
     return con
 
 
+def attach_loc(ob, target, f, name=None):
+    """From frame f on, ob moves along with target's location only (it keeps its own orientation:
+    something caught in a hanging net, a passenger that should stay upright)."""
+    from mathutils import Matrix
+    con = ob.constraints.new("CHILD_OF")
+    if name:
+        con.name = name
+    con.target = target
+    for ax in ("x", "y", "z"):
+        setattr(con, "use_rotation_" + ax, False)
+        setattr(con, "use_scale_" + ax, False)
+    tm = world_matrix_at(target, f)
+    con.inverse_matrix = Matrix.Translation(-tm.translation)
+    con.influence = 0.0
+    con.keyframe_insert("influence", frame=f - 1)
+    con.influence = 1.0
+    con.keyframe_insert("influence", frame=f)
+    for fc in ob.animation_data.action.fcurves:
+        if "influence" in fc.data_path:
+            for kp in fc.keyframe_points:
+                kp.interpolation = "CONSTANT"
+    return con
+
+
 def detach(ob, con, f, upright=None):
     """At frame f stop following; ob stays where it is (keys its own transform).
     upright: keep only the Z rotation (default for armatures/actors)."""

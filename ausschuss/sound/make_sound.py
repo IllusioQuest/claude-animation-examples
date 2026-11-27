@@ -594,6 +594,7 @@ def sfx_for(e):
         "wink": (lambda: X.tink(3136), 0.4), "glint": (lambda: X.sparkle(0.5), 0.5),
         "cat_meow": (X.meow, 0.6), "fiddle": (lambda: X.ratchet(1.0), 0.4), "wag": (None, 0),
         "engine_rev": (lambda: X.engine(2.0, 40, rev=True), 0.9), "determined": (None, 0),
+        "skid": (lambda: X.squeak(0.45, 2400), 0.8), "struggle": (lambda: X.cloth(0.7), 0.7),
     }
     if k in table:
         fn, g = table[k]

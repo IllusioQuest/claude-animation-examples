@@ -1,7 +1,7 @@
 """SEQ 1 – Scrapyard at dawn: the radio, Bello, the Erfasser, the press, the lens."""
 import math
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 import core as C
 import anim as A
 import characters as CH
@@ -247,27 +247,64 @@ def build(ctx, F):
     b.bone_scale(hit, "body", (1.1, 0.85, 1.0))
     b.bone_scale(hit + 4, "body", (1, 1, 1))
     b.pose(hit + 6, "cower")
-    # net
+    # net: he rolls into striking distance, raises the catch pole and slams the landing net down over
+    # Bello like a dome; a flick turns the bag over and Bello hangs in it, under the ring
     tn2 = hit + C.sec(1.2)
+    tcatch = tn2 + 14
+    bpos = b.pos_at(tcatch)
+    off = e.net_offset("net_throw")  # ring centre in the rig's frame for the slam
+    rm = Matrix.Rotation(math.radians(yaw_eb), 3, "Z")
+    E3 = bpos - rm @ off
+    E3.z = 0.0
+    tin = e.roll(hit + 16, [E2, E3], speed=1.2, lean=5)
+    e.place(tin + 1, E3, yaw_eb)
     e.pose(tn2, "net_ready")
+    e.net_bag(tn2 - 1, False)
+    e.net_bag(tn2 + 6, True)  # the bag flops over the ring on the way up
     e.pose(tn2 + 8, "net_ready")
-    e.pose(tn2 + 14, "net_throw", interp="LINEAR")
+    e.pose(tcatch, "net_throw", interp="LINEAR")
     A.event(tn2 + 10, "whoosh")
-    A.event(tn2 + 14, "net_catch")
-    con_b = A.attach_to(b.rig, e.extra["net"], tn2 + 14, name="netted")
-    b.pose(tn2 + 14, "cower")
-    # carry to hopper
-    tc = tn2 + 24
-    e.pose(tc, {"arm_R": (130, 0, 10), "fore_R": (10, 0, 0), "hand_R": (-10, 0, 0), "body": (-5, 0, 0)})
-    tcarry = e.roll(tc + 4, [E2, (5.1, 7.7, 0), (6.0, 7.5, 0)], speed=1.0, lean=4)
+    A.event(tcatch, "net_catch")
+    b.pose(tcatch, "cower")
+    hoop = bpy.data.objects["Erfasser_hoop"]
+    ring_c = e.net_ring(tcatch)
+    con_b = A.attach_loc(b.rig, hoop, tcatch, name="netted")
+    # struggling under the dome
+    for k in range(3):
+        b.pose(tcatch + 3 + k * 4, {"body": (0, 0, 12 if k % 2 else -12), "neck": (30, 0, 0)})
+    # flick and lift: the bag turns over, Bello drops into it and dangles under the ring
+    tl = tcatch + 16
+    e.pose(tl, "net_throw")
+    e.pose(tl + 12, "net_up")
+    e.net_bag(tl + 2, True)
+    e.net_bag(tl + 7, False)
+    A.event(tl + 4, "whoosh_small")
+    sink = (ring_c.z - bpos.z) - 0.42  # hang with his back just under the ring
+    b.place(tl + 2, bpos)
+    b.place(tl + 8, bpos + V((0, 0, sink)))
+    b.pose(tl + 8, {"body": (0, 0, 0), "neck": (-30, 0, 0), "head": (-10, 0, 0), "fl_L": (-40, 0, 0),
+                    "fl_R": (-40, 0, 0), "bl_L": (40, 0, 0), "bl_R": (40, 0, 0)})
+    b.glow(tl + 8, 1.0, "bulb")
+    # carry to the hopper, net held up
+    tc = tl + 18
+    e.pose(tc, "net_up")
+    tcarry = e.roll(tc + 4, [E3, (5.1, 7.7, 0), (6.0, 7.5, 0)], speed=1.0, lean=4)
     e.place(tcarry + 2, None, 0)
-    e.pose(tcarry + 6, {"arm_R": (150, 0, 0), "fore_R": (-10, 0, 0), "hand_R": (30, 0, 0), "body": (-10, 0, 0)})
+    e.pose(tcarry + 2, "net_up")
+    e.pose(tcarry + 8, {"arm_R": (85, 0, 5), "fore_R": (0, 0, 0), "hand_R": (-75, 0, 0), "body": (-8, 0, 0)})
+    # tip him out: the bag flops over, Bello falls into the hopper
     tdrop = tcarry + 14
-    e.pose(tdrop, {"arm_R": (120, 0, 0), "fore_R": (0, 0, 0), "hand_R": (70, 0, 0), "body": (6, 0, 0)})
+    e.net_bag(tdrop - 1, False)
+    e.net_bag(tdrop + 3, True)
     A.event(tdrop, "drop_in")
-    b.offstage(tdrop + 1)
+    hop = A.world_matrix_at(tr["hopper"], tdrop).translation
+    A.detach(b.rig, con_b, tdrop + 1)
+    A.arc(b.rig, tdrop + 2, tdrop + 9, A.world_matrix_at(b.rig, tdrop + 1).translation,
+          V((hop.x, hop.y, hop.z + 0.4)), height=0.25, spin=(2.5, 0, 0))
+    b.offstage(tdrop + 10)
     for d in ctx.decal_bello:
-        A.hide(d, tdrop + 1, True)
+        A.hide(d, tdrop + 10, True)
+    e.net_bag(tdrop + 12, False)
     e.pose(tdrop + 10, "stand")
     # press
     pl = tr["plate"]

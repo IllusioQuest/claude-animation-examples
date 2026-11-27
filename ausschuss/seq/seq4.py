@@ -78,7 +78,8 @@ def build(ctx, F):
         mk_keys.append((t_, mouth, hp_ if (hp_ - mouth).length > 1.4 else hp_ + (hp_ - mouth).normalized() * 1.4))
     B.shot(ctx, 4, "S4_c1b_mouth", tgrab + 20, mk_keys, lens=26)
     # ------------------------------------------------------------------ 4.2 laundry
-    # Hedda runs through the alley under the laundry; the Erfasser gets a sheet on his hat
+    # Hedda runs through the alley under the laundry; the one long bedsheet hanging low across it wraps
+    # itself round the Erfasser's head – he rolls on blind
     run2 = [Wv(18, 0.0), Wv(26, 0.4), Wv(34, -0.2)]
     tr2 = h.walk(tr1, run2, speed=4.2, stride=0.9, style="run", end_pose=None)
     fr = tr1
@@ -87,15 +88,24 @@ def build(ctx, F):
                     "forearm_R": (80, 0, -25)})
         fr += 6
     laundry = ctx.vil["laundry"]
-    # the sheet on line 2 (x≈21) catches on the Erfasser's hat
     sheet = min(laundry, key=lambda cl: abs(cl.location.x - Wv(21.5, 0).x) + abs(cl.location.y - O.y))
+    sh_h = sheet.dimensions.z
+    top = sheet.location.z + sh_h / 2
+    new_h = 1.45
+    for fr_, (sz_, z_) in ((F - 1, (1.0, sheet.location.z)), (F, (new_h / sh_h, top - new_h / 2))):
+        sheet.scale.z = sz_
+        sheet.location.z = z_
+        sheet.keyframe_insert("scale", frame=fr_, index=2)
+        sheet.keyframe_insert("location", frame=fr_, index=2)
+    A.set_interp(sheet, "scale", F - 1, "CONSTANT", 2)
+    A.set_interp(sheet, "location", F - 1, "CONSTANT", 2)
     xa, xb = 18.0, 28.5
     te2 = e.roll(te1, [Wv(xa, 0.0), Wv(xb, 0.2)], speed=3.4, lean=14)
     t_sheet = te1 + int((sheet.location.x - Wv(xa, 0).x) / (xb - xa) * (te2 - te1))
     e_head = A.world_matrix_at(e.rig, t_sheet, "head").translation
     sheet.keyframe_insert("location", frame=t_sheet - 1)
     sheet.keyframe_insert("rotation_euler", frame=t_sheet - 1)
-    sheet.location = e_head + V((0, 0.0, 0.2))
+    sheet.location = e_head + V((0.16, 0.0, -0.2))
     sheet.rotation_euler = (math.radians(-10), 0, math.radians(90))
     sheet.keyframe_insert("location", frame=t_sheet)
     sheet.keyframe_insert("rotation_euler", frame=t_sheet)
@@ -106,34 +116,61 @@ def build(ctx, F):
     e.pose(t_sheet + 2, {"head": (-15, 0, 20), "arm_L": (90, 0, 40), "arm_R": (90, 0, 40), "fore_L": (90, 0, 0),
                          "fore_R": (90, 0, 0)})
     e.pose(t_sheet + 12, {"head": (10, 0, -20)})
-    e.pose(t_sheet + 22, {"head": (-10, 0, 15), "arm_L": (8, 0, 8), "arm_R": (100, 0, 25), "fore_L": (30, 0, 0),
+    e.pose(t_sheet + 22, {"head": (-10, 0, 15), "arm_L": (100, 0, 30), "arm_R": (100, 0, 25), "fore_L": (60, 0, 0),
                           "fore_R": (20, 0, 0)})
-    B.shot(ctx, 4, "S4_c2_alley", tr1, [(tr1, Wv(30, 1.3, 1.5), Wv(20, 0, 1.6)),
-                                        (t_sheet + 20, Wv(31, 1.2, 1.6), Wv(23, 0, 1.6))], lens=28)
     # ------------------------------------------------------------------ 4.3 bucket of bolts
+    # a bucket of bolts on a crate right by her path: Funke sweeps it off as they pass; the bolts roll all
+    # over the alley - and the blind Erfasser rolls straight into them
     bucket = bpy.data.objects.get("v_bucket")
-    bp = Wv(28.0, -1.4)
+    bolts_in = [o for o in bpy.data.objects if o.name.startswith("v_bucketbolt")]
+    bp = Wv(28.0, -0.75)
+    crate = P.scrap_item("crate", bp + V((0, 0, 0.25)), (0, 0, 10), 1.0, ctx.c_props)
+    A.hide(crate, 0, True)
+    A.hide(crate, F, False)
+    tb = next((fr_ for fr_ in range(tr1, tr2) if h.pos_at(fr_).x >= Wv(27.7, 0).x), tr2)
+    on_crate = bp + V((0, 0, 0.65))
+    floor_at = bp + V((0.1, 0.55, 0.16))
     if bucket:
-        bucket.location = bp + V((0, 0, 0.15))
-    tb = tr1 + int((28.0 - 18.0) / 16.0 * (tr2 - tr1))
-    if bucket:
+        b0 = V(bucket.location)
+        bucket.keyframe_insert("location", frame=F - 1)
+        bucket.location = on_crate
+        bucket.keyframe_insert("location", frame=F)
+        A.set_interp(bucket, "location", F - 1, "CONSTANT")
         bucket.keyframe_insert("rotation_euler", frame=tb)
-        bucket.rotation_euler = (math.radians(95), 0, 0)
-        bucket.keyframe_insert("rotation_euler", frame=tb + 6)
+        A.arc(bucket, tb + 1, tb + 9, on_crate, floor_at, height=0.15)
+        bucket.rotation_euler = (math.radians(-95), 0, math.radians(20))
+        bucket.keyframe_insert("rotation_euler", frame=tb + 9)
+        for o in bolts_in:
+            A.hide(o, 0, False)
+            A.hide(o, tb + 5, True)
     A.event(tb + 4, "bolts_spill")
     C.set_coll(ctx.c_props)
-    for i in range(14):
-        b_ = C.cyl(f"spillbolt{i}", 0.015, 0.05, loc=bp + V((0, 0, 0.2)), m=C.mat("steel"), verts=6, coll=ctx.c_props)
-        b_.keyframe_insert("location", frame=tb + 3)
-        rnd = C.R.__class__(i)
-        A.arc(b_, tb + 4, tb + 14, bp + V((0, 0, 0.2)),
-              bp + V((rnd.uniform(-0.6, 0.8), rnd.uniform(0.2, 1.8), 0.01)), height=0.25,
-              spin=(rnd.uniform(-6, 6), rnd.uniform(-6, 6), 0))
+    bolt_m = C.mat("bolt_m", (0.75, 0.72, 0.68), metal=1.0, rough=0.3)
+    rnd = C.R.__class__(44)
+    for i in range(30):
+        if i % 4 == 3:
+            b_ = C.torus(f"spillnut{i}", 0.024, 0.009, m=bolt_m, seg=6, segr=4, coll=ctx.c_props)
+        else:
+            b_ = C.cyl(f"spillbolt{i}", 0.022, 0.08, m=bolt_m, verts=6, coll=ctx.c_props)
+        A.hide(b_, 0, True)
+        A.hide(b_, tb + 4, False)
+        src = floor_at + V((0, 0.1, 0.1))
+        b_.location = src
+        b_.keyframe_insert("location", frame=tb + 4)
+        dst = Wv(rnd.uniform(27.4, 29.3), rnd.uniform(-0.45, 0.9), 0.02)
+        A.arc(b_, tb + 5, tb + 14 + rnd.randint(0, 8), src, dst, height=0.2,
+              spin=(rnd.uniform(-8, 8), rnd.uniform(-8, 8), rnd.uniform(-4, 4)))
+        b_.rotation_euler = (math.radians(90), 0, rnd.uniform(0, 6.28))  # lying on their sides
+        b_.keyframe_insert("rotation_euler", frame=tb + 24)
     f.pose(tb - 6, {"arm_R": (90, 0, 60), "fore_R": (0, 0, 0)})
-    f.pose(tb + 2, {"arm_R": (40, 0, 80), "fore_R": (0, 0, 0)})
+    f.pose(tb + 1, {"arm_R": (40, 0, 80), "fore_R": (0, 0, 0)}, interp="LINEAR")
     f.pose(tb + 8, "scared")
-    # Erfasser hits the bolts: spin out (yaw spin + wobble) and recover
+    f.glow(tb + 2, 8.0, "bulb")
+    f.glow(tb + 12, 2.0, "bulb")
+    # Erfasser hits the bolts: the wheel skids, he spins out (yaw spin + wobble) and recovers
     ts = te2
+    if ts < tb + 22:
+        print("WARNING seq4: the Erfasser reaches the bolts", tb + 22 - ts, "frames before they have landed")
     pos = e.pos_at(ts)
     yaw0 = e.yaw_at(ts)
     for k, (dt, dy) in enumerate(((4, 120), (8, 260), (12, 400), (16, 520), (22, 600), (30, 630))):
@@ -142,13 +179,26 @@ def build(ctx, F):
     e.pose(ts + 12, {"body": (0, 0, -25)})
     e.pose(ts + 20, {"body": (0, 0, 15)})
     e.pose(ts + 30, {"body": (0, 0, 0), "arm_L": (8, 0, 8), "arm_R": (8, 0, 8)})
+    A.event(ts, "skid")
     A.event(ts + 2, "spin_out", dur=28)
     A.event(ts + 30, "boing")
     e.place(ts + 40, pos + V((0.7, 0.2, 0)), yaw0 + 720)
     e.pose(ts + 40, {"head": (0, 0, 0), "body": (-8, 0, 0)})
     ts_end = ts + 44
-    B.shot(ctx, 4, "S4_c3_bolts", t_sheet + 20, [(t_sheet + 20, bp + V((2.4, 0.2, 0.9)), bp + V((-1.5, 1.0, 0.8))),
-                                                 (ts_end, bp + V((2.5, 0.25, 1.0)), pos + V((0, 0, 1.0)))], lens=24)
+    # cameras: the alley (laundry), the bucket going over, and low on the floor among the bolts as he comes
+    c3_start = max(t_sheet + 18, tb + 20)
+    B.shot(ctx, 4, "S4_c2_alley", tr1, [(tr1, Wv(30, 1.3, 1.5), Wv(20, 0, 1.6)),
+                                        (c3_start, Wv(31, 1.2, 1.6), Wv(23, 0, 1.6))], lens=28)
+    if tb - 8 >= tr1 + 16 and tb + 18 <= c3_start:
+        B.shot(ctx, 4, "S4_c3a_bucket", tb - 8, [(tb - 8, bp + V((1.7, -1.5, 0.75)), bp + V((-0.4, 0.4, 0.55))),
+                                                 (tb + 18, bp + V((1.6, -1.4, 0.7)), bp + V((-0.2, 0.7, 0.3)))],
+               lens=26)
+        if c3_start - (tb + 18) >= 12:
+            mk = sc.timeline_markers.new("S4_c2_alley_back", frame=tb + 18)
+            mk.camera = bpy.data.objects["S4_c2_alley"]
+    B.shot(ctx, 4, "S4_c3_bolts", c3_start, [(c3_start, Wv(30.8, -1.15, 0.4), Wv(26.0, 0.1, 1.0)),
+                                             (ts_end, Wv(30.9, -1.25, 0.45), pos + V((0, 0, 0.9)))], lens=24)
+    print("seq4 timing: tb", tb, "t_sheet", t_sheet, "bolts reached", ts, "c3", c3_start)
     # ------------------------------------------------------------------ 4.4 the barrel
     barrel_spot = Wv(37.0, 1.4)
     barrel = P.scrap_item("barrel_rust", barrel_spot + V((0, 0, 0.704)), (0, 0, 0), 1.6, ctx.c_props)
@@ -228,14 +278,14 @@ def build(ctx, F):
     # net throw: Hedda trips forward, Funke flies from her arms into the net
     tn = hr - 8
     e.pose(tn - 10, "net_ready")
-    e.pose(tn, "net_throw", interp="LINEAR")
+    e.pose(tn, "net_up", interp="LINEAR")
     A.event(tn - 4, "whoosh")
     A.detach(f.rig, con1, tn + 2)
-    net = e.extra["net"]
-    hoop = A.world_matrix_at(net, tn + 10).translation
-    A.arc(f.rig, tn + 2, tn + 10, f.pos_at(tn + 2), hoop - V((0, 0, 0.35)), height=0.6, spin=(2 * math.pi + 0.4, 0, 0))
+    ring = e.net_ring(tn + 10)
+    A.arc(f.rig, tn + 2, tn + 10, A.world_matrix_at(f.rig, tn + 2).translation, ring - V((0, 0, 0.45)), height=0.6,
+          spin=(2 * math.pi, 0, 0))
     f.pose(tn + 6, "scared")
-    con_n = A.attach_to(f.rig, net, tn + 10, name="netted")
+    con_n = A.attach_loc(f.rig, bpy.data.objects["Erfasser_hoop"], tn + 10, name="netted")
     A.event(tn + 10, "net_catch")
     # Hedda trips and falls
     h.hold_place(hr)
@@ -251,8 +301,8 @@ def build(ctx, F):
     # ------------------------------------------------------------------ 4.6 stamp, truck leaves, Hedda in the dust
     tst = hr + 24
     e.hold_all(tst - 1)
-    e.pose(tst, {"arm_R": (80, 0, 30), "fore_R": (40, 0, 0), "hand_R": (-20, 0, 0)})
-    hit = e.stamp(tst + 4)
+    e.pose(tst, "net_up")
+    hit = e.stamp(tst + 4, keep_right=True)
     # the chase stays drained; the stamp takes the last of the colour
     S.key_sat(sc, F, 0.6)
     S.key_sat(sc, hit - 1, 0.62)
@@ -271,7 +321,7 @@ def build(ctx, F):
     tr["root"].keyframe_insert("rotation_euler", frame=F)
     A.key_socket(C.emit_socket(tr["headlight_m"]), F, 0.0)
     tgo = hit + 26
-    e.pose(tgo, {"arm_R": (130, 0, 10), "fore_R": (10, 0, 0), "hand_R": (-10, 0, 0)})
+    e.pose(tgo, "net_up")
     tstep = e.roll(tgo, [e.pos_at(tgo), V((3.2, 6.7, 0)), V((6.0, 4.6, 0))], speed=2.2, lean=6)
     e.place(tstep + 2, V((6.0, 4.6, 0)), 180)
     e.place(tstep + 8, V((6.0, 3.2, 0.78)), 180)

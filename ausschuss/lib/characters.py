@@ -762,8 +762,12 @@ ERF_POSES = {
                  "head": (-8, 0, 0)},
     "stamp_down": {"arm_L": (70, 0, 5), "fore_L": (20, 0, 0), "hand_L": (-90, 0, 0), "body": (12, 0, 0),
                    "head": (10, 0, 0)},
-    "net_ready": {"arm_R": (100, 0, 25), "fore_R": (20, 0, 0), "hand_R": (-20, 0, 0), "body": (-4, 0, 0)},
-    "net_throw": {"arm_R": (60, 0, 5), "fore_R": (0, 0, 0), "hand_R": (40, 0, 0), "body": (14, 0, 0)},
+    # catch pole: raised overhead / slammed down in front (tip ~1.2 m ahead at the ground) / held up with
+    # the bag hanging at ~2 m (measured: tools in the scratchpad, see net helpers in Erfasser)
+    "net_ready": {"arm_R": (120, 0, 5), "fore_R": (60, 0, 0), "hand_R": (165, 0, 0), "body": (-6, 0, 0)},
+    "net_throw": {"arm_R": (45, 0, 5), "fore_R": (30, 0, 0), "hand_R": (135, 0, 0), "body": (14, 0, 0)},
+    "net_up": {"arm_R": (60, 0, 5), "fore_R": (0, 0, 0), "hand_R": (-75, 0, 0), "body": (-4, 0, 0)},
+    "net_shoulder": {"arm_R": (75, 0, 5), "fore_R": (60, 0, 0), "hand_R": (105, 0, 0), "body": (8, 0, 0)},
     "scan": {"head": (8, 0, 0), "body": (6, 0, 0), "neck": (0, 0, 0)},
     "lean_fwd": {"body": (18, 0, 0), "head": (6, 0, 0)},
     "tangled": {"arm_L": (40, 0, 60), "arm_R": (40, 0, 60), "fore_L": (90, 0, 0), "fore_R": (90, 0, 0),
@@ -810,14 +814,63 @@ class Erfasser(Robot):
         A.event(f0, "unicycle", dur=dur)
         return f1
 
-    def stamp(self, f, target_face=True):
+    def stamp(self, f, target_face=True, keep_right=False):
+        """stamp with the left hand; keep_right: afterwards only the left arm, body and head go back to
+        rest (the right hand is holding the catch pole with something in it)"""
         self.pose(f, "stamp_up")
         self.pose(f + 8, "stamp_up")
         self.pose(f + 11, "stamp_down", interp="LINEAR")
         A.event(f + 11, "stamp")
         self.pose(f + 18, "stamp_down")
-        self.pose(f + 26, "stand")
+        rest = ERF_POSES["stand"]
+        if keep_right:
+            rest = {k: v for k, v in rest.items() if not k.endswith("_R")}
+        self.pose(f + 26, rest)
         return f + 11
+
+    def net_ring(self, f):
+        """world position of the landing net's ring centre at frame f"""
+        root_ = self.extra["netroot"]
+        return A.world_matrix_at(root_, f) @ Vector((-self.extra["net_r"], 0, 0))
+
+    def net_bag(self, f, up, interp=None):
+        """key the bag: up=True – flipped over the ring (a dome, to come down over something),
+        up=False – hanging under the ring"""
+        nm = self.extra["net"]
+        nm.scale = (1, 1, 1.0 if up else -1.0)
+        nm.keyframe_insert("scale", frame=f, index=2)
+        if interp:
+            A.set_interp(nm, "scale", f, interp, 2)
+
+    def fk(self, pose, side, point):
+        """rig-frame position of a rest-space point carried by hand_<side> in a pose (forward kinematics on
+        the rest skeleton; nothing is keyed)"""
+        from mathutils import Matrix, Euler
+        p = dict(ERF_POSES["stand"])
+        p.update(ERF_POSES[pose] if isinstance(pose, str) else pose)
+        bones = self.rig.data.bones
+
+        def basis(bn):
+            x, y, z = p.get(bn, (0, 0, 0))
+            if bn.endswith("_R"):
+                y, z = -y, -z
+            return Euler((math.radians(x), math.radians(y), math.radians(z)), "XYZ").to_matrix().to_4x4()
+        m = Matrix.Identity(4)
+        par = None
+        for bn in ("root", "body", "arm_" + side, "fore_" + side, "hand_" + side):
+            b = bones[bn]
+            rel = b.matrix_local if par is None else par.matrix_local.inverted() @ b.matrix_local
+            m = m @ rel @ basis(bn)
+            par = b
+        return m @ bones["hand_" + side].matrix_local.inverted() @ Vector(point)
+
+    def net_offset(self, pose):
+        """ring centre in the rig's frame for a pose"""
+        return self.fk(pose, "R", self.extra["pole_top"]) + Vector((-self.extra["net_r"], 0, 0))
+
+    def stamp_offset(self):
+        """the stamp's ink pad in the rig's frame at the moment it hits"""
+        return self.fk("stamp_down", "L", (0.23, 0, 0.509))
 
     def scan(self, f0, f1, sweeps=2):
         """Head sweep left/right with red slit brightening."""
@@ -968,20 +1021,31 @@ def build_erfasser(coll, name="Erfasser"):
                                                                                          (0.6, 0.02, 0.02),
                                                                                          rough=0.7), bevel=0.003,
                           coll=coll))
-    # net on right hand: pole + hoop + mesh
+    # catch pole on the right hand. The pole is rigid in the fist; at its tip hangs a landing net: a level
+    # ring (it swivels on the tip, always on the Erfasser's right of the pole) with a bag below it. The bag
+    # can be flipped over the ring (scale z +1) to come down over something like a dome, and hangs (-1)
+    # otherwise - whatever is caught then sits in the bag under the ring.
     pole_top = Vector((-0.23, 0, 0.7 + 1.1))
     P.add("hand_R", C.limb(n("pole"), (-0.23, 0, 0.55), pole_top, 0.012, m=chrome, coll=coll))
-    P.add("hand_R", C.torus(n("hoop"), 0.24, 0.01, loc=pole_top + Vector((0, 0, 0.24)), rot=(0, 90, 0), m=chrome,
-                            coll=coll))
-    netm = C.lathe(n("net"), [(0.24, 0.0), (0.2, 0.18), (0.12, 0.32), (0.02, 0.38)],
-                   loc=pole_top + Vector((0, 0, 0.24)), rot=(0, 90, 0), m=M("net_m", (0.3, 0.3, 0.28), rough=0.8),
-                   coll=coll, seg=16)
-    wf = netm.modifiers.new("wire", "WIREFRAME"); wf.thickness = 0.006
-    P.add("hand_R", netm)
+    tip = P.add("hand_R", C.empty(n("poletip"), loc=pole_top, coll=coll, size=0.05))
     P.attach_all(rig)
+    NR = 0.3
+    root_ = C.empty(n("netroot"), loc=(0, 0, 0), coll=coll, size=0.1)
+    cl_ = root_.constraints.new("COPY_LOCATION"); cl_.target = tip
+    cr_ = root_.constraints.new("COPY_ROTATION"); cr_.target = rig; cr_.use_x = cr_.use_y = False
+    C.cyl(n("swivel"), 0.016, 0.05, loc=(0, 0, 0), m=chrome, parent=root_, coll=coll)
+    C.torus(n("hoop"), NR, 0.011, loc=(-NR, 0, 0), m=chrome, parent=root_, coll=coll)
+    netm = C.lathe(n("net"), [(NR, 0.0), (NR * 0.85, 0.22), (NR * 0.55, 0.42), (0.03, 0.52)],
+                   loc=(-NR, 0, 0), m=M("net_m", (0.3, 0.3, 0.28), rough=0.8), coll=coll, seg=16)
+    netm.parent = root_
+    netm.scale = (1, 1, -1)
+    wf = netm.modifiers.new("wire", "WIREFRAME"); wf.thickness = 0.006
     act = Erfasser(rig, ERF_POSES, None, slit)
     act.pose(0, "stand")
     act.extra["net"] = netm
+    act.extra["netroot"] = root_
+    act.extra["net_r"] = NR
+    act.extra["pole_top"] = pole_top
     return act
 
 

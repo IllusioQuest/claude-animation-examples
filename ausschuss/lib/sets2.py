@@ -364,16 +364,19 @@ def build_village(coll):
     # laundry lines in the alley and across the square
     cloth_cols = [(0.7, 0.2, 0.15), (0.2, 0.4, 0.6), (0.8, 0.75, 0.6), (0.3, 0.5, 0.25), (0.8, 0.6, 0.1)]
     laundry = []
+    # (hung high enough to roll a Erfasser - 2.15 m to the top of his hat - underneath: the one sheet he
+    # crashes into in the chase is lengthened there)
     for i in range(4):
         x = 16 + i * 5
-        a = w((x, -2.1, 3.0)); b = w((x + 1.0, 2.1, 3.0))
-        pts = C.sag_points(a, b, 0.35, 8)
+        a = w((x, -2.1, 3.3)); b = w((x + 1.0, 2.1, 3.3))
+        pts = C.sag_points(a, b, 0.25, 8)
         C.curve_tube(f"v_line{i}", pts, radius=0.006, m=M("rope_m", (0.6, 0.55, 0.45)), coll=coll)
         for j in range(5):
             t = (j + 0.5) / 5
             p = Vector(a).lerp(Vector(b), t)
-            p.z -= 0.35 * 4 * t * (1 - t)
-            cl = C.box(f"v_cloth{i}{j}", (0.7, 0.02, rnd.uniform(0.6, 1.1)), loc=p - Vector((0, 0, 0.4)),
+            p.z -= 0.25 * 4 * t * (1 - t)
+            hh = rnd.uniform(0.4, 0.75)
+            cl = C.box(f"v_cloth{i}{j}", (0.7, 0.02, hh), loc=p - Vector((0, 0, hh / 2 - 0.02)),
                        rot=(0, 0, 90 + math.degrees(math.atan2(b[1] - a[1], b[0] - a[0])) - 90),
                        m=M(f"cloth{(i + j) % 5}", cloth_cols[(i + j) % 5], rough=0.95, dirt=0.3, bump=0.1),
                        bevel=0, coll=coll)
@@ -478,7 +481,13 @@ def build_village(coll):
     C.curve_tube("v_pigeonwire", out["pigeon_wire"], radius=0.01, m=M("cable_m"), coll=coll)
     # bucket of bolts and barrel in alley
     out["bucket_spot"] = Vector(w((20, -1.5, 0)))
-    C.cyl("v_bucket", 0.15, 0.3, loc=out["bucket_spot"] + Vector((0, 0, 0.15)), r2=0.18, m=m["steel"], coll=coll)
+    bk = C.cyl("v_bucket", 0.15, 0.3, loc=out["bucket_spot"] + Vector((0, 0, 0.15)), r2=0.18, m=m["steel"], coll=coll)
+    for k in range(9):  # heaped with bolts: you can see what is in it
+        a_ = k * 2.4
+        C.cyl(f"v_bucketbolt{k}", 0.02, 0.08, loc=(math.cos(a_) * 0.08 * (k % 3) / 2, math.sin(a_) * 0.08 * (k % 3) / 2,
+                                                    0.16 + 0.015 * (k % 2)),
+              rot=(80, 0, k * 40), m=M("bolt_m", (0.75, 0.72, 0.68), metal=1.0, rough=0.3), verts=6, parent=bk,
+              coll=coll)
     out["barrel_spot"] = Vector(w((27, 1.6, 0)))
     for i in range(30):
         P.scrap_item(rnd.choice(["crate", "barrel_rust", "tire", "drum"]),
@@ -607,6 +616,14 @@ def build_depot(coll):
         cb_lights.append(lm)
         C.sphere(f"h_cbl{i}", 0.04, loc=h((6.79, -3.45 + i * 0.15, 2.15)), m=lm, coll=coll)
     out["cb_lights"] = cb_lights
+    # the big red STOP button on the box's front (Funke's target): yellow collar, red mushroom, a label
+    C.cyl("h_stopcollar", 0.085, 0.03, loc=h((6.785, -3.3, 1.8)), rot=(0, 90, 0), m=M("hazard_y", (0.9, 0.7, 0.05),
+                                                                                       rough=0.5, dirt=0.3), coll=coll)
+    stop_m = C.mat("stop_red", (0.75, 0.03, 0.02), rough=0.35)
+    btn = C.cyl("h_stopbtn", 0.06, 0.045, loc=h((6.75, -3.3, 1.8)), rot=(0, 90, 0), m=stop_m, coll=coll)
+    C.text("h_stoplabel", "STOP", size=0.07, loc=h((6.797, -3.3, 1.93)), rot=(90, 0, -90),
+           m=C.emission("stop_label", (1.0, 0.85, 0.3), 1.5), coll=coll)
+    out["stop_button"] = btn
     # catwalk along conveyor at y=+2.6, z=3.5 with railing and stairs at x=-18
     C.box("h_catwalk", (26, 1.2, 0.1), loc=h((-5, 2.8, 3.5)), m=M("grate_m", (0.3, 0.3, 0.3), metal=0.8), bevel=0,
           coll=coll)
@@ -636,23 +653,39 @@ def build_depot(coll):
     return out
 
 
-def cage(name, loc, coll, size=(1.1, 1.1, 1.0)):
+def cage(name, loc, coll, size=(1.1, 1.1, 1.0), lid=False):
+    """Wire cage on a grate floor. Returns (root, pivot) – the pivot of the front door (rotates about z),
+    or with lid=True of a lid hinged at the top back edge (rotates about x, -110 deg = open)."""
     root = C.empty(name, loc=loc, coll=coll)
     cm = M("cage_m", (0.4, 0.4, 0.4), metal=1.0, rough=0.4, rust=0.3)
     me = C.mesh_box(name + "_bars", *size, origin="bottom")
+    if lid:  # open top: the lid closes it
+        import bmesh
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.normal.z > 0.9], context="FACES_ONLY")
+        bm.to_mesh(me)
+        bm.free()
     ob = C.new_obj(name + "_bars", me, (0, 0, 0), mat_=cm, parent=root, coll=coll)
     # subdivide to get bars then wireframe
     sd = ob.modifiers.new("sub", "SUBSURF"); sd.subdivision_type = "SIMPLE"; sd.levels = 2; sd.render_levels = 2
     wf = ob.modifiers.new("wire", "WIREFRAME"); wf.thickness = 0.025
     C.box(name + "_floor", (size[0], size[1], 0.04), loc=(0, 0, 0.02), m=M("grate_m"), parent=root, bevel=0,
           coll=coll)
-    # door (front face) as separate pivot for popping open
-    door_piv = C.empty(name + "_doorpiv", loc=(-size[0] / 2, -size[1] / 2 - 0.02, 0), parent=root, coll=coll)
-    me2 = C.mesh_box(name + "_door", size[0], 0.02, size[2] * 0.95, origin="bottom")
-    door = C.new_obj(name + "_door", me2, (size[0] / 2, 0, 0.02), mat_=cm, parent=door_piv, coll=coll)
+    if lid:
+        piv = C.empty(name + "_doorpiv", loc=(0, size[1] / 2, size[2]), parent=root, coll=coll)
+        me2 = C.mesh_box(name + "_door", size[0], size[1], 0.02, origin="center")
+        door = C.new_obj(name + "_door", me2, (0, -size[1] / 2, 0.0), mat_=cm, parent=piv, coll=coll)
+        C.box(name + "_lidbar", (size[0], 0.05, 0.05), loc=(0, -size[1], 0.0), m=cm, parent=piv, bevel=0.01,
+              coll=coll)
+    else:
+        # door (front face) as separate pivot for popping open
+        piv = C.empty(name + "_doorpiv", loc=(-size[0] / 2, -size[1] / 2 - 0.02, 0), parent=root, coll=coll)
+        me2 = C.mesh_box(name + "_door", size[0], 0.02, size[2] * 0.95, origin="bottom")
+        door = C.new_obj(name + "_door", me2, (size[0] / 2, 0, 0.02), mat_=cm, parent=piv, coll=coll)
     sd2 = door.modifiers.new("sub", "SUBSURF"); sd2.subdivision_type = "SIMPLE"; sd2.levels = 2
     door.modifiers.new("wire", "WIREFRAME").thickness = 0.025
-    return root, door_piv
+    return root, piv
 
 
 def cage_with_machine(name, loc, coll, kind=0, seed=0):

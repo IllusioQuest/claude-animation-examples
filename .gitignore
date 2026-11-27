@@ -13,3 +13,4 @@ ausschuss/preview/*.log
 ausschuss/preview/self/
 ausschuss/blendcache_*/
 ausschuss/preview/v8_s4/
+ausschuss/*_farm.blend
