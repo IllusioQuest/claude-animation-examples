@@ -190,8 +190,8 @@ def build(ctx, F):
     B.shot(ctx, 4, "S4_c2_alley", tr1, [(tr1, Wv(30, 1.3, 1.5), Wv(20, 0, 1.6)),
                                         (c3_start, Wv(31, 1.2, 1.6), Wv(23, 0, 1.6))], lens=28)
     if tb - 8 >= tr1 + 16 and tb + 18 <= c3_start:
-        B.shot(ctx, 4, "S4_c3a_bucket", tb - 8, [(tb - 8, bp + V((1.15, -0.85, 0.75)), bp + V((-0.6, 0.6, 0.5))),
-                                                 (tb + 18, bp + V((1.1, -0.8, 0.7)), bp + V((-0.2, 0.9, 0.25)))],
+        B.shot(ctx, 4, "S4_c3a_bucket", tb - 8, [(tb - 8, bp + V((1.3, -0.95, 1.15)), bp + V((-0.6, 0.6, 0.85))),
+                                                 (tb + 18, bp + V((1.25, -0.9, 1.05)), bp + V((-0.1, 0.9, 0.3)))],
                lens=26)
         if c3_start - (tb + 18) >= 12:
             mk = sc.timeline_markers.new("S4_c2_alley_back", frame=tb + 18)

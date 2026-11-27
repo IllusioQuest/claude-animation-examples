@@ -385,7 +385,15 @@ def build(ctx, F):
     B.shot(ctx, 5, "S5_c3_catwalk", t_wide, [(tcw, Hd(-12, 0.8, 5.2), Hd(-6, 2.8, 4.3)),
                                           (tn, Hd(tgt_x - 6.0, 0.4, 5.3), Hd(tgt_x - 1, 2.8, 4.4))], lens=28)
     B.shot(ctx, 5, "S5_c3b_stamp", tn + 10, [(tn + 10, Hd(tgt_x + 2.6, 0.2, 4.4), Hd(tgt_x - 1.4, 2.7, 5.5))], lens=24)
-    B.shot(ctx, 5, "S5_c3c_drop", tdrop - 4, [(tdrop - 4, Hd(tgt_x + 1.5, -4.5, 2.6), Hd(tgt_x + 1.5, 0.5, 2.0))], lens=26)
+    # following them along the catwalk from the floor below (she dangles from the pole)
+    ck = []
+    for t_ in list(range(tl + 14, tdrop - 4, 6)) + [tdrop - 4]:
+        ep_ = e.pos_at(t_)
+        ck.append((t_, ep_ + V((-2.2, -5.8, -1.6)), ep_ + V((0.4, -0.6, 1.2))))
+    B.shot(ctx, 5, "S5_c3d_carry", tl + 14, ck, lens=30)
+    B.shot(ctx, 5, "S5_c3c_drop", tdrop - 4, [(tdrop - 4, cage_pos + V((-1.2, -4.6, 2.6)), cage_pos + V((0, 0.5, 1.4))),
+                                            (tdrop + 30, cage_pos + V((-0.9, -4.3, 2.3)), cage_pos + V((0, 0.4, 1.0)))],
+           lens=28)
     # ------------------------------------------------------------------ 5.4 Funke squeezes out
     # his whole beat is anchored to the jam: squeeze out, jump onto the platform, find the STOP button,
     # press it twice (the double knock) – and only then does the press jam
@@ -422,7 +430,7 @@ def build(ctx, F):
     h.face(tsq + 16, "surprised")
     # ------------------------------------------------------------------ 5.5 onto the platform: the STOP button
     yaw_btn = math.degrees(A.yaw_towards(V((1, 0, 0))))
-    land = V((btn.location.x - 0.34, btn.location.y, plat.z))  # in front of the box, the button at arm's height
+    land = V((btn.location.x - 0.27, btn.location.y, plat.z))  # in front of the box, the button at arm's height
     A.arc(f.rig, tj, tj + 14, p_out + V((BELT_V * 6 / C.FPS, 0, 0)), land, height=0.9)
     f.pose(tj + 4, "happy")
     A.event(tj + 14, "land_spring")
@@ -665,7 +673,7 @@ def build(ctx, F):
     import pov
     pf0, pf1 = tn + 6, hit - 3
     pov.pov_shot(ctx, 5, "S5_pov_hedda", pf0, pf1, pov.erf_eye(e),
-                 sweep(pov.bone_pos(h, "head", 0.12), pf0, tn + 12, amp=0.6), lens=50, lock=tn + 12,
+                 sweep(pov.bone_pos(h, "head", 0.12), pf0, tn + 12, amp=0.6), lens=24, lock=tn + 12,
                  lines=[(tn + 12, "HUMAN", None), (tn + 17, "AGE       71", None),
                         (tn + 22, "OUTPUT    0 UNITS / DAY", (1, 0.6, 0.2))],
                  verdict=(tn + 27, "OBSOLETE"))
