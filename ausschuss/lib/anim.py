@@ -106,7 +106,9 @@ def carry_spot(actor, f):
     mw = world_matrix_at(actor.rig, f, "chest")
     yaw = math.radians(actor.yaw_at(f))
     fwd = Vector((math.sin(yaw), -math.cos(yaw), 0))
-    return mw @ Vector((0, 0.05, -0.32)) - Vector((0, 0, 0.04)) + fwd * 0.13
+    # offsets in world terms (the chest bone's own axes point along the spine: a local offset put him up
+    # behind her head)
+    return mw.translation + fwd * 0.24 + Vector((0, 0, -0.42))
 
 
 def ease(t, kind="inout"):

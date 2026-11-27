@@ -223,11 +223,11 @@ def build(ctx, F):
     B.shot(ctx, 6, "S6_c1_arrive", F, [(F, HL(-3.5, -12, 1.7), HL(0.5, -1, 1.0)), (hw - 8, HL(-3.0, -10.5, 1.65), HL(0.6, -2.5, 1.0))],
            lens=30)
     # over her shoulder: what is left of the hut, a slow push in
-    B.shot(ctx, 6, "S6_c1r_ruins", hw - 6, [(hw - 6, HL(1.55, -5.6, 1.62), HL(-0.2, 0.3, 0.25)),
-                                            (tface, HL(1.35, -4.75, 1.55), HL(-0.25, 0.4, 0.2))], lens=32)
+    B.shot(ctx, 6, "S6_c1r_ruins", hw - 6, [(hw - 6, HL(-0.7, -6.6, 1.75), HL(0.2, 0.3, 0.2)),
+                                            (tface, HL(-0.55, -5.7, 1.65), HL(0.15, 0.4, 0.15))], lens=30)
     # her face as she takes it in (a slow push in, held long)
     B.shot(ctx, 6, "S6_c1b_face", tface, [(tface, a1 + HL(0.5, 1.95, 1.45) - HL(0, 0, 0), a1 + V((0, 0, 1.42))),
-                                          (tset - 6, a1 + HL(0.4, 1.55, 1.4) - HL(0, 0, 0), a1 + V((0, 0, 1.3)))],
+                                          (tset - 6, a1 + HL(0.4, 1.6, 1.38) - HL(0, 0, 0), a1 + V((0, 0, 1.33)))],
            lens=40)
     B.shot(ctx, 6, "S6_c1c_sit", tset - 6, [(tset - 6, HL(-1.6, -7.8, 1.5), HL(0.2, -2.6, 0.8)),
                                            (tsit + 20, HL(-1.4, -7.2, 1.45), HL(0.0, -2.6, 0.75))], lens=30)
