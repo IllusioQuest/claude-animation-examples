@@ -123,6 +123,7 @@ def build(ctx, F):
         for ob in g:
             A.hide(ob, F, True)
     stage_t = {"legs": T(4.0), "body": T(6.0), "arms": T(8.0), "head": T(10.0)}
+    grp["head"] += grp.pop("ant")  # the antenna is fitted with the head (it used to pop up with the lens)
     for k, t in stage_t.items():
         for ob in grp[k]:
             A.hide(ob, t, False)
@@ -172,7 +173,7 @@ def build(ctx, F):
                    "spine": (14, 0, 0)})
     A.event(t_ins, "click")
     A.hide(lens, t_ins, True)
-    for ob in grp["eye"] + grp["ant"]:
+    for ob in grp["eye"]:
         A.hide(ob, t_ins, False)
     h.pose(t_ins + 8, "work")
     # tap twice -> nothing
