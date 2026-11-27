@@ -175,11 +175,21 @@ def build(ctx, F):
         h.pose(fr, {"upper_arm_L": (35, 0, 6), "upper_arm_R": (35, 0, 6), "forearm_L": (80, 0, -25),
                     "forearm_R": (80, 0, -25)})
         fr += 6
+    # the reveal: she stops dead and takes a long, quiet look at what is left of her home - first over her
+    # shoulder at the ruins, then on her face (the music turns her theme to minor here: "ruin_reveal")
+    A.event(hw - 4, "ruin_reveal")
     h.face(hw - 6, "surprised")
     h.pose(hw + 4, {"head": (0, 0, 0), "spine": (-4, 0, 0)})
-    h.face(hw + 30, "sad")
+    tface = hw + 66  # cut to her face
+    h.pose(tface + 6, {"head": (0, 0, 0), "spine": (-4, 0, 0)})
+    h.pose(tface + 44, {"head": (14, 0, 0), "spine": (8, 0, 0)})  # the head sinks
+    h.face(tface + 30, "sad")
+    h.blink(tface + 70, "sad")
+    f.pose(hw + 20, {"lid": (-95, 0, 0), "head": (0, 0, 0)})
+    f.pose(tface + 40, {"lid": (-55, 0, 0), "head": (-22, 0, 0)})  # Funke looks up at her, his lid droops
+    f.glow(tface + 40, 1.6, "bulb")
     # set Funke down
-    tset = hw + 40
+    tset = tface + 104
     h.pose(tset, "bend_down")
     A.detach(f.rig, con, tset + 6)
     fpos = HL(1.6, -3.1)
@@ -212,10 +222,14 @@ def build(ctx, F):
     A.event(F, "dawn_wind", dur=C.sec(8))
     B.shot(ctx, 6, "S6_c1_arrive", F, [(F, HL(-3.5, -12, 1.7), HL(0.5, -1, 1.0)), (hw - 8, HL(-3.0, -10.5, 1.65), HL(0.6, -2.5, 1.0))],
            lens=30)
-    # her face as she takes it in
-    B.shot(ctx, 6, "S6_c1b_face", hw - 8, [(hw - 8, a1 + HL(0.5, 1.9, 1.45) - HL(0, 0, 0), a1 + V((0, 0, 1.45))),
-                                           (hw + 34, a1 + HL(0.45, 1.75, 1.45) - HL(0, 0, 0), a1 + V((0, 0, 1.4)))], lens=40)
-    B.shot(ctx, 6, "S6_c1c_sit", hw + 34, [(hw + 34, HL(-1.6, -7.8, 1.5), HL(0.2, -2.6, 0.8)),
+    # over her shoulder: what is left of the hut, a slow push in
+    B.shot(ctx, 6, "S6_c1r_ruins", hw - 6, [(hw - 6, HL(1.55, -5.6, 1.62), HL(-0.2, 0.3, 0.25)),
+                                            (tface, HL(1.35, -4.75, 1.55), HL(-0.25, 0.4, 0.2))], lens=32)
+    # her face as she takes it in (a slow push in, held long)
+    B.shot(ctx, 6, "S6_c1b_face", tface, [(tface, a1 + HL(0.5, 1.95, 1.45) - HL(0, 0, 0), a1 + V((0, 0, 1.42))),
+                                          (tset - 6, a1 + HL(0.4, 1.55, 1.4) - HL(0, 0, 0), a1 + V((0, 0, 1.3)))],
+           lens=40)
+    B.shot(ctx, 6, "S6_c1c_sit", tset - 6, [(tset - 6, HL(-1.6, -7.8, 1.5), HL(0.2, -2.6, 0.8)),
                                            (tsit + 20, HL(-1.4, -7.2, 1.45), HL(0.0, -2.6, 0.75))], lens=30)
     # ------------------------------------------------------------------ 6.2 Funke brings a sheet, the double knock
     tf = tsit + 20

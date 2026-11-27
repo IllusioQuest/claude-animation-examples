@@ -165,6 +165,7 @@ def render_midi(mid, wav, gain=0.5):
 FUNKE = "G4/.5 C5/.5 E5/.5 G5/1.5 F5/.5 E5/.5 D5/.5 C5/1.5 A4/.5 D5/.5 F5/.5 A5/1 G5/.5 E5/.5 G5/.5 F5/.5 D5/.5 C5/2"
 SPARK = "E5/.25 G5/.25 C6/1"
 HEDDA = "A4/1 C5/.5 D5/.5 F5/1.5 E5/.5 D5/1 C5/.5 A4/.5 C5/2 Bb4/1 D5/.5 C5/.5 A4/1 G4/1 F4/3"
+HEDDA_MIN = "Ab4/1 C5/.5 Db5/.5 F5/1.5 Eb5/.5 Db5/1 C5/.5 Ab4/.5 C5/2 Bb4/1 Db5/.5 C5/.5 Ab4/1 G4/1 F4/3"  # the ruins
 BELLO = "A4/1.5 G4/.5 F4/1 E4/1 D4/1 F4/1 E4/2"
 ERF_TB = "Bb2/1 Db3/.5 F3/.5 Eb3/1 Db3/.5 C3/.5 Bb2/2 F2/2"
 SWING = ("C5/.5 D5/.5 F5/1 A5/1 F5/1 G5/.75 F5/.25 D5/1 F5/2 C5/.5 D5/.5 F5/1 A5/1 C6/1 Bb5/.75 A5/.25 G5/1 F5/2 "
@@ -483,8 +484,20 @@ def compose():
         O.mel("mute_tp", t + 0.3, "Bb4/1 A4/1 Ab4/1 G4/3", 0.3, 85)
     # ------------------------------------------------------------------ SEQ 6
     a, b = seq_t(6)
-    O.mel("clarinet", a + 1.0, HEDDA, 0.7, 45)
-    O.chord("strings", a, 8.0, ["F2", "C3", "A3"], 30)
+    O.chord("strings", a, 6.0, ["F2", "C3"], 22)  # an open, uneasy fifth; her theme is saved for the ruins
+    t_rv = first("ruin_reveal", 6)
+    if t_rv:
+        # she sees what is left of the hut: a soft timpani roll and tremolo strings swell, then her own theme
+        # comes back - slow, in minor, on a lone oboe over sustained strings
+        O.roll("timpani", t_rv, 2.6, "F2", 40, 0.07)
+        O2.chord("tremolo", t_rv, 3.2, ["F3", "Ab3", "C4"], 48)
+        bt = 0.8
+        t_m = t_rv + 2.4
+        O.mel("oboe", t_m, HEDDA_MIN, bt, 64)
+        for d_, n_, ch in ((0, 4, ["F2", "C3", "Ab3"]), (4, 4, ["Db2", "Ab2", "F3"]), (8, 2, ["Bb1", "F2", "Db3"]),
+                           (10, 2, ["C2", "G2", "E3"]), (12, 6, ["F2", "C3", "Ab3"])):
+            O.chord("strings", t_m + d_ * bt, n_ * bt * 1.05, ch, 46)
+        O.n("harp", t_m + 12 * bt, 2.0, "F2", 50)
     t_w = first("warm_chord", 6)
     if t_w:
         O.chord("strings", t_w, 6.0, ["F3", "A3", "C4", "F4"], 55)
@@ -688,7 +701,7 @@ def ambience(mix):
     a, b = seq_t(6)
     mix.add(a, X.wind(b - a, 0.7, 6), 0.7)
     rng6 = np.random.default_rng(6)
-    t = a + 2.5
+    t = max(a + 2.5, first("warm_chord", 6, a + 2.5))  # the birds come with the hope, not before
     k = 0
     while t < b - 2.0:
         prog = (t - a) / (b - a)

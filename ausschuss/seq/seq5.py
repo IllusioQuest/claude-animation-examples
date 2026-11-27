@@ -175,6 +175,8 @@ def build(ctx, F):
     # cage doors pop open
     for name, (root, door, xj) in cages.items():
         dt = rnd.randint(2, 14)
+        if name == "hedda":  # shut until the jam: keyed closed here, else it drifts open from the slam on
+            door.rotation_euler.x = 0.0
         door.keyframe_insert("rotation_euler", frame=t_jam + dt)
         if name == "hedda":  # the lid
             door.rotation_euler.x = math.radians(-110)
