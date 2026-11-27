@@ -18,6 +18,9 @@ t0 = time.time()
 src = bpy.data.filepath
 out = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else os.path.splitext(src)[0] + "_farm.blend"
 out = os.path.abspath(out)
+# continue as the farm file right away: freeing a disk bake below would otherwise delete the source
+# file's blendcache_<name>/ folder (it now looks in blendcache_<farm name>/ instead)
+bpy.ops.wm.save_as_mainfile(filepath=out, compress=True)
 sc = next(s for s in bpy.data.scenes if s.name != "FILM" and "Hedda" in s.objects)
 CL.bind_details(sc, bpy.data.objects["Hedda"])
 total = want = 0
@@ -64,7 +67,7 @@ for o in bpy.data.objects:
         pc = getattr(m, "point_cache", None)
         if pc and pc.use_disk_cache:
             external.append(("PointCache", o.name, "disk cache"))
-bpy.ops.wm.save_as_mainfile(filepath=out, compress=True, copy=True)
+bpy.ops.wm.save_as_mainfile(filepath=out, compress=True)
 print("FARM cloth frames in file", total, "of", want)
 print("FARM external references left:", len(external))
 for e in external:
